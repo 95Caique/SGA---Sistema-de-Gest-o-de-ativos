@@ -4,3 +4,5 @@ docs/
 .agents/
 .codex/
 PROJECT_CONTEXT.md
+.venv/
+venv/
