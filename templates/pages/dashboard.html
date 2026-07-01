@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>Dashboard</h1>
+    </div>
+    <div class="toolbar">
+        <label class="period-select">
+            <span>Periodo:</span>
+            <select>
+                <option>01/05/2025 - 31/05/2025</option>
+            </select>
+        </label>
+        <button class="button button-muted" type="button">Filtros</button>
+    </div>
+</div>
+
+<section class="metric-grid">
+    {% for metric in metrics %}
+        <article class="metric-card">
+            <span>{{ metric.label }}</span>
+            <strong>{{ metric.value }}</strong>
+            <small class="text-{{ metric.tone }}">{{ metric.trend }}</small>
+        </article>
+    {% endfor %}
+</section>
+
+<section class="panel financial-panel">
+    <div class="panel-title">
+        <h2>Resumo financeiro</h2>
+    </div>
+    <div class="financial-grid">
+        {% for item in financial_summary %}
+            <div>
+                <span>{{ item.label }}</span>
+                <strong class="text-{{ item.tone }}">{{ item.value }}</strong>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="dashboard-grid">
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Faturamento ultimos 6 meses</h2>
+        </div>
+        <div class="chart-line" aria-label="Grafico de faturamento">
+            <span style="--x: 6%; --y: 68%"></span>
+            <span style="--x: 23%; --y: 50%"></span>
+            <span style="--x: 40%; --y: 60%"></span>
+            <span style="--x: 57%; --y: 46%"></span>
+            <span style="--x: 74%; --y: 40%"></span>
+            <span style="--x: 92%; --y: 24%"></span>
+        </div>
+        <div class="chart-labels">
+            <span>Dez</span><span>Jan</span><span>Fev</span><span>Mar</span><span>Abr</span><span>Mai</span>
+        </div>
+    </article>
+
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Locacoes por status</h2>
+        </div>
+        <div class="status-content">
+            <div class="donut"></div>
+            <div class="status-list">
+                {% for status in rental_status %}
+                    <div>
+                        <span class="dot dot-{{ status.color }}"></span>
+                        <span>{{ status.label }}</span>
+                        <strong>{{ status.value }} ({{ status.percent }})</strong>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </article>
+</section>
+
+<section class="quick-grid">
+    {% for card in alert_cards %}
+        <article class="quick-card">
+            <div class="quick-icon quick-{{ card.tone }}">{{ card.value }}</div>
+            <div>
+                <span>{{ card.label }}</span>
+                <a href="#">{{ card.action }}</a>
+            </div>
+        </article>
+    {% endfor %}
+</section>
+
+<section class="panel">
+    <div class="panel-title">
+        <h2>Locacoes recentes</h2>
+        <a href="{% url 'locacoes' %}">Ver todas</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Locacao</th>
+                    <th>Cliente</th>
+                    <th>Periodo</th>
+                    <th>Equipamentos</th>
+                    <th>Valor total</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rental in recent_rentals %}
+                    <tr>
+                        <td><a href="#">{{ rental.code }}</a></td>
+                        <td>{{ rental.client }}</td>
+                        <td>{{ rental.period }}</td>
+                        <td>{{ rental.items }}</td>
+                        <td>{{ rental.amount }}</td>
+                        <td><span class="badge badge-success">{{ rental.status }}</span></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

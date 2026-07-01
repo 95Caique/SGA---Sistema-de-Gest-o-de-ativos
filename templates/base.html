@@ -1,0 +1,60 @@
+{% load static %}
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ page_title }} | Loca360</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+    <aside class="sidebar">
+        <a class="brand" href="{% url 'dashboard' %}" aria-label="Loca360">
+            <span class="brand-mark"></span>
+            <span>
+                <strong>Loca360</strong>
+                <small>GESTAO DE ATIVOS</small>
+            </span>
+        </a>
+
+        <nav class="nav-list" aria-label="Principal">
+            {% for item in nav_items %}
+                <a class="nav-link {% if request.resolver_match.url_name == item.url_name %}is-active{% endif %}" href="{% url item.url_name %}">
+                    <span class="nav-icon">{{ item.icon }}</span>
+                    <span>{{ item.label }}</span>
+                </a>
+            {% endfor %}
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="tenant-avatar">LA</div>
+            <div>
+                <strong>Locadora Alpha</strong>
+                <small>Fernando</small>
+            </div>
+        </div>
+    </aside>
+
+    <main class="app-shell">
+        <header class="topbar">
+            <button class="icon-button" type="button" aria-label="Menu">=</button>
+            <form class="search-form" role="search">
+                <input type="search" placeholder="Buscar..." aria-label="Buscar">
+                <kbd>Ctrl K</kbd>
+            </form>
+            <div class="topbar-actions">
+                <button class="icon-button" type="button" aria-label="Notificacoes">!</button>
+                <button class="icon-button" type="button" aria-label="Ajuda">?</button>
+                <div class="user-chip">
+                    <span class="tenant-avatar">LA</span>
+                    <span>Locadora Alpha</span>
+                </div>
+            </div>
+        </header>
+
+        <section class="content">
+            {% block content %}{% endblock %}
+        </section>
+    </main>
+</body>
+</html>

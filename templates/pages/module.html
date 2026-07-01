@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>{{ module.title }}</h1>
+        <p>{{ module.subtitle }}</p>
+    </div>
+    <div class="toolbar">
+        <div class="module-search">
+            <input type="search" placeholder="Buscar..." aria-label="Buscar">
+        </div>
+        <button class="button button-muted" type="button">Filtros</button>
+        <button class="button button-primary" type="button">+ {{ module.primary_action }}</button>
+    </div>
+</div>
+
+<section class="panel">
+    <div class="tabs">
+        <a class="is-active" href="#">Todos</a>
+        <a href="#">Ativos</a>
+        <a href="#">Pendentes</a>
+        <a href="#">Finalizados</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    {% for column in module.columns %}
+                        <th>{{ column }}</th>
+                    {% endfor %}
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in module.rows %}
+                    <tr>
+                        {% for cell in row %}
+                            <td>
+                                {% if forloop.last %}
+                                    <span class="badge badge-auto">{{ cell }}</span>
+                                {% elif forloop.first %}
+                                    <a href="#">{{ cell }}</a>
+                                {% else %}
+                                    {{ cell }}
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                        <td class="actions-cell">...</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="table-footer">
+        <span>Exibindo {{ module.rows|length }} registros</span>
+        <div class="pagination">
+            <span class="is-current">1</span>
+            <span>2</span>
+            <span>3</span>
+        </div>
+    </div>
+</section>
+{% endblock %}
