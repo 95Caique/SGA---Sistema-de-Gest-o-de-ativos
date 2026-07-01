@@ -620,6 +620,27 @@ td strong {
     color: var(--danger);
 }
 
+.badge-status-ativa {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.badge-status-agendada,
+.badge-status-orcamento {
+    background: var(--warning-soft);
+    color: #a16207;
+}
+
+.badge-status-finalizada {
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.badge-status-cancelada {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
 .muted-text {
     color: #94a3b8;
     font-weight: 800;

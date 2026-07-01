@@ -19,6 +19,7 @@ from django.urls import path
 
 from ativos.views import equipamentos_list
 from clientes.views import clientes_list
+from locacoes.views import locacoes_list
 
 from . import views
 
@@ -26,7 +27,7 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('agenda/', views.module_page, {'module': 'agenda'}, name='agenda'),
-    path('locacoes/', views.module_page, {'module': 'locacoes'}, name='locacoes'),
+    path('locacoes/', locacoes_list, name='locacoes'),
     path('equipamentos/', equipamentos_list, name='equipamentos'),
     path('clientes/', clientes_list, name='clientes'),
     path('contratos/', views.module_page, {'module': 'contratos'}, name='contratos'),

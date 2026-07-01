@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>Locacoes</h1>
+        <p>Pedidos de locacao, reservas, contratos e devolucoes.</p>
+    </div>
+    <form class="toolbar" method="get">
+        <div class="module-search">
+            <input type="search" name="q" value="{{ query }}" placeholder="Buscar locacoes..." aria-label="Buscar locacoes">
+        </div>
+        <button class="button button-muted" type="submit">Filtros</button>
+        <button class="button button-primary" type="button">+ Nova locacao</button>
+    </form>
+</div>
+
+<section class="panel">
+    <div class="tabs">
+        <a class="is-active" href="#">Todas <span>{{ status_counts.todos }}</span></a>
+        <a href="#">Ativas <span>{{ status_counts.ativas }}</span></a>
+        <a href="#">Agendadas <span>{{ status_counts.agendadas }}</span></a>
+        <a href="#">Finalizadas <span>{{ status_counts.finalizadas }}</span></a>
+        <a href="#">Canceladas <span>{{ status_counts.canceladas }}</span></a>
+    </div>
+
+    {% if locacoes %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Locacao</th>
+                        <th>Cliente</th>
+                        <th>Periodo</th>
+                        <th>Equipamentos</th>
+                        <th>Valor total</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for locacao in locacoes %}
+                        <tr>
+                            <td><a href="#">{{ locacao.codigo }}</a></td>
+                            <td>
+                                <strong>{{ locacao.cliente.nome }}</strong>
+                                <small class="table-subtext">{{ locacao.cliente.documento }}</small>
+                            </td>
+                            <td>{{ locacao.data_inicio|date:"d/m/Y" }} - {{ locacao.data_fim|date:"d/m/Y" }}</td>
+                            <td>{{ locacao.total_itens }} item{{ locacao.total_itens|pluralize }}</td>
+                            <td>R$ {{ locacao.valor_total }}</td>
+                            <td><span class="badge badge-status-{{ locacao.status }}">{{ locacao.get_status_display }}</span></td>
+                            <td class="actions-cell">...</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="table-footer">
+            <span>Exibindo {{ locacoes|length }} locacao{{ locacoes|length|pluralize:"es" }}</span>
+            <div class="pagination">
+                <span class="is-current">1</span>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <strong>Nenhuma locacao cadastrada</strong>
+            <p>Crie locacoes para reservar ativos, acompanhar contratos, controlar devolucoes e ativar o rastreio simulado quando aplicavel.</p>
+            <button class="button button-primary" type="button">+ Nova locacao</button>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}
