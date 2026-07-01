@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>Rastreamento</h1>
+        <p>Acompanhe ativos com rastreador real ou dados simulados durante a locacao.</p>
+    </div>
+    <form class="toolbar" method="get">
+        <div class="module-search">
+            <input type="search" name="q" value="{{ query }}" placeholder="Buscar equipamento..." aria-label="Buscar equipamento rastreado">
+        </div>
+        <button class="button button-muted" type="submit">Filtros</button>
+        <button class="button button-primary" type="button">Historico</button>
+    </form>
+</div>
+
+<section class="metric-grid">
+    <article class="metric-card">
+        <span>Equipamentos rastreados</span>
+        <strong>{{ status_counts.rastreados }}</strong>
+        <small class="text-neutral">ativos com rastreador</small>
+    </article>
+    <article class="metric-card">
+        <span>Online</span>
+        <strong>{{ status_counts.online }}</strong>
+        <small class="text-success">comunicando agora</small>
+    </article>
+    <article class="metric-card">
+        <span>Parados</span>
+        <strong>{{ status_counts.parados }}</strong>
+        <small class="text-warning">sem movimento registrado</small>
+    </article>
+    <article class="metric-card">
+        <span>Sem comunicacao</span>
+        <strong>{{ status_counts.sem_comunicacao }}</strong>
+        <small class="text-danger">exigem atencao</small>
+    </article>
+</section>
+
+<section class="tracking-grid">
+    <aside class="panel tracking-list">
+        <div class="panel-title">
+            <h2>Equipamentos</h2>
+            <span class="muted-text">{{ rastreadores|length }} itens</span>
+        </div>
+
+        {% if rastreadores %}
+            <div class="tracking-items">
+                {% for rastreador in rastreadores %}
+                    <article class="tracking-item">
+                        <div class="tracking-thumb">{{ rastreador.ativo.codigo|slice:":3" }}</div>
+                        <div>
+                            <strong>{{ rastreador.ativo.nome }}</strong>
+                            <span>{{ rastreador.ativo.codigo }} | {{ rastreador.identificador }}</span>
+                            <small>{{ rastreador.ultimo_endereco|default:rastreador.ativo.localizacao_atual|default:"Sem posicao registrada" }}</small>
+                        </div>
+                        <span class="badge badge-status-{{ rastreador.status }}">{{ rastreador.get_status_display }}</span>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state compact">
+                <strong>Nenhum rastreador cadastrado</strong>
+                <p>Quando um ativo permitir rastreamento, ele aparecera aqui com status, bateria e ultima posicao.</p>
+            </div>
+        {% endif %}
+    </aside>
+
+    <div class="panel tracking-map-panel">
+        <div class="tracking-map-toolbar">
+            <button class="button button-muted" type="button">Todos os status</button>
+            <button class="button button-muted" type="button">Todos os equipamentos</button>
+            <button class="button button-muted" type="button">Geocerca</button>
+        </div>
+
+        <div class="tracking-map">
+            {% if rastreadores %}
+                {% for rastreador in rastreadores %}
+                    <div class="map-pin map-pin-{{ rastreador.status }}" style="--x: {{ forloop.counter|add:20 }}%; --y: {{ forloop.counter|add:28 }}%;">
+                        <span>{{ rastreador.ativo.codigo|slice:":2" }}</span>
+                        <strong>{{ rastreador.ativo.nome }}</strong>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="map-empty">
+                    <strong>Mapa aguardando dados</strong>
+                    <p>O mapa sera preenchido quando houver rastreadores e posicoes registradas. Nesta fase, o rastreio pode usar dados simulados.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if rastreadores %}
+            <div class="tracking-detail">
+                {% with primeiro=rastreadores.0 %}
+                    <div class="tracking-thumb">{{ primeiro.ativo.codigo|slice:":3" }}</div>
+                    <div>
+                        <strong>{{ primeiro.ativo.nome }}</strong>
+                        <span>{{ primeiro.ativo.codigo }} | Patrimonio {{ primeiro.ativo.patrimonio|default:"-" }}</span>
+                    </div>
+                    <div>
+                        <span>Ultima posicao</span>
+                        <strong>{{ primeiro.ultimo_endereco|default:"Sem posicao" }}</strong>
+                    </div>
+                    <div>
+                        <span>Velocidade</span>
+                        <strong>{{ primeiro.ultima_velocidade|default:"0" }} km/h</strong>
+                    </div>
+                    <div>
+                        <span>Bateria</span>
+                        <strong>{{ primeiro.bateria_percentual }}%</strong>
+                    </div>
+                    <div>
+                        <span>Sinal GSM</span>
+                        <strong>{{ primeiro.sinal_gsm_percentual }}%</strong>
+                    </div>
+                {% endwith %}
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
