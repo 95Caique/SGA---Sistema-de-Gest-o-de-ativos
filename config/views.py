@@ -1,4 +1,12 @@
+from decimal import Decimal
+
+from django.db.models import Count, Sum
 from django.shortcuts import redirect, render
+
+from ativos.models import Ativo
+from clientes.models import Cliente
+from locacoes.models import Locacao
+from rastreamento.models import Rastreador
 
 
 NAV_ITEMS = [
@@ -13,46 +21,6 @@ NAV_ITEMS = [
     {"label": "Rastreamento", "url_name": "rastreamento", "icon": "R"},
     {"label": "Alertas", "url_name": "alertas", "icon": "!"},
     {"label": "Relatorios", "url_name": "relatorios", "icon": "G"},
-]
-
-
-DASHBOARD_METRICS = [
-    {"label": "Faturamento", "value": "R$ 128.690,00", "trend": "+18,5% vs mes anterior", "tone": "success"},
-    {"label": "Locacoes ativas", "value": "87", "trend": "+12% vs mes anterior", "tone": "success"},
-    {"label": "Equipamentos", "value": "248", "trend": "Transporte 15", "tone": "neutral"},
-    {"label": "Clientes ativos", "value": "56", "trend": "+8% vs mes anterior", "tone": "warning"},
-]
-
-
-FINANCIAL_SUMMARY = [
-    {"label": "Receitas", "value": "R$ 128.690,00", "tone": "neutral"},
-    {"label": "Despesas", "value": "R$ 34.560,00", "tone": "neutral"},
-    {"label": "A receber", "value": "R$ 45.230,00", "tone": "warning"},
-    {"label": "Atrasados", "value": "R$ 12.450,00", "tone": "danger"},
-]
-
-
-RENTAL_STATUS = [
-    {"label": "Ativas", "value": "87", "percent": "65%", "color": "purple"},
-    {"label": "Agendadas", "value": "32", "percent": "24%", "color": "green"},
-    {"label": "Finalizadas", "value": "12", "percent": "9%", "color": "yellow"},
-    {"label": "Canceladas", "value": "2", "percent": "2%", "color": "red"},
-]
-
-
-ALERT_CARDS = [
-    {"label": "Equip. em manutencao", "value": "6", "action": "Ver detalhes", "tone": "purple"},
-    {"label": "Equip. sem comunicacao", "value": "3", "action": "Ver no mapa", "tone": "danger"},
-    {"label": "Contratos vencendo", "value": "9", "action": "Ver contratos", "tone": "warning"},
-    {"label": "Devolucoes hoje", "value": "4", "action": "Ver agenda", "tone": "success"},
-]
-
-
-RECENT_RENTALS = [
-    {"code": "LOC-0058", "client": "Construtora Forte", "period": "10/05/2025 - 17/05/2025", "items": "5 itens", "amount": "R$ 2.450,00", "status": "Ativa"},
-    {"code": "LOC-0057", "client": "Alpha Eventos", "period": "08/05/2025 - 11/05/2025", "items": "12 itens", "amount": "R$ 8.750,00", "status": "Ativa"},
-    {"code": "LOC-0056", "client": "TV Serra Dourada", "period": "08/05/2025 - 15/05/2025", "items": "7 itens", "amount": "R$ 5.300,00", "status": "Ativa"},
-    {"code": "LOC-0055", "client": "Agencia Impacto", "period": "06/05/2025 - 10/05/2025", "items": "3 itens", "amount": "R$ 1.250,00", "status": "Ativa"},
 ]
 
 
@@ -73,7 +41,7 @@ MODULES = {
         "subtitle": "Pedidos de locacao, reservas, contratos e devolucoes.",
         "primary_action": "Nova locacao",
         "columns": ["Locacao", "Cliente", "Periodo", "Equipamentos", "Valor total", "Status"],
-        "rows": [[item["code"], item["client"], item["period"], item["items"], item["amount"], item["status"]] for item in RECENT_RENTALS],
+        "rows": [],
     },
     "equipamentos": {
         "title": "Equipamentos",
@@ -176,20 +144,83 @@ def home(request):
     return redirect("dashboard")
 
 
+def money_br(value):
+    value = value or Decimal("0")
+    formatted = f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return f"R$ {formatted}"
+
+
+def percent(value, total):
+    if not total:
+        return "0%"
+    return f"{round((value / total) * 100)}%"
+
+
+def dashboard_context():
+    total_locacoes = Locacao.objects.count()
+    locacoes_ativas = Locacao.objects.filter(status=Locacao.Status.ATIVA).count()
+    locacoes_agendadas = Locacao.objects.filter(status=Locacao.Status.AGENDADA).count()
+    locacoes_finalizadas = Locacao.objects.filter(status=Locacao.Status.FINALIZADA).count()
+    locacoes_canceladas = Locacao.objects.filter(status=Locacao.Status.CANCELADA).count()
+    faturamento_total = Locacao.objects.aggregate(total=Sum("valor_total"))["total"] or Decimal("0")
+    valor_em_aberto = Locacao.objects.filter(status__in=[Locacao.Status.ORCAMENTO, Locacao.Status.AGENDADA]).aggregate(
+        total=Sum("valor_total")
+    )["total"] or Decimal("0")
+    equipamentos_total = Ativo.objects.count()
+    equipamentos_manutencao = Ativo.objects.filter(status=Ativo.Status.MANUTENCAO).count()
+    clientes_ativos = Cliente.objects.filter(status=Cliente.Status.ATIVO).count()
+    rastreadores_sem_comunicacao = Rastreador.objects.filter(status=Rastreador.Status.SEM_COMUNICACAO).count()
+
+    recent_rentals = []
+    for locacao in Locacao.objects.select_related("cliente").annotate(total_itens=Count("itens")).order_by("-data_inicio")[:5]:
+        recent_rentals.append(
+            {
+                "code": locacao.codigo,
+                "client": locacao.cliente.nome,
+                "period": f"{locacao.data_inicio:%d/%m/%Y} - {locacao.data_fim:%d/%m/%Y}",
+                "items": f"{locacao.total_itens} item{'s' if locacao.total_itens != 1 else ''}",
+                "amount": money_br(locacao.valor_total),
+                "status": locacao.get_status_display(),
+                "status_key": locacao.status,
+            }
+        )
+
+    return {
+        "metrics": [
+            {"label": "Faturamento", "value": money_br(faturamento_total), "trend": "Total registrado em locacoes", "tone": "success"},
+            {"label": "Locacoes ativas", "value": locacoes_ativas, "trend": f"{total_locacoes} locacoes cadastradas", "tone": "success"},
+            {"label": "Equipamentos", "value": equipamentos_total, "trend": f"{equipamentos_manutencao} em manutencao", "tone": "neutral"},
+            {"label": "Clientes ativos", "value": clientes_ativos, "trend": "Clientes aptos para locacao", "tone": "warning"},
+        ],
+        "financial_summary": [
+            {"label": "Receitas", "value": money_br(faturamento_total), "tone": "neutral"},
+            {"label": "Despesas", "value": money_br(Decimal("0")), "tone": "neutral"},
+            {"label": "A receber", "value": money_br(valor_em_aberto), "tone": "warning"},
+            {"label": "Atrasados", "value": money_br(Decimal("0")), "tone": "danger"},
+        ],
+        "rental_status": [
+            {"label": "Ativas", "value": locacoes_ativas, "percent": percent(locacoes_ativas, total_locacoes), "color": "purple"},
+            {"label": "Agendadas", "value": locacoes_agendadas, "percent": percent(locacoes_agendadas, total_locacoes), "color": "green"},
+            {"label": "Finalizadas", "value": locacoes_finalizadas, "percent": percent(locacoes_finalizadas, total_locacoes), "color": "yellow"},
+            {"label": "Canceladas", "value": locacoes_canceladas, "percent": percent(locacoes_canceladas, total_locacoes), "color": "red"},
+        ],
+        "alert_cards": [
+            {"label": "Equip. em manutencao", "value": equipamentos_manutencao, "action": "Ver detalhes", "tone": "purple"},
+            {"label": "Equip. sem comunicacao", "value": rastreadores_sem_comunicacao, "action": "Ver no mapa", "tone": "danger"},
+            {"label": "Contratos vencendo", "value": 0, "action": "Ver contratos", "tone": "warning"},
+            {"label": "Devolucoes hoje", "value": 0, "action": "Ver agenda", "tone": "success"},
+        ],
+        "recent_rentals": recent_rentals,
+    }
+
+
 def dashboard(request):
+    context = dashboard_context()
+    context["page_title"] = "Dashboard"
     return render(
         request,
         "pages/dashboard.html",
-        with_layout(
-            {
-                "page_title": "Dashboard",
-                "metrics": DASHBOARD_METRICS,
-                "financial_summary": FINANCIAL_SUMMARY,
-                "rental_status": RENTAL_STATUS,
-                "alert_cards": ALERT_CARDS,
-                "recent_rentals": RECENT_RENTALS,
-            }
-        ),
+        with_layout(context),
     )
 
 

@@ -114,7 +114,16 @@
                         <td>{{ rental.period }}</td>
                         <td>{{ rental.items }}</td>
                         <td>{{ rental.amount }}</td>
-                        <td><span class="badge badge-success">{{ rental.status }}</span></td>
+                        <td><span class="badge badge-status-{{ rental.status_key }}">{{ rental.status }}</span></td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state compact">
+                                <strong>Nenhuma locacao cadastrada</strong>
+                                <p>As locacoes recentes aparecerao aqui conforme forem registradas no sistema.</p>
+                            </div>
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
