@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>Equipamentos</h1>
+        <p>Cadastro e disponibilidade dos ativos locaveis.</p>
+    </div>
+    <form class="toolbar" method="get">
+        <div class="module-search">
+            <input type="search" name="q" value="{{ query }}" placeholder="Buscar equipamentos..." aria-label="Buscar equipamentos">
+        </div>
+        <button class="button button-muted" type="submit">Filtros</button>
+        <button class="button button-primary" type="button">+ Novo equipamento</button>
+    </form>
+</div>
+
+<section class="panel">
+    <div class="tabs">
+        <a class="is-active" href="#">Todos <span>{{ status_counts.todos }}</span></a>
+        <a href="#">Disponiveis <span>{{ status_counts.disponiveis }}</span></a>
+        <a href="#">Locados <span>{{ status_counts.locados }}</span></a>
+        <a href="#">Manutencao <span>{{ status_counts.manutencao }}</span></a>
+        <a href="#">Inativos <span>{{ status_counts.inativos }}</span></a>
+    </div>
+
+    {% if ativos %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Codigo</th>
+                        <th>Equipamento</th>
+                        <th>Categoria</th>
+                        <th>Status</th>
+                        <th>Rastreio</th>
+                        <th>Localizacao</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ativo in ativos %}
+                        <tr>
+                            <td><a href="#">{{ ativo.codigo }}</a></td>
+                            <td>
+                                <strong>{{ ativo.nome }}</strong>
+                                {% if ativo.patrimonio %}
+                                    <small class="table-subtext">Patrimonio {{ ativo.patrimonio }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ ativo.categoria.nome }}</td>
+                            <td>
+                                <span class="badge badge-status-{{ ativo.status }}">{{ ativo.get_status_display }}</span>
+                            </td>
+                            <td>
+                                {% if ativo.permite_rastreamento %}
+                                    <span class="badge badge-tracking">Simulado</span>
+                                {% else %}
+                                    <span class="muted-text">Nao</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ ativo.localizacao_atual|default:"Deposito" }}</td>
+                            <td class="actions-cell">...</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="table-footer">
+            <span>Exibindo {{ ativos|length }} equipamento{{ ativos|length|pluralize }}</span>
+            <div class="pagination">
+                <span class="is-current">1</span>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <strong>Nenhum equipamento cadastrado</strong>
+            <p>Quando os ativos forem cadastrados, eles aparecem aqui com status, categoria, localizacao e rastreio simulado.</p>
+            <button class="button button-primary" type="button">+ Novo equipamento</button>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}
