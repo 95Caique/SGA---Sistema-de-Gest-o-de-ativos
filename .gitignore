@@ -6,4 +6,7 @@ docs/
 PROJECT_CONTEXT.md
 .venv/
 venv/
+__pycache__/
+*.py[cod]
+db.sqlite3
 features.md
