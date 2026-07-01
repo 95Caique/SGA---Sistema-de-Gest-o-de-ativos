@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path
 
 from ativos.views import equipamentos_list
+from clientes.views import clientes_list
 
 from . import views
 
@@ -27,7 +28,7 @@ urlpatterns = [
     path('agenda/', views.module_page, {'module': 'agenda'}, name='agenda'),
     path('locacoes/', views.module_page, {'module': 'locacoes'}, name='locacoes'),
     path('equipamentos/', equipamentos_list, name='equipamentos'),
-    path('clientes/', views.module_page, {'module': 'clientes'}, name='clientes'),
+    path('clientes/', clientes_list, name='clientes'),
     path('contratos/', views.module_page, {'module': 'contratos'}, name='contratos'),
     path('financeiro/', views.module_page, {'module': 'financeiro'}, name='financeiro'),
     path('manutencao/', views.module_page, {'module': 'manutencao'}, name='manutencao'),

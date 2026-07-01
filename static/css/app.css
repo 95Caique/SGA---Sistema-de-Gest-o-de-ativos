@@ -610,6 +610,16 @@ td strong {
     color: #64748b;
 }
 
+.badge-status-ativo {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.badge-status-bloqueado {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
 .muted-text {
     color: #94a3b8;
     font-weight: 800;

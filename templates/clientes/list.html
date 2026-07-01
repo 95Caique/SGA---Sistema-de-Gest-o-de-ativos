@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>Clientes</h1>
+        <p>Cadastro, contatos e historico comercial.</p>
+    </div>
+    <form class="toolbar" method="get">
+        <div class="module-search">
+            <input type="search" name="q" value="{{ query }}" placeholder="Buscar clientes..." aria-label="Buscar clientes">
+        </div>
+        <button class="button button-muted" type="submit">Filtros</button>
+        <button class="button button-primary" type="button">+ Novo cliente</button>
+    </form>
+</div>
+
+<section class="panel">
+    <div class="tabs">
+        <a class="is-active" href="#">Todos <span>{{ status_counts.todos }}</span></a>
+        <a href="#">Ativos <span>{{ status_counts.ativos }}</span></a>
+        <a href="#">Inativos <span>{{ status_counts.inativos }}</span></a>
+        <a href="#">Bloqueados <span>{{ status_counts.bloqueados }}</span></a>
+    </div>
+
+    {% if clientes %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Documento</th>
+                        <th>Contato</th>
+                        <th>Responsavel</th>
+                        <th>Locacoes</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
+                        <tr>
+                            <td>
+                                <a href="#">{{ cliente.nome }}</a>
+                                <small class="table-subtext">{{ cliente.get_tipo_pessoa_display }}</small>
+                            </td>
+                            <td>{{ cliente.documento }}</td>
+                            <td>
+                                <strong>{{ cliente.telefone|default:"Sem telefone" }}</strong>
+                                {% if cliente.email %}
+                                    <small class="table-subtext">{{ cliente.email }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ cliente.responsavel|default:"-" }}</td>
+                            <td>{{ cliente.total_locacoes }}</td>
+                            <td><span class="badge badge-status-{{ cliente.status }}">{{ cliente.get_status_display }}</span></td>
+                            <td class="actions-cell">...</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="table-footer">
+            <span>Exibindo {{ clientes|length }} cliente{{ clientes|length|pluralize }}</span>
+            <div class="pagination">
+                <span class="is-current">1</span>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <strong>Nenhum cliente cadastrado</strong>
+            <p>Cadastre clientes para acompanhar contratos, locacoes, contatos, enderecos de entrega e historico financeiro.</p>
+            <button class="button button-primary" type="button">+ Novo cliente</button>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}
