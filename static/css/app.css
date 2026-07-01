@@ -203,6 +203,41 @@ select {
     color: var(--text);
 }
 
+.ui-input,
+.ui-select,
+.content input:not([type="checkbox"]):not([type="radio"]),
+.content select,
+.content textarea {
+    display: block;
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--text);
+    font-weight: 650;
+    line-height: 1.4;
+    padding: 9px 12px;
+    outline: 0;
+}
+
+.search-form .ui-input,
+.module-search .ui-input {
+    min-height: 36px;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+}
+
+.ui-input:focus,
+.ui-select:focus,
+.content input:not([type="checkbox"]):not([type="radio"]):focus,
+.content select:focus,
+.content textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 47, 240, 0.12);
+}
+
 .search-form kbd {
     border: 1px solid var(--panel-border);
     border-radius: 5px;
@@ -227,6 +262,27 @@ select {
 
 .content {
     padding: 28px 32px 40px;
+}
+
+.messages {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.message {
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: #ffffff;
+    color: #334155;
+    font-weight: 750;
+    padding: 12px 14px;
+}
+
+.message-success {
+    border-color: #bbf7d0;
+    background: var(--success-soft);
+    color: var(--success);
 }
 
 .page-heading {
@@ -680,6 +736,124 @@ td strong {
     line-height: 1.6;
 }
 
+.form-panel {
+    max-width: 980px;
+    padding: 24px;
+}
+
+.form-grid,
+.asset-form .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.form-field,
+.asset-form .form-field {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+}
+
+.form-field label,
+.asset-form .form-field label {
+    color: #334155;
+    font-size: 13px;
+    font-weight: 850;
+}
+
+.form-control,
+.asset-form .form-control,
+.form-field input:not([type="checkbox"]),
+.form-field select,
+.form-field textarea {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--text);
+    font-weight: 650;
+    padding: 10px 12px;
+    outline: 0;
+}
+
+.form-control:focus,
+.asset-form .form-control:focus,
+.form-field input:not([type="checkbox"]):focus,
+.form-field select:focus,
+.form-field textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 47, 240, 0.12);
+}
+
+.form-field small {
+    color: #64748b;
+    font-weight: 700;
+}
+
+.form-field .field-error,
+.form-errors span {
+    color: var(--danger);
+}
+
+.form-errors {
+    border: 1px solid #fecdd3;
+    border-radius: 8px;
+    background: var(--danger-soft);
+    font-weight: 750;
+    margin-bottom: 18px;
+    padding: 12px 14px;
+}
+
+.span-2,
+.asset-form .span-2 {
+    grid-column: span 2;
+}
+
+.checkbox-field {
+    align-content: start;
+}
+
+.checkbox-control,
+.asset-form .checkbox-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 0 12px;
+}
+
+.checkbox-control label {
+    font-weight: 800;
+}
+
+.form-checkbox,
+.checkbox-field input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+}
+
+.form-field textarea.form-control,
+.form-field textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    border-top: 1px solid var(--panel-border);
+    margin-top: 22px;
+    padding-top: 18px;
+}
+
 .empty-state.compact {
     padding: 32px 12px;
 }
@@ -948,8 +1122,13 @@ td strong {
     .dashboard-grid,
     .status-content,
     .tracking-grid,
-    .tracking-detail {
+    .tracking-detail,
+    .form-grid {
         grid-template-columns: 1fr;
+    }
+
+    .span-2 {
+        grid-column: span 1;
     }
 
     .topbar-actions {

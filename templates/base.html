@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ page_title }} | Loca360</title>
-    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260701-inputs">
 </head>
 <body>
     <aside class="sidebar">
@@ -39,7 +39,7 @@
         <header class="topbar">
             <button class="icon-button" type="button" aria-label="Menu">=</button>
             <form class="search-form" role="search">
-                <input type="search" placeholder="Buscar..." aria-label="Buscar">
+                <input class="ui-input" type="search" placeholder="Buscar..." aria-label="Buscar">
                 <kbd>Ctrl K</kbd>
             </form>
             <div class="topbar-actions">
@@ -53,6 +53,13 @@
         </header>
 
         <section class="content">
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="message message-{{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
             {% block content %}{% endblock %}
         </section>
     </main>

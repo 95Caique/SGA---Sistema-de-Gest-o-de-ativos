@@ -1,8 +1,10 @@
 from django.db.models import Q
-from django.shortcuts import render
+from django.contrib import messages
+from django.shortcuts import redirect, render
 
 from config.views import with_layout
 
+from .forms import AtivoForm
 from .models import Ativo
 
 
@@ -36,6 +38,28 @@ def equipamentos_list(request):
                 "ativos": ativos,
                 "query": query,
                 "status_counts": status_counts,
+            }
+        ),
+    )
+
+
+def equipamento_create(request):
+    if request.method == "POST":
+        form = AtivoForm(request.POST)
+        if form.is_valid():
+            ativo = form.save()
+            messages.success(request, f"Equipamento {ativo.codigo} cadastrado com sucesso.")
+            return redirect("equipamentos")
+    else:
+        form = AtivoForm()
+
+    return render(
+        request,
+        "ativos/form.html",
+        with_layout(
+            {
+                "page_title": "Novo equipamento",
+                "form": form,
             }
         ),
     )

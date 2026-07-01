@@ -8,10 +8,10 @@
     </div>
     <form class="toolbar" method="get">
         <div class="module-search">
-            <input type="search" name="q" value="{{ query }}" placeholder="Buscar equipamentos..." aria-label="Buscar equipamentos">
+            <input class="ui-input" type="search" name="q" value="{{ query }}" placeholder="Buscar equipamentos..." aria-label="Buscar equipamentos">
         </div>
         <button class="button button-muted" type="submit">Filtros</button>
-        <button class="button button-primary" type="button">+ Novo equipamento</button>
+        <a class="button button-primary" href="{% url 'equipamento_create' %}">+ Novo equipamento</a>
     </form>
 </div>
 
@@ -76,7 +76,7 @@
         <div class="empty-state">
             <strong>Nenhum equipamento cadastrado</strong>
             <p>Quando os ativos forem cadastrados, eles aparecem aqui com status, categoria, localizacao e rastreio simulado.</p>
-            <button class="button button-primary" type="button">+ Novo equipamento</button>
+            <a class="button button-primary" href="{% url 'equipamento_create' %}">+ Novo equipamento</a>
         </div>
     {% endif %}
 </section>
