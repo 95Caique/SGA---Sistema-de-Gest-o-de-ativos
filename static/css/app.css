@@ -4,8 +4,8 @@
     --panel-border: #e7eaf2;
     --text: #121827;
     --muted: #6b7280;
-    --sidebar: #0e1830;
-    --sidebar-soft: #172447;
+    --sidebar: #0F4D0F;
+    --sidebar-soft: #176317;
     --primary: #4f2ff0;
     --primary-soft: #ece9ff;
     --success: #16a34a;
@@ -49,8 +49,8 @@ select {
     display: flex;
     width: 248px;
     flex-direction: column;
-    background: linear-gradient(180deg, #111d38 0%, #0b1428 100%);
-    color: #dbe4ff;
+    background: linear-gradient(180deg, #0F4D0F 0%, #0a350a 100%);
+    color: #dff3df;
     padding: 22px 14px;
 }
 
@@ -72,7 +72,7 @@ select {
 .brand small,
 .sidebar-footer small {
     display: block;
-    color: #8fa1c7;
+    color: #b8dcb8;
     font-size: 11px;
     font-weight: 700;
     line-height: 1.4;
@@ -82,9 +82,9 @@ select {
     width: 44px;
     height: 44px;
     border: 6px solid #ffbf1f;
-    border-right-color: #6d28d9;
+    border-right-color: #ffffff;
     border-radius: 50%;
-    box-shadow: inset 0 0 0 6px #172447;
+    box-shadow: inset 0 0 0 6px #176317;
 }
 
 .nav-list {
@@ -98,7 +98,7 @@ select {
     gap: 12px;
     min-height: 44px;
     border-radius: 8px;
-    color: #c3cde5;
+    color: #d0ead0;
     font-weight: 650;
     padding: 0 12px;
 }
