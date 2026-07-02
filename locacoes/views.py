@@ -116,10 +116,27 @@ def locacao_ativar(request, pk):
         messages.error(request, "Adicione pelo menos um equipamento antes de ativar a locacao.")
         return redirect("locacao_detail", pk=locacao.pk)
 
-    locacao.status = Locacao.Status.ATIVA
-    locacao.save(update_fields=["status", "atualizado_em"])
-    locacao.recalcular_totais()
-    locacao.sincronizar_status_ativos()
+    if locacao.status in [Locacao.Status.ATIVA, Locacao.Status.FINALIZADA, Locacao.Status.CANCELADA]:
+        messages.error(request, "Esta locacao nao pode ser ativada neste status.")
+        return redirect("locacao_detail", pk=locacao.pk)
+
+    with transaction.atomic():
+        locacao = get_object_or_404(Locacao.objects.select_for_update(), pk=pk)
+        ativo_ids = locacao.itens.values_list("ativo_id", flat=True)
+        ativos_indisponiveis = Ativo.objects.select_for_update().filter(pk__in=ativo_ids).exclude(
+            status=Ativo.Status.DISPONIVEL
+        )
+
+        if ativos_indisponiveis.exists():
+            codigos = ", ".join(ativos_indisponiveis.values_list("codigo", flat=True))
+            messages.error(request, f"Nao foi possivel ativar. Equipamentos indisponiveis: {codigos}.")
+            return redirect("locacao_detail", pk=locacao.pk)
+
+        locacao.status = Locacao.Status.ATIVA
+        locacao.save(update_fields=["status", "atualizado_em"])
+        locacao.recalcular_totais()
+        locacao.sincronizar_status_ativos()
+
     messages.success(request, f"Locacao {locacao.codigo} ativada com sucesso.")
     return redirect("locacao_detail", pk=locacao.pk)
 

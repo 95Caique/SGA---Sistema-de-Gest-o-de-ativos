@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.urls import reverse
 
 from ativos.models import Ativo, CategoriaAtivo
 from clientes.models import Cliente
@@ -144,3 +145,20 @@ class LocacaoOperacaoTests(TestCase):
                 valor_diaria=Decimal("100.00"),
                 valor_total=Decimal("400.00"),
             )
+
+    def test_ativacao_rejeita_locacao_com_ativo_indisponivel(self):
+        ItemLocacao.objects.create(
+            locacao=self.locacao,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("400.00"),
+        )
+        self.ativo.status = Ativo.Status.LOCADO
+        self.ativo.save()
+
+        response = self.client.post(reverse("locacao_ativar", kwargs={"pk": self.locacao.pk}))
+
+        self.locacao.refresh_from_db()
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
+        self.assertEqual(self.locacao.status, Locacao.Status.ORCAMENTO)
