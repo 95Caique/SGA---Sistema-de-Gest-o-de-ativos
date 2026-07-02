@@ -311,6 +311,11 @@ select {
     gap: 10px;
 }
 
+.inline-form {
+    display: inline-flex;
+    margin: 0;
+}
+
 .period-select {
     display: flex;
     align-items: center;

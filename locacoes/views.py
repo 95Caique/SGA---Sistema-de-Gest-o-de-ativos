@@ -93,3 +93,21 @@ def locacao_detail(request, pk):
             }
         ),
     )
+
+
+def locacao_ativar(request, pk):
+    locacao = get_object_or_404(Locacao, pk=pk)
+
+    if request.method != "POST":
+        return redirect("locacao_detail", pk=locacao.pk)
+
+    if not locacao.itens.exists():
+        messages.error(request, "Adicione pelo menos um equipamento antes de ativar a locacao.")
+        return redirect("locacao_detail", pk=locacao.pk)
+
+    locacao.status = Locacao.Status.ATIVA
+    locacao.save(update_fields=["status", "atualizado_em"])
+    locacao.recalcular_totais()
+    locacao.sincronizar_status_ativos()
+    messages.success(request, f"Locacao {locacao.codigo} ativada com sucesso.")
+    return redirect("locacao_detail", pk=locacao.pk)
