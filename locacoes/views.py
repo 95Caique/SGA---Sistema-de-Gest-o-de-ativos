@@ -74,6 +74,8 @@ def locacao_detail(request, pk):
             item = form.save(commit=False)
             item.locacao = locacao
             item.save()
+            locacao.recalcular_totais()
+            locacao.sincronizar_status_ativos()
             messages.success(request, f"Ativo {item.ativo.codigo} adicionado a locacao.")
             return redirect("locacao_detail", pk=locacao.pk)
     else:

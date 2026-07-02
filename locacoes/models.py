@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Sum
 
 
 class Locacao(models.Model):
@@ -36,6 +37,23 @@ class Locacao(models.Model):
 
     def __str__(self):
         return f"{self.codigo} - {self.cliente}"
+
+    def recalcular_totais(self, salvar=True):
+        total_itens = self.itens.aggregate(total=Sum("valor_total"))["total"] or 0
+        self.valor_equipamentos = total_itens
+        self.valor_total = self.valor_equipamentos + self.valor_servicos - self.valor_desconto
+
+        if salvar:
+            self.save(update_fields=["valor_equipamentos", "valor_total", "atualizado_em"])
+
+    def sincronizar_status_ativos(self):
+        if self.status != self.Status.ATIVA:
+            return
+
+        from ativos.models import Ativo
+
+        ativos = Ativo.objects.filter(itens_locacao__locacao=self).exclude(status=Ativo.Status.MANUTENCAO)
+        ativos.update(status=Ativo.Status.LOCADO)
 
 
 class ItemLocacao(models.Model):
