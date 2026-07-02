@@ -1,6 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from ativos.models import Ativo, CategoriaAtivo
@@ -116,3 +117,30 @@ class LocacaoOperacaoTests(TestCase):
 
         self.assertFalse(form.is_valid())
         self.assertIn("ativo", form.errors)
+
+    def test_form_item_locacao_calcula_total_quando_nao_informado(self):
+        form = ItemLocacaoForm(
+            data={
+                "ativo": self.ativo.pk,
+                "quantidade": 3,
+                "valor_diaria": "125.50",
+                "valor_total": "",
+                "observacoes": "",
+            }
+        )
+
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data["valor_total"], Decimal("376.50"))
+
+    def test_model_item_locacao_rejeita_ativo_indisponivel(self):
+        self.ativo.status = Ativo.Status.LOCADO
+        self.ativo.save()
+
+        with self.assertRaises(ValidationError):
+            ItemLocacao.objects.create(
+                locacao=self.locacao,
+                ativo=self.ativo,
+                quantidade=1,
+                valor_diaria=Decimal("100.00"),
+                valor_total=Decimal("400.00"),
+            )

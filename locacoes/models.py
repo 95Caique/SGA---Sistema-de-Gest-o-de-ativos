@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Sum
 
@@ -93,3 +94,18 @@ class ItemLocacao(models.Model):
 
     def __str__(self):
         return f"{self.locacao.codigo} - {self.ativo.codigo}"
+
+    def clean(self):
+        super().clean()
+
+        if not self._state.adding or not self.ativo_id:
+            return
+
+        from ativos.models import Ativo
+
+        if self.ativo.status != Ativo.Status.DISPONIVEL:
+            raise ValidationError({"ativo": "Este ativo nao esta disponivel para locacao."})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)

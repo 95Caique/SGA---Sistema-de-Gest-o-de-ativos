@@ -72,6 +72,7 @@ class ItemLocacaoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["ativo"].queryset = Ativo.objects.filter(status=Ativo.Status.DISPONIVEL)
+        self.fields["valor_total"].required = False
         placeholders = {
             "valor_diaria": "0,00",
             "valor_total": "0,00",
@@ -84,9 +85,23 @@ class ItemLocacaoForm(forms.ModelForm):
                 field.widget.attrs.update({"placeholder": placeholders[field_name]})
 
     def clean_ativo(self):
-        ativo = self.cleaned_data["ativo"]
+        ativo = self.cleaned_data.get("ativo")
+
+        if not ativo:
+            return ativo
 
         if ativo.status != Ativo.Status.DISPONIVEL:
             raise forms.ValidationError("Este ativo nao esta disponivel para locacao.")
 
         return ativo
+
+    def clean(self):
+        cleaned_data = super().clean()
+        quantidade = cleaned_data.get("quantidade")
+        valor_diaria = cleaned_data.get("valor_diaria")
+        valor_total = cleaned_data.get("valor_total")
+
+        if quantidade and valor_diaria and not valor_total:
+            cleaned_data["valor_total"] = quantidade * valor_diaria
+
+        return cleaned_data

@@ -1,7 +1,9 @@
-from django.db.models import Count, Q
 from django.contrib import messages
+from django.db import transaction
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 
+from ativos.models import Ativo
 from config.views import with_layout
 
 from .forms import ItemLocacaoForm, LocacaoForm
@@ -71,11 +73,20 @@ def locacao_detail(request, pk):
     if request.method == "POST":
         form = ItemLocacaoForm(request.POST)
         if form.is_valid():
-            item = form.save(commit=False)
-            item.locacao = locacao
-            item.save()
-            locacao.recalcular_totais()
-            locacao.sincronizar_status_ativos()
+            with transaction.atomic():
+                ativo = Ativo.objects.select_for_update().get(pk=form.cleaned_data["ativo"].pk)
+
+                if ativo.status != Ativo.Status.DISPONIVEL:
+                    messages.error(request, "Este ativo nao esta disponivel para locacao.")
+                    return redirect("locacao_detail", pk=locacao.pk)
+
+                item = form.save(commit=False)
+                item.locacao = locacao
+                item.ativo = ativo
+                item.save()
+                locacao.recalcular_totais()
+                locacao.sincronizar_status_ativos()
+
             messages.success(request, f"Ativo {item.ativo.codigo} adicionado a locacao.")
             return redirect("locacao_detail", pk=locacao.pk)
     else:
