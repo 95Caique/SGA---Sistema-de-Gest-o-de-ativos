@@ -353,6 +353,18 @@ select {
     box-shadow: 0 10px 22px rgba(79, 47, 240, 0.25);
 }
 
+.button-danger {
+    border-color: var(--danger-soft);
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.button-small {
+    min-height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+}
+
 .button-muted {
     border-color: var(--panel-border);
     background: #ffffff;

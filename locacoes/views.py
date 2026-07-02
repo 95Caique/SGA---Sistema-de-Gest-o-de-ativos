@@ -7,7 +7,7 @@ from ativos.models import Ativo
 from config.views import with_layout
 
 from .forms import ItemLocacaoForm, LocacaoForm
-from .models import Locacao
+from .models import ItemLocacao, Locacao
 
 
 def locacoes_list(request):
@@ -69,8 +69,13 @@ def locacao_create(request):
 def locacao_detail(request, pk):
     locacao = get_object_or_404(Locacao.objects.select_related("cliente"), pk=pk)
     itens = locacao.itens.select_related("ativo", "ativo__categoria").order_by("ativo__codigo")
+    can_edit_itens = locacao.status in [Locacao.Status.ORCAMENTO, Locacao.Status.AGENDADA]
 
     if request.method == "POST":
+        if not can_edit_itens:
+            messages.error(request, "Nao e possivel alterar itens nesta etapa da locacao.")
+            return redirect("locacao_detail", pk=locacao.pk)
+
         form = ItemLocacaoForm(request.POST)
         if form.is_valid():
             with transaction.atomic():
@@ -101,9 +106,28 @@ def locacao_detail(request, pk):
                 "locacao": locacao,
                 "itens": itens,
                 "form": form,
+                "can_edit_itens": can_edit_itens,
             }
         ),
     )
+
+
+def locacao_item_remove(request, pk, item_pk):
+    locacao = get_object_or_404(Locacao, pk=pk)
+
+    if request.method != "POST":
+        return redirect("locacao_detail", pk=locacao.pk)
+
+    if locacao.status not in [Locacao.Status.ORCAMENTO, Locacao.Status.AGENDADA]:
+        messages.error(request, "Nao e possivel remover itens nesta etapa da locacao.")
+        return redirect("locacao_detail", pk=locacao.pk)
+
+    item = get_object_or_404(ItemLocacao, pk=item_pk, locacao=locacao)
+    codigo_ativo = item.ativo.codigo
+    item.delete()
+    locacao.recalcular_totais()
+    messages.success(request, f"Ativo {codigo_ativo} removido da locacao.")
+    return redirect("locacao_detail", pk=locacao.pk)
 
 
 def locacao_ativar(request, pk):

@@ -64,6 +64,9 @@
                             <th>Diaria</th>
                             <th>Total</th>
                             <th>Rastreio</th>
+                            {% if can_edit_itens %}
+                                <th></th>
+                            {% endif %}
                         </tr>
                     </thead>
                     <tbody>
@@ -86,6 +89,14 @@
                                         <span class="muted-text">Nao</span>
                                     {% endif %}
                                 </td>
+                                {% if can_edit_itens %}
+                                    <td class="table-actions">
+                                        <form method="post" action="{% url 'locacao_item_remove' locacao.pk item.pk %}" class="inline-form">
+                                            {% csrf_token %}
+                                            <button class="button button-danger button-small" type="submit">Remover</button>
+                                        </form>
+                                    </td>
+                                {% endif %}
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -99,35 +110,47 @@
         {% endif %}
     </article>
 
-    <form class="panel form-panel" method="post" data-item-locacao-form novalidate>
-        {% csrf_token %}
-        <div class="panel-title">
-            <h2>Adicionar equipamento</h2>
-        </div>
-
-        {% if form.non_field_errors %}
-            <div class="form-errors">
-                {% for error in form.non_field_errors %}
-                    <span>{{ error }}</span>
-                {% endfor %}
+    {% if can_edit_itens %}
+        <form class="panel form-panel" method="post" data-item-locacao-form novalidate>
+            {% csrf_token %}
+            <div class="panel-title">
+                <h2>Adicionar equipamento</h2>
             </div>
-        {% endif %}
 
-        <div class="form-grid single-column">
-            {% for field in form %}
-                <div class="form-field">
-                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                    {{ field }}
-                    {% for error in field.errors %}
-                        <small class="field-error">{{ error }}</small>
+            {% if form.non_field_errors %}
+                <div class="form-errors">
+                    {% for error in form.non_field_errors %}
+                        <span>{{ error }}</span>
                     {% endfor %}
                 </div>
-            {% endfor %}
-        </div>
+            {% endif %}
 
-        <div class="form-actions">
-            <button class="button button-primary" type="submit">Adicionar item</button>
-        </div>
-    </form>
+            <div class="form-grid single-column">
+                {% for field in form %}
+                    <div class="form-field">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% for error in field.errors %}
+                            <small class="field-error">{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="form-actions">
+                <button class="button button-primary" type="submit">Adicionar item</button>
+            </div>
+        </form>
+    {% else %}
+        <aside class="panel">
+            <div class="panel-title">
+                <h2>Itens bloqueados</h2>
+            </div>
+            <div class="empty-state compact">
+                <strong>Locacao em andamento ou encerrada</strong>
+                <p>Os equipamentos desta locacao nao podem ser alterados nesta etapa.</p>
+            </div>
+        </aside>
+    {% endif %}
 </section>
 {% endblock %}

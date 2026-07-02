@@ -162,3 +162,41 @@ class LocacaoOperacaoTests(TestCase):
         self.locacao.refresh_from_db()
         self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
         self.assertEqual(self.locacao.status, Locacao.Status.ORCAMENTO)
+
+    def test_remove_item_da_locacao_e_recalcula_totais(self):
+        item = ItemLocacao.objects.create(
+            locacao=self.locacao,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("400.00"),
+        )
+        self.locacao.recalcular_totais()
+
+        response = self.client.post(
+            reverse("locacao_item_remove", kwargs={"pk": self.locacao.pk, "item_pk": item.pk})
+        )
+
+        self.locacao.refresh_from_db()
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
+        self.assertFalse(ItemLocacao.objects.filter(pk=item.pk).exists())
+        self.assertEqual(self.locacao.valor_equipamentos, Decimal("0.00"))
+        self.assertEqual(self.locacao.valor_total, Decimal("40.00"))
+
+    def test_remove_item_bloqueia_locacao_ativa(self):
+        item = ItemLocacao.objects.create(
+            locacao=self.locacao,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("400.00"),
+        )
+        self.locacao.status = Locacao.Status.ATIVA
+        self.locacao.save()
+
+        response = self.client.post(
+            reverse("locacao_item_remove", kwargs={"pk": self.locacao.pk, "item_pk": item.pk})
+        )
+
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
+        self.assertTrue(ItemLocacao.objects.filter(pk=item.pk).exists())
