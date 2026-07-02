@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Locacao
+from .models import ItemLocacao, Locacao
 
 
 class LocacaoForm(forms.ModelForm):
@@ -51,3 +51,31 @@ class LocacaoForm(forms.ModelForm):
             raise forms.ValidationError("A data final nao pode ser anterior a data inicial.")
 
         return cleaned_data
+
+
+class ItemLocacaoForm(forms.ModelForm):
+    class Meta:
+        model = ItemLocacao
+        fields = [
+            "ativo",
+            "quantidade",
+            "valor_diaria",
+            "valor_total",
+            "observacoes",
+        ]
+        widgets = {
+            "observacoes": forms.TextInput(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        placeholders = {
+            "valor_diaria": "0,00",
+            "valor_total": "0,00",
+            "observacoes": "Observacao opcional",
+        }
+
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({"class": "form-control"})
+            if field_name in placeholders:
+                field.widget.attrs.update({"placeholder": placeholders[field_name]})

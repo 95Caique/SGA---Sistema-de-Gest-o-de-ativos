@@ -748,6 +748,10 @@ td strong {
     gap: 18px;
 }
 
+.form-grid.single-column {
+    grid-template-columns: 1fr;
+}
+
 .form-field,
 .asset-form .form-field {
     display: grid;

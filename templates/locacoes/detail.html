@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>{{ locacao.codigo }}</h1>
+        <p>{{ locacao.cliente.nome }} | {{ locacao.data_inicio|date:"d/m/Y" }} - {{ locacao.data_fim|date:"d/m/Y" }}</p>
+    </div>
+    <div class="toolbar">
+        <a class="button button-muted" href="{% url 'locacoes' %}">Voltar</a>
+        <a class="button button-primary" href="{% url 'locacao_create' %}">+ Nova locacao</a>
+    </div>
+</div>
+
+<section class="metric-grid">
+    <article class="metric-card">
+        <span>Status</span>
+        <strong>{{ locacao.get_status_display }}</strong>
+        <small class="text-neutral">Situacao atual</small>
+    </article>
+    <article class="metric-card">
+        <span>Equipamentos</span>
+        <strong>{{ itens|length }}</strong>
+        <small class="text-neutral">Itens adicionados</small>
+    </article>
+    <article class="metric-card">
+        <span>Valor total</span>
+        <strong>R$ {{ locacao.valor_total }}</strong>
+        <small class="text-success">Locacao</small>
+    </article>
+    <article class="metric-card">
+        <span>Entrega</span>
+        <strong>{{ locacao.endereco_entrega.cidade|default:"-" }}</strong>
+        <small class="text-neutral">Endereco vinculado</small>
+    </article>
+</section>
+
+<section class="dashboard-grid">
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Equipamentos da locacao</h2>
+        </div>
+
+        {% if itens %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Codigo</th>
+                            <th>Equipamento</th>
+                            <th>Categoria</th>
+                            <th>Quantidade</th>
+                            <th>Diaria</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in itens %}
+                            <tr>
+                                <td><a href="#">{{ item.ativo.codigo }}</a></td>
+                                <td>{{ item.ativo.nome }}</td>
+                                <td>{{ item.ativo.categoria.nome }}</td>
+                                <td>{{ item.quantidade }}</td>
+                                <td>R$ {{ item.valor_diaria }}</td>
+                                <td>R$ {{ item.valor_total }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state compact">
+                <strong>Nenhum equipamento adicionado</strong>
+                <p>Adicione ativos para compor a locacao. Na proxima etapa, isso podera reservar disponibilidade e ativar rastreio simulado.</p>
+            </div>
+        {% endif %}
+    </article>
+
+    <form class="panel form-panel" method="post" novalidate>
+        {% csrf_token %}
+        <div class="panel-title">
+            <h2>Adicionar equipamento</h2>
+        </div>
+
+        {% if form.non_field_errors %}
+            <div class="form-errors">
+                {% for error in form.non_field_errors %}
+                    <span>{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="form-grid single-column">
+            {% for field in form %}
+                <div class="form-field">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <small class="field-error">{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="form-actions">
+            <button class="button button-primary" type="submit">Adicionar item</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

@@ -1,10 +1,10 @@
 from django.db.models import Count, Q
 from django.contrib import messages
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from config.views import with_layout
 
-from .forms import LocacaoForm
+from .forms import ItemLocacaoForm, LocacaoForm
 from .models import Locacao
 
 
@@ -48,7 +48,7 @@ def locacao_create(request):
         if form.is_valid():
             locacao = form.save()
             messages.success(request, f"Locacao {locacao.codigo} cadastrada com sucesso.")
-            return redirect("locacoes")
+            return redirect("locacao_detail", pk=locacao.pk)
     else:
         form = LocacaoForm()
 
@@ -58,6 +58,35 @@ def locacao_create(request):
         with_layout(
             {
                 "page_title": "Nova locacao",
+                "form": form,
+            }
+        ),
+    )
+
+
+def locacao_detail(request, pk):
+    locacao = get_object_or_404(Locacao.objects.select_related("cliente"), pk=pk)
+    itens = locacao.itens.select_related("ativo", "ativo__categoria").order_by("ativo__codigo")
+
+    if request.method == "POST":
+        form = ItemLocacaoForm(request.POST)
+        if form.is_valid():
+            item = form.save(commit=False)
+            item.locacao = locacao
+            item.save()
+            messages.success(request, f"Ativo {item.ativo.codigo} adicionado a locacao.")
+            return redirect("locacao_detail", pk=locacao.pk)
+    else:
+        form = ItemLocacaoForm()
+
+    return render(
+        request,
+        "locacoes/detail.html",
+        with_layout(
+            {
+                "page_title": locacao.codigo,
+                "locacao": locacao,
+                "itens": itens,
                 "form": form,
             }
         ),

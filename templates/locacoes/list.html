@@ -41,7 +41,7 @@
                 <tbody>
                     {% for locacao in locacoes %}
                         <tr>
-                            <td><a href="#">{{ locacao.codigo }}</a></td>
+                            <td><a href="{% url 'locacao_detail' locacao.pk %}">{{ locacao.codigo }}</a></td>
                             <td>
                                 <strong>{{ locacao.cliente.nome }}</strong>
                                 <small class="table-subtext">{{ locacao.cliente.documento }}</small>
