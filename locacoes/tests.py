@@ -7,6 +7,7 @@ from ativos.models import Ativo, CategoriaAtivo
 from clientes.models import Cliente
 from rastreamento.models import Rastreador
 
+from .forms import ItemLocacaoForm
 from .models import ItemLocacao, Locacao
 
 
@@ -85,3 +86,33 @@ class LocacaoOperacaoTests(TestCase):
 
         self.assertEqual(self.ativo.status, Ativo.Status.DISPONIVEL)
         self.assertEqual(rastreador.status, Rastreador.Status.OFFLINE)
+
+    def test_form_item_locacao_lista_apenas_ativos_disponiveis(self):
+        ativo_locado = Ativo.objects.create(
+            codigo="BET-002",
+            nome="Betoneira locada",
+            categoria=self.categoria,
+            status=Ativo.Status.LOCADO,
+        )
+
+        form = ItemLocacaoForm()
+
+        self.assertIn(self.ativo, form.fields["ativo"].queryset)
+        self.assertNotIn(ativo_locado, form.fields["ativo"].queryset)
+
+    def test_form_item_locacao_rejeita_ativo_indisponivel(self):
+        self.ativo.status = Ativo.Status.LOCADO
+        self.ativo.save()
+
+        form = ItemLocacaoForm(
+            data={
+                "ativo": self.ativo.pk,
+                "quantidade": 1,
+                "valor_diaria": "100.00",
+                "valor_total": "400.00",
+                "observacoes": "",
+            }
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("ativo", form.errors)

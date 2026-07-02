@@ -1,5 +1,7 @@
 from django import forms
 
+from ativos.models import Ativo
+
 from .models import ItemLocacao, Locacao
 
 
@@ -69,6 +71,7 @@ class ItemLocacaoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["ativo"].queryset = Ativo.objects.filter(status=Ativo.Status.DISPONIVEL)
         placeholders = {
             "valor_diaria": "0,00",
             "valor_total": "0,00",
@@ -79,3 +82,11 @@ class ItemLocacaoForm(forms.ModelForm):
             field.widget.attrs.update({"class": "form-control"})
             if field_name in placeholders:
                 field.widget.attrs.update({"placeholder": placeholders[field_name]})
+
+    def clean_ativo(self):
+        ativo = self.cleaned_data["ativo"]
+
+        if ativo.status != Ativo.Status.DISPONIVEL:
+            raise forms.ValidationError("Este ativo nao esta disponivel para locacao.")
+
+        return ativo
