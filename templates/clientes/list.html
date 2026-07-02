@@ -11,7 +11,7 @@
             <input class="ui-input" type="search" name="q" value="{{ query }}" placeholder="Buscar clientes..." aria-label="Buscar clientes">
         </div>
         <button class="button button-muted" type="submit">Filtros</button>
-        <button class="button button-primary" type="button">+ Novo cliente</button>
+        <a class="button button-primary" href="{% url 'cliente_create' %}">+ Novo cliente</a>
     </form>
 </div>
 
@@ -70,7 +70,7 @@
         <div class="empty-state">
             <strong>Nenhum cliente cadastrado</strong>
             <p>Cadastre clientes para acompanhar contratos, locacoes, contatos, enderecos de entrega e historico financeiro.</p>
-            <button class="button button-primary" type="button">+ Novo cliente</button>
+            <a class="button button-primary" href="{% url 'cliente_create' %}">+ Novo cliente</a>
         </div>
     {% endif %}
 </section>

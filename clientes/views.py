@@ -1,8 +1,10 @@
 from django.db.models import Count, Q
-from django.shortcuts import render
+from django.contrib import messages
+from django.shortcuts import redirect, render
 
 from config.views import with_layout
 
+from .forms import ClienteForm
 from .models import Cliente
 
 
@@ -38,6 +40,28 @@ def clientes_list(request):
                 "clientes": clientes,
                 "query": query,
                 "status_counts": status_counts,
+            }
+        ),
+    )
+
+
+def cliente_create(request):
+    if request.method == "POST":
+        form = ClienteForm(request.POST)
+        if form.is_valid():
+            cliente = form.save()
+            messages.success(request, f"Cliente {cliente.nome} cadastrado com sucesso.")
+            return redirect("clientes")
+    else:
+        form = ClienteForm()
+
+    return render(
+        request,
+        "clientes/form.html",
+        with_layout(
+            {
+                "page_title": "Novo cliente",
+                "form": form,
             }
         ),
     )
