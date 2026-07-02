@@ -1,8 +1,10 @@
 from django.db.models import Count, Q
-from django.shortcuts import render
+from django.contrib import messages
+from django.shortcuts import redirect, render
 
 from config.views import with_layout
 
+from .forms import LocacaoForm
 from .models import Locacao
 
 
@@ -35,6 +37,28 @@ def locacoes_list(request):
                 "locacoes": locacoes,
                 "query": query,
                 "status_counts": status_counts,
+            }
+        ),
+    )
+
+
+def locacao_create(request):
+    if request.method == "POST":
+        form = LocacaoForm(request.POST)
+        if form.is_valid():
+            locacao = form.save()
+            messages.success(request, f"Locacao {locacao.codigo} cadastrada com sucesso.")
+            return redirect("locacoes")
+    else:
+        form = LocacaoForm()
+
+    return render(
+        request,
+        "locacoes/form.html",
+        with_layout(
+            {
+                "page_title": "Nova locacao",
+                "form": form,
             }
         ),
     )

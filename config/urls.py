@@ -19,7 +19,7 @@ from django.urls import path
 
 from ativos.views import equipamento_create, equipamentos_list
 from clientes.views import cliente_create, clientes_list
-from locacoes.views import locacoes_list
+from locacoes.views import locacao_create, locacoes_list
 from rastreamento.views import rastreamento_mapa
 
 from . import views
@@ -29,6 +29,7 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('agenda/', views.module_page, {'module': 'agenda'}, name='agenda'),
     path('locacoes/', locacoes_list, name='locacoes'),
+    path('locacoes/nova/', locacao_create, name='locacao_create'),
     path('equipamentos/', equipamentos_list, name='equipamentos'),
     path('equipamentos/novo/', equipamento_create, name='equipamento_create'),
     path('clientes/', clientes_list, name='clientes'),

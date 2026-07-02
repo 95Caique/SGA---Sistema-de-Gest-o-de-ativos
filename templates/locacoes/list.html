@@ -11,7 +11,7 @@
             <input class="ui-input" type="search" name="q" value="{{ query }}" placeholder="Buscar locacoes..." aria-label="Buscar locacoes">
         </div>
         <button class="button button-muted" type="submit">Filtros</button>
-        <button class="button button-primary" type="button">+ Nova locacao</button>
+        <a class="button button-primary" href="{% url 'locacao_create' %}">+ Nova locacao</a>
     </form>
 </div>
 
@@ -66,7 +66,7 @@
         <div class="empty-state">
             <strong>Nenhuma locacao cadastrada</strong>
             <p>Crie locacoes para reservar ativos, acompanhar contratos, controlar devolucoes e ativar o rastreio simulado quando aplicavel.</p>
-            <button class="button button-primary" type="button">+ Nova locacao</button>
+            <a class="button button-primary" href="{% url 'locacao_create' %}">+ Nova locacao</a>
         </div>
     {% endif %}
 </section>
