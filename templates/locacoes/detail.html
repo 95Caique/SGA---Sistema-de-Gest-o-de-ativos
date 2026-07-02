@@ -52,6 +52,7 @@
                             <th>Quantidade</th>
                             <th>Diaria</th>
                             <th>Total</th>
+                            <th>Rastreio</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -63,6 +64,17 @@
                                 <td>{{ item.quantidade }}</td>
                                 <td>R$ {{ item.valor_diaria }}</td>
                                 <td>R$ {{ item.valor_total }}</td>
+                                <td>
+                                    {% if item.ativo.permite_rastreamento %}
+                                        {% if item.ativo.rastreador %}
+                                            <span class="badge badge-tracking">Online</span>
+                                        {% else %}
+                                            <span class="badge badge-status-agendada">Simulado</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="muted-text">Nao</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -71,7 +83,7 @@
         {% else %}
             <div class="empty-state compact">
                 <strong>Nenhum equipamento adicionado</strong>
-                <p>Adicione ativos para compor a locacao. Na proxima etapa, isso podera reservar disponibilidade e ativar rastreio simulado.</p>
+                <p>Adicione ativos para compor a locacao. Ativos rastreaveis entram online com rastreio simulado quando a locacao estiver ativa.</p>
             </div>
         {% endif %}
     </article>

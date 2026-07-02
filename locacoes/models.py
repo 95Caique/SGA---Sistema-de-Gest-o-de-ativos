@@ -51,9 +51,20 @@ class Locacao(models.Model):
             return
 
         from ativos.models import Ativo
+        from rastreamento.models import Rastreador
 
         ativos = Ativo.objects.filter(itens_locacao__locacao=self).exclude(status=Ativo.Status.MANUTENCAO)
         ativos.update(status=Ativo.Status.LOCADO)
+
+        for ativo in ativos.filter(permite_rastreamento=True):
+            Rastreador.objects.update_or_create(
+                ativo=ativo,
+                defaults={
+                    "identificador": f"SIM-{ativo.codigo}",
+                    "status": Rastreador.Status.ONLINE,
+                    "usando_dados_simulados": True,
+                },
+            )
 
 
 class ItemLocacao(models.Model):
