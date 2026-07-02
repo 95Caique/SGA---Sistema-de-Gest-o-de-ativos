@@ -111,3 +111,20 @@ def locacao_ativar(request, pk):
     locacao.sincronizar_status_ativos()
     messages.success(request, f"Locacao {locacao.codigo} ativada com sucesso.")
     return redirect("locacao_detail", pk=locacao.pk)
+
+
+def locacao_finalizar(request, pk):
+    locacao = get_object_or_404(Locacao, pk=pk)
+
+    if request.method != "POST":
+        return redirect("locacao_detail", pk=locacao.pk)
+
+    if locacao.status != Locacao.Status.ATIVA:
+        messages.error(request, "Somente locacoes ativas podem ser finalizadas.")
+        return redirect("locacao_detail", pk=locacao.pk)
+
+    locacao.status = Locacao.Status.FINALIZADA
+    locacao.save(update_fields=["status", "atualizado_em"])
+    locacao.finalizar_operacao()
+    messages.success(request, f"Locacao {locacao.codigo} finalizada com sucesso.")
+    return redirect("locacao_detail", pk=locacao.pk)

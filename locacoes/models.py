@@ -66,6 +66,14 @@ class Locacao(models.Model):
                 },
             )
 
+    def finalizar_operacao(self):
+        from ativos.models import Ativo
+        from rastreamento.models import Rastreador
+
+        ativos = Ativo.objects.filter(itens_locacao__locacao=self).exclude(status=Ativo.Status.MANUTENCAO)
+        ativos.update(status=Ativo.Status.DISPONIVEL)
+        Rastreador.objects.filter(ativo__in=ativos, usando_dados_simulados=True).update(status=Rastreador.Status.OFFLINE)
+
 
 class ItemLocacao(models.Model):
     locacao = models.ForeignKey(Locacao, on_delete=models.CASCADE, related_name="itens")
