@@ -17,10 +17,10 @@
 
 <section class="panel">
     <div class="tabs">
-        <a class="is-active" href="#">Todos <span>{{ status_counts.todos }}</span></a>
-        <a href="#">Ativos <span>{{ status_counts.ativos }}</span></a>
-        <a href="#">Inativos <span>{{ status_counts.inativos }}</span></a>
-        <a href="#">Bloqueados <span>{{ status_counts.bloqueados }}</span></a>
+        <a class="{% if not status_filter %}is-active{% endif %}" href="{% url 'clientes' %}{% if query %}?q={{ query|urlencode }}{% endif %}">Todos <span>{{ status_counts.todos }}</span></a>
+        <a class="{% if status_filter == 'ativo' %}is-active{% endif %}" href="{% url 'clientes' %}?status=ativo{% if query %}&q={{ query|urlencode }}{% endif %}">Ativos <span>{{ status_counts.ativos }}</span></a>
+        <a class="{% if status_filter == 'inativo' %}is-active{% endif %}" href="{% url 'clientes' %}?status=inativo{% if query %}&q={{ query|urlencode }}{% endif %}">Inativos <span>{{ status_counts.inativos }}</span></a>
+        <a class="{% if status_filter == 'bloqueado' %}is-active{% endif %}" href="{% url 'clientes' %}?status=bloqueado{% if query %}&q={{ query|urlencode }}{% endif %}">Bloqueados <span>{{ status_counts.bloqueados }}</span></a>
     </div>
 
     {% if clientes %}

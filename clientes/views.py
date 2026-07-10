@@ -10,6 +10,8 @@ from .models import Cliente
 
 def clientes_list(request):
     query = request.GET.get("q", "").strip()
+    status_filter = request.GET.get("status", "").strip()
+    status_validos = [status for status, _label in Cliente.Status.choices]
     clientes = Cliente.objects.annotate(
         total_locacoes=Count("locacoes", distinct=True),
         total_contatos=Count("contatos", distinct=True),
@@ -23,6 +25,9 @@ def clientes_list(request):
             | Q(telefone__icontains=query)
             | Q(responsavel__icontains=query)
         )
+
+    if status_filter in status_validos:
+        clientes = clientes.filter(status=status_filter)
 
     status_counts = {
         "todos": Cliente.objects.count(),
@@ -39,6 +44,7 @@ def clientes_list(request):
                 "page_title": "Clientes",
                 "clientes": clientes,
                 "query": query,
+                "status_filter": status_filter if status_filter in status_validos else "",
                 "status_counts": status_counts,
             }
         ),

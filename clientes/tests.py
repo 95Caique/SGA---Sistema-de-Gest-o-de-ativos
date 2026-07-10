@@ -33,3 +33,15 @@ class ClienteViewTests(TestCase):
         self.assertEqual(self.cliente.nome, "Construtora Forte Atualizada")
         self.assertEqual(self.cliente.email, "novo@forte.com.br")
         self.assertEqual(self.cliente.responsavel, "Marina")
+
+    def test_lista_clientes_filtra_por_status(self):
+        Cliente.objects.create(
+            nome="Cliente Bloqueado",
+            documento="98765432000199",
+            status=Cliente.Status.BLOQUEADO,
+        )
+
+        response = self.client.get(reverse("clientes"), {"status": Cliente.Status.BLOQUEADO})
+
+        self.assertContains(response, "Cliente Bloqueado")
+        self.assertNotContains(response, "Construtora Forte")
