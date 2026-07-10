@@ -19,6 +19,7 @@ from django.urls import path
 
 from ativos.views import equipamento_create, equipamento_update, equipamentos_list
 from clientes.views import (
+    cliente_contato_create,
     cliente_create,
     cliente_endereco_create,
     cliente_endereco_update,
@@ -55,6 +56,7 @@ urlpatterns = [
     path('clientes/', clientes_list, name='clientes'),
     path('clientes/novo/', cliente_create, name='cliente_create'),
     path('clientes/<int:pk>/editar/', cliente_update, name='cliente_update'),
+    path('clientes/<int:pk>/contatos/novo/', cliente_contato_create, name='cliente_contato_create'),
     path('clientes/<int:pk>/enderecos/novo/', cliente_endereco_create, name='cliente_endereco_create'),
     path(
         'clientes/<int:pk>/enderecos/<int:endereco_pk>/editar/',

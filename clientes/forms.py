@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Cliente, EnderecoCliente
+from .models import Cliente, ContatoCliente, EnderecoCliente
 
 
 class ClienteForm(forms.ModelForm):
@@ -62,6 +62,38 @@ class EnderecoClienteForm(forms.ModelForm):
             "bairro": "Bairro",
             "cidade": "Cidade",
             "estado": "UF",
+        }
+
+        for field_name, field in self.fields.items():
+            if isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs.update({"class": "form-checkbox"})
+            else:
+                field.widget.attrs.update({"class": "form-control"})
+
+            if field_name in placeholders:
+                field.widget.attrs.update({"placeholder": placeholders[field_name]})
+
+
+class ContatoClienteForm(forms.ModelForm):
+    class Meta:
+        model = ContatoCliente
+        fields = [
+            "nome",
+            "cargo",
+            "email",
+            "telefone",
+            "whatsapp",
+            "principal",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        placeholders = {
+            "nome": "Nome do contato",
+            "cargo": "Cargo",
+            "email": "email@cliente.com.br",
+            "telefone": "(00) 00000-0000",
+            "whatsapp": "(00) 00000-0000",
         }
 
         for field_name, field in self.fields.items():

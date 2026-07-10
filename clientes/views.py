@@ -4,8 +4,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from config.views import with_layout
 
-from .forms import ClienteForm, EnderecoClienteForm
-from .models import Cliente, EnderecoCliente
+from .forms import ClienteForm, ContatoClienteForm, EnderecoClienteForm
+from .models import Cliente, ContatoCliente, EnderecoCliente
 
 
 def clientes_list(request):
@@ -79,6 +79,7 @@ def cliente_create(request):
 def cliente_update(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
     enderecos = cliente.enderecos.order_by("-principal", "nome")
+    contatos = cliente.contatos.order_by("-principal", "nome")
 
     if request.method == "POST":
         form = ClienteForm(request.POST, instance=cliente)
@@ -101,6 +102,7 @@ def cliente_update(request, pk):
                 "form": form,
                 "cliente": cliente,
                 "enderecos": enderecos,
+                "contatos": contatos,
             }
         ),
     )
@@ -162,6 +164,37 @@ def cliente_endereco_update(request, pk, endereco_pk):
                 "page_title": f"Editar endereco - {cliente.nome}",
                 "form_title": f"Editar endereco {endereco.nome}",
                 "submit_label": "Salvar alteracoes",
+                "cliente": cliente,
+                "form": form,
+            }
+        ),
+    )
+
+
+def cliente_contato_create(request, pk):
+    cliente = get_object_or_404(Cliente, pk=pk)
+
+    if request.method == "POST":
+        form = ContatoClienteForm(request.POST)
+        if form.is_valid():
+            contato = form.save(commit=False)
+            contato.cliente = cliente
+            contato.save()
+
+            if contato.principal:
+                ContatoCliente.objects.filter(cliente=cliente).exclude(pk=contato.pk).update(principal=False)
+
+            messages.success(request, f"Contato {contato.nome} cadastrado para {cliente.nome}.")
+            return redirect("cliente_update", pk=cliente.pk)
+    else:
+        form = ContatoClienteForm()
+
+    return render(
+        request,
+        "clientes/contato_form.html",
+        with_layout(
+            {
+                "page_title": f"Novo contato - {cliente.nome}",
                 "cliente": cliente,
                 "form": form,
             }

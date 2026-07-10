@@ -43,6 +43,51 @@
 {% if cliente %}
     <section class="panel form-panel">
         <div class="panel-title">
+            <h2>Contatos</h2>
+            <a href="{% url 'cliente_contato_create' cliente.pk %}">Novo contato</a>
+        </div>
+
+        {% if contatos %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Cargo</th>
+                            <th>Telefone</th>
+                            <th>Email</th>
+                            <th>Principal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contato in contatos %}
+                            <tr>
+                                <td>{{ contato.nome }}</td>
+                                <td>{{ contato.cargo|default:"-" }}</td>
+                                <td>{{ contato.telefone|default:contato.whatsapp|default:"-" }}</td>
+                                <td>{{ contato.email|default:"-" }}</td>
+                                <td>
+                                    {% if contato.principal %}
+                                        <span class="badge badge-success">Sim</span>
+                                    {% else %}
+                                        <span class="muted-text">Nao</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state compact">
+                <strong>Nenhum contato cadastrado</strong>
+                <p>Cadastre contatos para facilitar a comunicacao operacional.</p>
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="panel form-panel">
+        <div class="panel-title">
             <h2>Enderecos</h2>
             <a href="{% url 'cliente_endereco_create' cliente.pk %}">Novo endereco</a>
         </div>

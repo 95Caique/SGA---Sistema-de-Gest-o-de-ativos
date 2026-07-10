@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import Cliente, EnderecoCliente
+from .models import Cliente, ContatoCliente, EnderecoCliente
 
 
 class ClienteViewTests(TestCase):
@@ -139,3 +139,35 @@ class ClienteViewTests(TestCase):
         self.assertEqual(endereco.nome, "Obra norte")
         self.assertEqual(endereco.logradouro, "Rua Norte")
         self.assertTrue(endereco.principal)
+
+    def test_cria_contato_do_cliente(self):
+        response = self.client.post(
+            reverse("cliente_contato_create", kwargs={"pk": self.cliente.pk}),
+            data={
+                "nome": "Marina",
+                "cargo": "Compras",
+                "email": "marina@forte.com.br",
+                "telefone": "11999990000",
+                "whatsapp": "11999990000",
+                "principal": "on",
+            },
+        )
+
+        contato = ContatoCliente.objects.get(cliente=self.cliente)
+        self.assertRedirects(response, reverse("cliente_update", kwargs={"pk": self.cliente.pk}))
+        self.assertEqual(contato.nome, "Marina")
+        self.assertTrue(contato.principal)
+
+    def test_edicao_cliente_exibe_contatos(self):
+        ContatoCliente.objects.create(
+            cliente=self.cliente,
+            nome="Marina",
+            cargo="Compras",
+            email="marina@forte.com.br",
+            principal=True,
+        )
+
+        response = self.client.get(reverse("cliente_update", kwargs={"pk": self.cliente.pk}))
+
+        self.assertContains(response, "Marina")
+        self.assertContains(response, "Compras")
