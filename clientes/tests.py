@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import Cliente
+from .models import Cliente, EnderecoCliente
 
 
 class ClienteViewTests(TestCase):
@@ -45,3 +45,52 @@ class ClienteViewTests(TestCase):
 
         self.assertContains(response, "Cliente Bloqueado")
         self.assertNotContains(response, "Construtora Forte")
+
+    def test_cria_endereco_do_cliente(self):
+        response = self.client.post(
+            reverse("cliente_endereco_create", kwargs={"pk": self.cliente.pk}),
+            data={
+                "nome": "Obra centro",
+                "cep": "01000-000",
+                "logradouro": "Rua A",
+                "numero": "100",
+                "complemento": "",
+                "bairro": "Centro",
+                "cidade": "Sao Paulo",
+                "estado": "SP",
+                "principal": "on",
+            },
+        )
+
+        endereco = EnderecoCliente.objects.get(cliente=self.cliente)
+        self.assertRedirects(response, reverse("cliente_update", kwargs={"pk": self.cliente.pk}))
+        self.assertEqual(endereco.nome, "Obra centro")
+        self.assertTrue(endereco.principal)
+
+    def test_novo_endereco_principal_desmarca_anterior(self):
+        endereco_antigo = EnderecoCliente.objects.create(
+            cliente=self.cliente,
+            nome="Antigo",
+            logradouro="Rua B",
+            cidade="Sao Paulo",
+            estado="SP",
+            principal=True,
+        )
+
+        self.client.post(
+            reverse("cliente_endereco_create", kwargs={"pk": self.cliente.pk}),
+            data={
+                "nome": "Novo",
+                "cep": "",
+                "logradouro": "Rua C",
+                "numero": "",
+                "complemento": "",
+                "bairro": "",
+                "cidade": "Sao Paulo",
+                "estado": "SP",
+                "principal": "on",
+            },
+        )
+
+        endereco_antigo.refresh_from_db()
+        self.assertFalse(endereco_antigo.principal)

@@ -4,8 +4,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from config.views import with_layout
 
-from .forms import ClienteForm
-from .models import Cliente
+from .forms import ClienteForm, EnderecoClienteForm
+from .models import Cliente, EnderecoCliente
 
 
 def clientes_list(request):
@@ -97,6 +97,37 @@ def cliente_update(request, pk):
                 "form_title": f"Editar cliente {cliente.nome}",
                 "form_subtitle": "Atualize os dados principais do cliente.",
                 "submit_label": "Salvar alteracoes",
+                "form": form,
+            }
+        ),
+    )
+
+
+def cliente_endereco_create(request, pk):
+    cliente = get_object_or_404(Cliente, pk=pk)
+
+    if request.method == "POST":
+        form = EnderecoClienteForm(request.POST)
+        if form.is_valid():
+            endereco = form.save(commit=False)
+            endereco.cliente = cliente
+            endereco.save()
+
+            if endereco.principal:
+                EnderecoCliente.objects.filter(cliente=cliente).exclude(pk=endereco.pk).update(principal=False)
+
+            messages.success(request, f"Endereco {endereco.nome} cadastrado para {cliente.nome}.")
+            return redirect("cliente_update", pk=cliente.pk)
+    else:
+        form = EnderecoClienteForm()
+
+    return render(
+        request,
+        "clientes/endereco_form.html",
+        with_layout(
+            {
+                "page_title": f"Novo endereco - {cliente.nome}",
+                "cliente": cliente,
                 "form": form,
             }
         ),

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>Novo endereco</h1>
+        <p>{{ cliente.nome }}</p>
+    </div>
+    <div class="toolbar">
+        <a class="button button-muted" href="{% url 'cliente_update' cliente.pk %}">Voltar</a>
+    </div>
+</div>
+
+<form class="panel form-panel" method="post" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+        <div class="form-errors">
+            {% for error in form.non_field_errors %}
+                <span>{{ error }}</span>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="form-grid">
+        {% for field in form %}
+            <div class="form-field {% if field.name == 'logradouro' %}span-2{% endif %} {% if field.name == 'principal' %}checkbox-field{% endif %}">
+                {% if field.name == 'principal' %}
+                    <div class="checkbox-control">
+                        {{ field }}
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    </div>
+                {% else %}
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                {% endif %}
+                {% for error in field.errors %}
+                    <small class="field-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="form-actions">
+        <a class="button button-muted" href="{% url 'cliente_update' cliente.pk %}">Cancelar</a>
+        <button class="button button-primary" type="submit">Salvar endereco</button>
+    </div>
+</form>
+{% endblock %}

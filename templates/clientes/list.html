@@ -56,6 +56,7 @@
                             <td><span class="badge badge-status-{{ cliente.status }}">{{ cliente.get_status_display }}</span></td>
                             <td class="actions-cell">
                                 <a href="{% url 'cliente_update' cliente.pk %}">Editar</a>
+                                <a href="{% url 'cliente_endereco_create' cliente.pk %}">Endereco</a>
                             </td>
                         </tr>
                     {% endfor %}
