@@ -1,6 +1,6 @@
 from django.db.models import Q
 from django.contrib import messages
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from config.views import with_layout
 
@@ -59,6 +59,36 @@ def equipamento_create(request):
         with_layout(
             {
                 "page_title": "Novo equipamento",
+                "form_title": "Novo equipamento",
+                "form_subtitle": "Cadastre um ativo locavel com status, categoria, localizacao e rastreio.",
+                "submit_label": "Salvar equipamento",
+                "form": form,
+            }
+        ),
+    )
+
+
+def equipamento_update(request, pk):
+    ativo = get_object_or_404(Ativo, pk=pk)
+
+    if request.method == "POST":
+        form = AtivoForm(request.POST, instance=ativo)
+        if form.is_valid():
+            ativo = form.save()
+            messages.success(request, f"Equipamento {ativo.codigo} atualizado com sucesso.")
+            return redirect("equipamentos")
+    else:
+        form = AtivoForm(instance=ativo)
+
+    return render(
+        request,
+        "ativos/form.html",
+        with_layout(
+            {
+                "page_title": f"Editar {ativo.codigo}",
+                "form_title": f"Editar equipamento {ativo.codigo}",
+                "form_subtitle": "Atualize os dados cadastrais, status, localizacao e rastreio do ativo.",
+                "submit_label": "Salvar alteracoes",
                 "form": form,
             }
         ),

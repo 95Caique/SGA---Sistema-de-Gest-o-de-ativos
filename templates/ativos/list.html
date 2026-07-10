@@ -41,7 +41,7 @@
                 <tbody>
                     {% for ativo in ativos %}
                         <tr>
-                            <td><a href="#">{{ ativo.codigo }}</a></td>
+                            <td><a href="{% url 'equipamento_update' ativo.pk %}">{{ ativo.codigo }}</a></td>
                             <td>
                                 <strong>{{ ativo.nome }}</strong>
                                 {% if ativo.patrimonio %}
@@ -60,7 +60,9 @@
                                 {% endif %}
                             </td>
                             <td>{{ ativo.localizacao_atual|default:"Deposito" }}</td>
-                            <td class="actions-cell">...</td>
+                            <td class="actions-cell">
+                                <a href="{% url 'equipamento_update' ativo.pk %}">Editar</a>
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>

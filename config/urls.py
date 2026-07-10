@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from ativos.views import equipamento_create, equipamentos_list
+from ativos.views import equipamento_create, equipamento_update, equipamentos_list
 from clientes.views import cliente_create, clientes_list
 from locacoes.views import (
     locacao_ativar,
@@ -43,6 +43,7 @@ urlpatterns = [
     path('locacoes/<int:pk>/', locacao_detail, name='locacao_detail'),
     path('equipamentos/', equipamentos_list, name='equipamentos'),
     path('equipamentos/novo/', equipamento_create, name='equipamento_create'),
+    path('equipamentos/<int:pk>/editar/', equipamento_update, name='equipamento_update'),
     path('clientes/', clientes_list, name='clientes'),
     path('clientes/novo/', cliente_create, name='cliente_create'),
     path('contratos/', views.module_page, {'module': 'contratos'}, name='contratos'),

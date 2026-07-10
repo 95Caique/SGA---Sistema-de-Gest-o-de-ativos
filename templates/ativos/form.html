@@ -3,8 +3,8 @@
 {% block content %}
 <div class="page-heading">
     <div>
-        <h1>Novo equipamento</h1>
-        <p>Cadastre um ativo locavel com status, categoria, localizacao e rastreio.</p>
+        <h1>{{ form_title|default:"Novo equipamento" }}</h1>
+        <p>{{ form_subtitle|default:"Cadastre um ativo locavel com status, categoria, localizacao e rastreio." }}</p>
     </div>
     <div class="toolbar">
         <a class="button button-muted" href="{% url 'equipamentos' %}">Voltar</a>
@@ -46,7 +46,7 @@
 
     <div class="form-actions">
         <a class="button button-muted" href="{% url 'equipamentos' %}">Cancelar</a>
-        <button class="button button-primary" type="submit">Salvar equipamento</button>
+        <button class="button button-primary" type="submit">{{ submit_label|default:"Salvar equipamento" }}</button>
     </div>
 </form>
 {% endblock %}
