@@ -36,6 +36,7 @@ from locacoes.views import (
     locacao_update,
     locacoes_list,
 )
+from manutencao.views import manutencao_create, manutencao_finalizar, manutencoes_list
 from rastreamento.views import rastreamento_mapa
 
 from . import views
@@ -71,7 +72,9 @@ urlpatterns = [
     ),
     path('contratos/', views.module_page, {'module': 'contratos'}, name='contratos'),
     path('financeiro/', views.module_page, {'module': 'financeiro'}, name='financeiro'),
-    path('manutencao/', views.module_page, {'module': 'manutencao'}, name='manutencao'),
+    path('manutencao/', manutencoes_list, name='manutencao'),
+    path('manutencao/nova/', manutencao_create, name='manutencao_create'),
+    path('manutencao/<int:pk>/finalizar/', manutencao_finalizar, name='manutencao_finalizar'),
     path('rastreamento/', rastreamento_mapa, name='rastreamento'),
     path('alertas/', views.module_page, {'module': 'alertas'}, name='alertas'),
     path('relatorios/', views.module_page, {'module': 'relatorios'}, name='relatorios'),

@@ -699,7 +699,9 @@ td strong {
 }
 
 .badge-status-agendada,
-.badge-status-orcamento {
+.badge-status-orcamento,
+.badge-status-aberta,
+.badge-status-em_andamento {
     background: var(--warning-soft);
     color: #a16207;
 }

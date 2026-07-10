@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>Manutencao</h1>
+        <p>Ordens preventivas e corretivas dos equipamentos.</p>
+    </div>
+    <form class="toolbar" method="get">
+        <div class="module-search">
+            <input class="ui-input" type="search" name="q" value="{{ query }}" placeholder="Buscar manutencoes..." aria-label="Buscar manutencoes">
+        </div>
+        <button class="button button-muted" type="submit">Filtros</button>
+        <a class="button button-primary" href="{% url 'manutencao_create' %}">+ Nova manutencao</a>
+    </form>
+</div>
+
+<section class="panel">
+    <div class="tabs">
+        <a class="{% if not status_filter %}is-active{% endif %}" href="{% url 'manutencao' %}{% if query %}?q={{ query|urlencode }}{% endif %}">Todas <span>{{ status_counts.todos }}</span></a>
+        <a class="{% if status_filter == 'aberta' %}is-active{% endif %}" href="{% url 'manutencao' %}?status=aberta{% if query %}&q={{ query|urlencode }}{% endif %}">Abertas <span>{{ status_counts.abertas }}</span></a>
+        <a class="{% if status_filter == 'em_andamento' %}is-active{% endif %}" href="{% url 'manutencao' %}?status=em_andamento{% if query %}&q={{ query|urlencode }}{% endif %}">Em andamento <span>{{ status_counts.andamento }}</span></a>
+        <a class="{% if status_filter == 'finalizada' %}is-active{% endif %}" href="{% url 'manutencao' %}?status=finalizada{% if query %}&q={{ query|urlencode }}{% endif %}">Finalizadas <span>{{ status_counts.finalizadas }}</span></a>
+        <a class="{% if status_filter == 'cancelada' %}is-active{% endif %}" href="{% url 'manutencao' %}?status=cancelada{% if query %}&q={{ query|urlencode }}{% endif %}">Canceladas <span>{{ status_counts.canceladas }}</span></a>
+    </div>
+
+    {% if ordens %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ordem</th>
+                        <th>Equipamento</th>
+                        <th>Tipo</th>
+                        <th>Prioridade</th>
+                        <th>Prevista</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ordem in ordens %}
+                        <tr>
+                            <td>{{ ordem.codigo }}</td>
+                            <td>
+                                <strong>{{ ordem.ativo.codigo }}</strong>
+                                <small class="table-subtext">{{ ordem.ativo.nome }}</small>
+                            </td>
+                            <td>{{ ordem.get_tipo_display }}</td>
+                            <td>{{ ordem.get_prioridade_display }}</td>
+                            <td>{{ ordem.data_prevista|date:"d/m/Y"|default:"-" }}</td>
+                            <td><span class="badge badge-status-{{ ordem.status }}">{{ ordem.get_status_display }}</span></td>
+                            <td class="actions-cell">
+                                {% if ordem.status == 'aberta' or ordem.status == 'em_andamento' %}
+                                    <form class="inline-form" method="post" action="{% url 'manutencao_finalizar' ordem.pk %}">
+                                        {% csrf_token %}
+                                        <button class="button button-small button-muted" type="submit">Finalizar</button>
+                                    </form>
+                                {% else %}
+                                    <span class="muted-text">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <strong>Nenhuma manutencao cadastrada</strong>
+            <p>Abra ordens para retirar equipamentos do estoque disponivel e acompanhar reparos ou preventivas.</p>
+            <a class="button button-primary" href="{% url 'manutencao_create' %}">+ Nova manutencao</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

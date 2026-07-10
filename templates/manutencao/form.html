@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>Nova manutencao</h1>
+        <p>Abra uma ordem para equipamento disponivel.</p>
+    </div>
+    <div class="toolbar">
+        <a class="button button-muted" href="{% url 'manutencao' %}">Voltar</a>
+    </div>
+</div>
+
+<form class="panel form-panel" method="post" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+        <div class="form-errors">
+            {% for error in form.non_field_errors %}
+                <span>{{ error }}</span>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="form-grid">
+        {% for field in form %}
+            <div class="form-field {% if field.name == 'descricao' %}span-2{% endif %}">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}
+                    <small class="field-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="form-actions">
+        <a class="button button-muted" href="{% url 'manutencao' %}">Cancelar</a>
+        <button class="button button-primary" type="submit">Abrir manutencao</button>
+    </div>
+</form>
+{% endblock %}
