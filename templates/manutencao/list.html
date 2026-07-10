@@ -51,7 +51,16 @@
                             <td>{{ ordem.data_prevista|date:"d/m/Y"|default:"-" }}</td>
                             <td><span class="badge badge-status-{{ ordem.status }}">{{ ordem.get_status_display }}</span></td>
                             <td class="actions-cell">
-                                {% if ordem.status == 'aberta' or ordem.status == 'em_andamento' %}
+                                {% if ordem.status == 'aberta' %}
+                                    <form class="inline-form" method="post" action="{% url 'manutencao_iniciar' ordem.pk %}">
+                                        {% csrf_token %}
+                                        <button class="button button-small button-muted" type="submit">Iniciar</button>
+                                    </form>
+                                    <form class="inline-form" method="post" action="{% url 'manutencao_finalizar' ordem.pk %}">
+                                        {% csrf_token %}
+                                        <button class="button button-small button-muted" type="submit">Finalizar</button>
+                                    </form>
+                                {% elif ordem.status == 'em_andamento' %}
                                     <form class="inline-form" method="post" action="{% url 'manutencao_finalizar' ordem.pk %}">
                                         {% csrf_token %}
                                         <button class="button button-small button-muted" type="submit">Finalizar</button>

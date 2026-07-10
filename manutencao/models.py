@@ -50,6 +50,11 @@ class OrdemManutencao(models.Model):
             self.ativo.status = Ativo.Status.MANUTENCAO
             self.ativo.save(update_fields=["status", "atualizado_em"])
 
+    def iniciar(self):
+        self.status = self.Status.EM_ANDAMENTO
+        self.save(update_fields=["status", "atualizado_em"])
+        self.colocar_ativo_em_manutencao()
+
     def finalizar(self):
         from ativos.models import Ativo
 

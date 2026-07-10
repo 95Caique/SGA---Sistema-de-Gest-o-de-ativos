@@ -72,6 +72,21 @@ def manutencao_create(request):
     )
 
 
+def manutencao_iniciar(request, pk):
+    ordem = get_object_or_404(OrdemManutencao, pk=pk)
+
+    if request.method != "POST":
+        return redirect("manutencao")
+
+    if ordem.status != OrdemManutencao.Status.ABERTA:
+        messages.error(request, "Somente ordens abertas podem ser iniciadas.")
+        return redirect("manutencao")
+
+    ordem.iniciar()
+    messages.success(request, f"Ordem {ordem.codigo} iniciada com sucesso.")
+    return redirect("manutencao")
+
+
 def manutencao_finalizar(request, pk):
     ordem = get_object_or_404(OrdemManutencao, pk=pk)
 
