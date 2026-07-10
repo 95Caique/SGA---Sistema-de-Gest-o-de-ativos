@@ -234,3 +234,35 @@ class LocacaoOperacaoTests(TestCase):
 
         self.assertContains(response, "LOC-0002")
         self.assertNotContains(response, "LOC-0001")
+
+    def test_edita_locacao_em_orcamento(self):
+        response = self.client.post(
+            reverse("locacao_update", kwargs={"pk": self.locacao.pk}),
+            data={
+                "codigo": "LOC-0001",
+                "cliente": self.cliente.pk,
+                "data_inicio": "2026-07-02",
+                "data_fim": "2026-07-06",
+                "status": Locacao.Status.AGENDADA,
+                "endereco_entrega": "",
+                "valor_equipamentos": "0.00",
+                "valor_servicos": "80.00",
+                "valor_desconto": "5.00",
+                "valor_total": "75.00",
+                "observacoes": "Entrega pela manha",
+            },
+        )
+
+        self.locacao.refresh_from_db()
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
+        self.assertEqual(self.locacao.status, Locacao.Status.AGENDADA)
+        self.assertEqual(self.locacao.valor_servicos, Decimal("80.00"))
+        self.assertEqual(self.locacao.observacoes, "Entrega pela manha")
+
+    def test_edicao_bloqueia_locacao_ativa(self):
+        self.locacao.status = Locacao.Status.ATIVA
+        self.locacao.save()
+
+        response = self.client.get(reverse("locacao_update", kwargs={"pk": self.locacao.pk}))
+
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))

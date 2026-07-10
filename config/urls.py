@@ -25,6 +25,7 @@ from locacoes.views import (
     locacao_detail,
     locacao_finalizar,
     locacao_item_remove,
+    locacao_update,
     locacoes_list,
 )
 from rastreamento.views import rastreamento_mapa
@@ -37,6 +38,7 @@ urlpatterns = [
     path('agenda/', views.module_page, {'module': 'agenda'}, name='agenda'),
     path('locacoes/', locacoes_list, name='locacoes'),
     path('locacoes/nova/', locacao_create, name='locacao_create'),
+    path('locacoes/<int:pk>/editar/', locacao_update, name='locacao_update'),
     path('locacoes/<int:pk>/ativar/', locacao_ativar, name='locacao_ativar'),
     path('locacoes/<int:pk>/finalizar/', locacao_finalizar, name='locacao_finalizar'),
     path('locacoes/<int:pk>/itens/<int:item_pk>/remover/', locacao_item_remove, name='locacao_item_remove'),

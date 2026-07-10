@@ -51,7 +51,13 @@
                             <td>{{ locacao.total_itens }} item{{ locacao.total_itens|pluralize }}</td>
                             <td>R$ {{ locacao.valor_total }}</td>
                             <td><span class="badge badge-status-{{ locacao.status }}">{{ locacao.get_status_display }}</span></td>
-                            <td class="actions-cell">...</td>
+                            <td class="actions-cell">
+                                {% if locacao.status == 'orcamento' or locacao.status == 'agendada' %}
+                                    <a href="{% url 'locacao_update' locacao.pk %}">Editar</a>
+                                {% else %}
+                                    <a href="{% url 'locacao_detail' locacao.pk %}">Ver</a>
+                                {% endif %}
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>

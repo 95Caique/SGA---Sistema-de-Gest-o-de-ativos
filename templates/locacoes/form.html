@@ -3,8 +3,8 @@
 {% block content %}
 <div class="page-heading">
     <div>
-        <h1>Nova locacao</h1>
-        <p>Cadastre os dados principais da locacao. Os equipamentos entram na proxima etapa.</p>
+        <h1>{{ form_title|default:"Nova locacao" }}</h1>
+        <p>{{ form_subtitle|default:"Cadastre os dados principais da locacao. Os equipamentos entram na proxima etapa." }}</p>
     </div>
     <div class="toolbar">
         <a class="button button-muted" href="{% url 'locacoes' %}">Voltar</a>
@@ -36,7 +36,7 @@
 
     <div class="form-actions">
         <a class="button button-muted" href="{% url 'locacoes' %}">Cancelar</a>
-        <button class="button button-primary" type="submit">Salvar locacao</button>
+        <button class="button button-primary" type="submit">{{ submit_label|default:"Salvar locacao" }}</button>
     </div>
 </form>
 {% endblock %}

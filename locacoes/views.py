@@ -67,6 +67,40 @@ def locacao_create(request):
         with_layout(
             {
                 "page_title": "Nova locacao",
+                "form_title": "Nova locacao",
+                "form_subtitle": "Cadastre os dados principais da locacao. Os equipamentos entram na proxima etapa.",
+                "submit_label": "Salvar locacao",
+                "form": form,
+            }
+        ),
+    )
+
+
+def locacao_update(request, pk):
+    locacao = get_object_or_404(Locacao, pk=pk)
+
+    if locacao.status not in [Locacao.Status.ORCAMENTO, Locacao.Status.AGENDADA]:
+        messages.error(request, "Nao e possivel editar dados principais nesta etapa da locacao.")
+        return redirect("locacao_detail", pk=locacao.pk)
+
+    if request.method == "POST":
+        form = LocacaoForm(request.POST, instance=locacao)
+        if form.is_valid():
+            locacao = form.save()
+            messages.success(request, f"Locacao {locacao.codigo} atualizada com sucesso.")
+            return redirect("locacao_detail", pk=locacao.pk)
+    else:
+        form = LocacaoForm(instance=locacao)
+
+    return render(
+        request,
+        "locacoes/form.html",
+        with_layout(
+            {
+                "page_title": f"Editar {locacao.codigo}",
+                "form_title": f"Editar locacao {locacao.codigo}",
+                "form_subtitle": "Atualize os dados principais antes da ativacao da locacao.",
+                "submit_label": "Salvar alteracoes",
                 "form": form,
             }
         ),
