@@ -221,6 +221,18 @@ class LocacaoOperacaoTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("status", form.errors)
 
+    def test_form_locacao_lista_apenas_clientes_ativos(self):
+        cliente_bloqueado = Cliente.objects.create(
+            nome="Cliente Bloqueado",
+            documento="98765432000199",
+            status=Cliente.Status.BLOQUEADO,
+        )
+
+        form = LocacaoForm()
+
+        self.assertIn(self.cliente, form.fields["cliente"].queryset)
+        self.assertNotIn(cliente_bloqueado, form.fields["cliente"].queryset)
+
     def test_lista_locacoes_filtra_por_status(self):
         Locacao.objects.create(
             codigo="LOC-0002",

@@ -1,7 +1,7 @@
 from django import forms
 
 from ativos.models import Ativo
-from clientes.models import EnderecoCliente
+from clientes.models import Cliente, EnderecoCliente
 
 from .models import ItemLocacao, Locacao
 
@@ -30,6 +30,7 @@ class LocacaoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["cliente"].queryset = Cliente.objects.filter(status=Cliente.Status.ATIVO)
         self.fields["endereco_entrega"].required = False
         self.fields["status"].choices = [
             (Locacao.Status.ORCAMENTO, Locacao.Status.ORCAMENTO.label),
@@ -77,6 +78,14 @@ class LocacaoForm(forms.ModelForm):
             raise forms.ValidationError("Nova locacao deve iniciar como orcamento ou agendada.")
 
         return status
+
+    def clean_cliente(self):
+        cliente = self.cleaned_data.get("cliente")
+
+        if cliente and cliente.status != Cliente.Status.ATIVO:
+            raise forms.ValidationError("Somente clientes ativos podem gerar locacao.")
+
+        return cliente
 
 
 class ItemLocacaoForm(forms.ModelForm):
