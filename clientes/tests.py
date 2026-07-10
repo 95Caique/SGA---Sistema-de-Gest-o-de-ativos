@@ -94,3 +94,18 @@ class ClienteViewTests(TestCase):
 
         endereco_antigo.refresh_from_db()
         self.assertFalse(endereco_antigo.principal)
+
+    def test_edicao_cliente_exibe_enderecos(self):
+        EnderecoCliente.objects.create(
+            cliente=self.cliente,
+            nome="Obra centro",
+            logradouro="Rua A",
+            cidade="Sao Paulo",
+            estado="SP",
+            principal=True,
+        )
+
+        response = self.client.get(reverse("cliente_update", kwargs={"pk": self.cliente.pk}))
+
+        self.assertContains(response, "Obra centro")
+        self.assertContains(response, "Rua A")

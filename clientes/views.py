@@ -78,6 +78,7 @@ def cliente_create(request):
 
 def cliente_update(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
+    enderecos = cliente.enderecos.order_by("-principal", "nome")
 
     if request.method == "POST":
         form = ClienteForm(request.POST, instance=cliente)
@@ -98,6 +99,8 @@ def cliente_update(request, pk):
                 "form_subtitle": "Atualize os dados principais do cliente.",
                 "submit_label": "Salvar alteracoes",
                 "form": form,
+                "cliente": cliente,
+                "enderecos": enderecos,
             }
         ),
     )
