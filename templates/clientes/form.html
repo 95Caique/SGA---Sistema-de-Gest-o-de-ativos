@@ -3,8 +3,8 @@
 {% block content %}
 <div class="page-heading">
     <div>
-        <h1>Novo cliente</h1>
-        <p>Cadastre os dados principais do cliente para locacoes, contratos e financeiro.</p>
+        <h1>{{ form_title|default:"Novo cliente" }}</h1>
+        <p>{{ form_subtitle|default:"Cadastre os dados principais do cliente para locacoes, contratos e financeiro." }}</p>
     </div>
     <div class="toolbar">
         <a class="button button-muted" href="{% url 'clientes' %}">Voltar</a>
@@ -36,7 +36,7 @@
 
     <div class="form-actions">
         <a class="button button-muted" href="{% url 'clientes' %}">Cancelar</a>
-        <button class="button button-primary" type="submit">Salvar cliente</button>
+        <button class="button button-primary" type="submit">{{ submit_label|default:"Salvar cliente" }}</button>
     </div>
 </form>
 {% endblock %}

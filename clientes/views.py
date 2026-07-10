@@ -1,6 +1,6 @@
 from django.db.models import Count, Q
 from django.contrib import messages
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from config.views import with_layout
 
@@ -61,6 +61,36 @@ def cliente_create(request):
         with_layout(
             {
                 "page_title": "Novo cliente",
+                "form_title": "Novo cliente",
+                "form_subtitle": "Cadastre os dados principais do cliente para locacoes, contratos e financeiro.",
+                "submit_label": "Salvar cliente",
+                "form": form,
+            }
+        ),
+    )
+
+
+def cliente_update(request, pk):
+    cliente = get_object_or_404(Cliente, pk=pk)
+
+    if request.method == "POST":
+        form = ClienteForm(request.POST, instance=cliente)
+        if form.is_valid():
+            cliente = form.save()
+            messages.success(request, f"Cliente {cliente.nome} atualizado com sucesso.")
+            return redirect("clientes")
+    else:
+        form = ClienteForm(instance=cliente)
+
+    return render(
+        request,
+        "clientes/form.html",
+        with_layout(
+            {
+                "page_title": f"Editar {cliente.nome}",
+                "form_title": f"Editar cliente {cliente.nome}",
+                "form_subtitle": "Atualize os dados principais do cliente.",
+                "submit_label": "Salvar alteracoes",
                 "form": form,
             }
         ),

@@ -41,7 +41,7 @@
                     {% for cliente in clientes %}
                         <tr>
                             <td>
-                                <a href="#">{{ cliente.nome }}</a>
+                                <a href="{% url 'cliente_update' cliente.pk %}">{{ cliente.nome }}</a>
                                 <small class="table-subtext">{{ cliente.get_tipo_pessoa_display }}</small>
                             </td>
                             <td>{{ cliente.documento }}</td>
@@ -54,7 +54,9 @@
                             <td>{{ cliente.responsavel|default:"-" }}</td>
                             <td>{{ cliente.total_locacoes }}</td>
                             <td><span class="badge badge-status-{{ cliente.status }}">{{ cliente.get_status_display }}</span></td>
-                            <td class="actions-cell">...</td>
+                            <td class="actions-cell">
+                                <a href="{% url 'cliente_update' cliente.pk %}">Editar</a>
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>
