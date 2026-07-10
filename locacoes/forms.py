@@ -30,6 +30,10 @@ class LocacaoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["endereco_entrega"].required = False
+        self.fields["status"].choices = [
+            (Locacao.Status.ORCAMENTO, Locacao.Status.ORCAMENTO.label),
+            (Locacao.Status.AGENDADA, Locacao.Status.AGENDADA.label),
+        ]
 
         placeholders = {
             "codigo": "Ex: LOC-0001",
@@ -53,6 +57,14 @@ class LocacaoForm(forms.ModelForm):
             raise forms.ValidationError("A data final nao pode ser anterior a data inicial.")
 
         return cleaned_data
+
+    def clean_status(self):
+        status = self.cleaned_data.get("status")
+
+        if status not in [Locacao.Status.ORCAMENTO, Locacao.Status.AGENDADA]:
+            raise forms.ValidationError("Nova locacao deve iniciar como orcamento ou agendada.")
+
+        return status
 
 
 class ItemLocacaoForm(forms.ModelForm):

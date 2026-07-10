@@ -9,7 +9,7 @@ from ativos.models import Ativo, CategoriaAtivo
 from clientes.models import Cliente
 from rastreamento.models import Rastreador
 
-from .forms import ItemLocacaoForm
+from .forms import ItemLocacaoForm, LocacaoForm
 from .models import ItemLocacao, Locacao
 
 
@@ -200,3 +200,23 @@ class LocacaoOperacaoTests(TestCase):
 
         self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
         self.assertTrue(ItemLocacao.objects.filter(pk=item.pk).exists())
+
+    def test_form_locacao_nao_permite_criar_ativa(self):
+        form = LocacaoForm(
+            data={
+                "codigo": "LOC-0002",
+                "cliente": self.cliente.pk,
+                "data_inicio": "2026-07-10",
+                "data_fim": "2026-07-12",
+                "status": Locacao.Status.ATIVA,
+                "endereco_entrega": "",
+                "valor_equipamentos": "0.00",
+                "valor_servicos": "0.00",
+                "valor_desconto": "0.00",
+                "valor_total": "0.00",
+                "observacoes": "",
+            }
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("status", form.errors)
