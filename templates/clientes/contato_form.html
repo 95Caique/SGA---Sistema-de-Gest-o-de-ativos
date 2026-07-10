@@ -3,7 +3,7 @@
 {% block content %}
 <div class="page-heading">
     <div>
-        <h1>Novo contato</h1>
+        <h1>{{ form_title|default:"Novo contato" }}</h1>
         <p>{{ cliente.nome }}</p>
     </div>
     <div class="toolbar">
@@ -43,7 +43,7 @@
 
     <div class="form-actions">
         <a class="button button-muted" href="{% url 'cliente_update' cliente.pk %}">Cancelar</a>
-        <button class="button button-primary" type="submit">Salvar contato</button>
+        <button class="button button-primary" type="submit">{{ submit_label|default:"Salvar contato" }}</button>
     </div>
 </form>
 {% endblock %}

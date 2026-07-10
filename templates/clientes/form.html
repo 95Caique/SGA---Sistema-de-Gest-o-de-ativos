@@ -57,6 +57,7 @@
                             <th>Telefone</th>
                             <th>Email</th>
                             <th>Principal</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -72,6 +73,9 @@
                                     {% else %}
                                         <span class="muted-text">Nao</span>
                                     {% endif %}
+                                </td>
+                                <td class="actions-cell">
+                                    <a href="{% url 'cliente_contato_update' cliente.pk contato.pk %}">Editar</a>
                                 </td>
                             </tr>
                         {% endfor %}

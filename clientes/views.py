@@ -200,3 +200,35 @@ def cliente_contato_create(request, pk):
             }
         ),
     )
+
+
+def cliente_contato_update(request, pk, contato_pk):
+    cliente = get_object_or_404(Cliente, pk=pk)
+    contato = get_object_or_404(ContatoCliente, pk=contato_pk, cliente=cliente)
+
+    if request.method == "POST":
+        form = ContatoClienteForm(request.POST, instance=contato)
+        if form.is_valid():
+            contato = form.save()
+
+            if contato.principal:
+                ContatoCliente.objects.filter(cliente=cliente).exclude(pk=contato.pk).update(principal=False)
+
+            messages.success(request, f"Contato {contato.nome} atualizado com sucesso.")
+            return redirect("cliente_update", pk=cliente.pk)
+    else:
+        form = ContatoClienteForm(instance=contato)
+
+    return render(
+        request,
+        "clientes/contato_form.html",
+        with_layout(
+            {
+                "page_title": f"Editar contato - {cliente.nome}",
+                "form_title": f"Editar contato {contato.nome}",
+                "submit_label": "Salvar alteracoes",
+                "cliente": cliente,
+                "form": form,
+            }
+        ),
+    )

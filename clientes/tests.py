@@ -171,3 +171,29 @@ class ClienteViewTests(TestCase):
 
         self.assertContains(response, "Marina")
         self.assertContains(response, "Compras")
+
+    def test_edita_contato_do_cliente(self):
+        contato = ContatoCliente.objects.create(
+            cliente=self.cliente,
+            nome="Marina",
+            cargo="Compras",
+            email="marina@forte.com.br",
+        )
+
+        response = self.client.post(
+            reverse("cliente_contato_update", kwargs={"pk": self.cliente.pk, "contato_pk": contato.pk}),
+            data={
+                "nome": "Marina Silva",
+                "cargo": "Operacoes",
+                "email": "marina.silva@forte.com.br",
+                "telefone": "11888880000",
+                "whatsapp": "11888880000",
+                "principal": "on",
+            },
+        )
+
+        contato.refresh_from_db()
+        self.assertRedirects(response, reverse("cliente_update", kwargs={"pk": self.cliente.pk}))
+        self.assertEqual(contato.nome, "Marina Silva")
+        self.assertEqual(contato.cargo, "Operacoes")
+        self.assertTrue(contato.principal)
