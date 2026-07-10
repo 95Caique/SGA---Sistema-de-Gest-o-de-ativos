@@ -18,7 +18,13 @@ from django.contrib import admin
 from django.urls import path
 
 from ativos.views import equipamento_create, equipamento_update, equipamentos_list
-from clientes.views import cliente_create, cliente_endereco_create, cliente_update, clientes_list
+from clientes.views import (
+    cliente_create,
+    cliente_endereco_create,
+    cliente_endereco_update,
+    cliente_update,
+    clientes_list,
+)
 from locacoes.views import (
     locacao_ativar,
     locacao_create,
@@ -50,6 +56,11 @@ urlpatterns = [
     path('clientes/novo/', cliente_create, name='cliente_create'),
     path('clientes/<int:pk>/editar/', cliente_update, name='cliente_update'),
     path('clientes/<int:pk>/enderecos/novo/', cliente_endereco_create, name='cliente_endereco_create'),
+    path(
+        'clientes/<int:pk>/enderecos/<int:endereco_pk>/editar/',
+        cliente_endereco_update,
+        name='cliente_endereco_update',
+    ),
     path('contratos/', views.module_page, {'module': 'contratos'}, name='contratos'),
     path('financeiro/', views.module_page, {'module': 'financeiro'}, name='financeiro'),
     path('manutencao/', views.module_page, {'module': 'manutencao'}, name='manutencao'),

@@ -56,6 +56,7 @@
                             <th>Endereco</th>
                             <th>Cidade/UF</th>
                             <th>Principal</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -75,6 +76,9 @@
                                     {% else %}
                                         <span class="muted-text">Nao</span>
                                     {% endif %}
+                                </td>
+                                <td class="actions-cell">
+                                    <a href="{% url 'cliente_endereco_update' cliente.pk endereco.pk %}">Editar</a>
                                 </td>
                             </tr>
                         {% endfor %}

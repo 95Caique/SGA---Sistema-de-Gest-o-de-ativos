@@ -135,3 +135,35 @@ def cliente_endereco_create(request, pk):
             }
         ),
     )
+
+
+def cliente_endereco_update(request, pk, endereco_pk):
+    cliente = get_object_or_404(Cliente, pk=pk)
+    endereco = get_object_or_404(EnderecoCliente, pk=endereco_pk, cliente=cliente)
+
+    if request.method == "POST":
+        form = EnderecoClienteForm(request.POST, instance=endereco)
+        if form.is_valid():
+            endereco = form.save()
+
+            if endereco.principal:
+                EnderecoCliente.objects.filter(cliente=cliente).exclude(pk=endereco.pk).update(principal=False)
+
+            messages.success(request, f"Endereco {endereco.nome} atualizado com sucesso.")
+            return redirect("cliente_update", pk=cliente.pk)
+    else:
+        form = EnderecoClienteForm(instance=endereco)
+
+    return render(
+        request,
+        "clientes/endereco_form.html",
+        with_layout(
+            {
+                "page_title": f"Editar endereco - {cliente.nome}",
+                "form_title": f"Editar endereco {endereco.nome}",
+                "submit_label": "Salvar alteracoes",
+                "cliente": cliente,
+                "form": form,
+            }
+        ),
+    )

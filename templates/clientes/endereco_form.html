@@ -3,7 +3,7 @@
 {% block content %}
 <div class="page-heading">
     <div>
-        <h1>Novo endereco</h1>
+        <h1>{{ form_title|default:"Novo endereco" }}</h1>
         <p>{{ cliente.nome }}</p>
     </div>
     <div class="toolbar">
@@ -43,7 +43,7 @@
 
     <div class="form-actions">
         <a class="button button-muted" href="{% url 'cliente_update' cliente.pk %}">Cancelar</a>
-        <button class="button button-primary" type="submit">Salvar endereco</button>
+        <button class="button button-primary" type="submit">{{ submit_label|default:"Salvar endereco" }}</button>
     </div>
 </form>
 {% endblock %}

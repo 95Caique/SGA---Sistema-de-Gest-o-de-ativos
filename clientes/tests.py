@@ -109,3 +109,33 @@ class ClienteViewTests(TestCase):
 
         self.assertContains(response, "Obra centro")
         self.assertContains(response, "Rua A")
+
+    def test_edita_endereco_do_cliente(self):
+        endereco = EnderecoCliente.objects.create(
+            cliente=self.cliente,
+            nome="Obra centro",
+            logradouro="Rua A",
+            cidade="Sao Paulo",
+            estado="SP",
+        )
+
+        response = self.client.post(
+            reverse("cliente_endereco_update", kwargs={"pk": self.cliente.pk, "endereco_pk": endereco.pk}),
+            data={
+                "nome": "Obra norte",
+                "cep": "02000-000",
+                "logradouro": "Rua Norte",
+                "numero": "200",
+                "complemento": "",
+                "bairro": "Santana",
+                "cidade": "Sao Paulo",
+                "estado": "SP",
+                "principal": "on",
+            },
+        )
+
+        endereco.refresh_from_db()
+        self.assertRedirects(response, reverse("cliente_update", kwargs={"pk": self.cliente.pk}))
+        self.assertEqual(endereco.nome, "Obra norte")
+        self.assertEqual(endereco.logradouro, "Rua Norte")
+        self.assertTrue(endereco.principal)
