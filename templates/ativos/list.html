@@ -17,11 +17,11 @@
 
 <section class="panel">
     <div class="tabs">
-        <a class="is-active" href="#">Todos <span>{{ status_counts.todos }}</span></a>
-        <a href="#">Disponiveis <span>{{ status_counts.disponiveis }}</span></a>
-        <a href="#">Locados <span>{{ status_counts.locados }}</span></a>
-        <a href="#">Manutencao <span>{{ status_counts.manutencao }}</span></a>
-        <a href="#">Inativos <span>{{ status_counts.inativos }}</span></a>
+        <a class="{% if not status_filter %}is-active{% endif %}" href="{% url 'equipamentos' %}{% if query %}?q={{ query|urlencode }}{% endif %}">Todos <span>{{ status_counts.todos }}</span></a>
+        <a class="{% if status_filter == 'disponivel' %}is-active{% endif %}" href="{% url 'equipamentos' %}?status=disponivel{% if query %}&q={{ query|urlencode }}{% endif %}">Disponiveis <span>{{ status_counts.disponiveis }}</span></a>
+        <a class="{% if status_filter == 'locado' %}is-active{% endif %}" href="{% url 'equipamentos' %}?status=locado{% if query %}&q={{ query|urlencode }}{% endif %}">Locados <span>{{ status_counts.locados }}</span></a>
+        <a class="{% if status_filter == 'manutencao' %}is-active{% endif %}" href="{% url 'equipamentos' %}?status=manutencao{% if query %}&q={{ query|urlencode }}{% endif %}">Manutencao <span>{{ status_counts.manutencao }}</span></a>
+        <a class="{% if status_filter == 'inativo' %}is-active{% endif %}" href="{% url 'equipamentos' %}?status=inativo{% if query %}&q={{ query|urlencode }}{% endif %}">Inativos <span>{{ status_counts.inativos }}</span></a>
     </div>
 
     {% if ativos %}

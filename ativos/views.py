@@ -10,6 +10,8 @@ from .models import Ativo
 
 def equipamentos_list(request):
     query = request.GET.get("q", "").strip()
+    status_filter = request.GET.get("status", "").strip()
+    status_validos = [status for status, _label in Ativo.Status.choices]
     ativos = Ativo.objects.select_related("categoria").order_by("codigo")
 
     if query:
@@ -20,6 +22,9 @@ def equipamentos_list(request):
             | Q(categoria__nome__icontains=query)
             | Q(localizacao_atual__icontains=query)
         )
+
+    if status_filter in status_validos:
+        ativos = ativos.filter(status=status_filter)
 
     status_counts = {
         "todos": Ativo.objects.count(),
@@ -37,6 +42,7 @@ def equipamentos_list(request):
                 "page_title": "Equipamentos",
                 "ativos": ativos,
                 "query": query,
+                "status_filter": status_filter if status_filter in status_validos else "",
                 "status_counts": status_counts,
             }
         ),

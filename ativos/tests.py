@@ -39,3 +39,16 @@ class EquipamentoViewTests(TestCase):
         self.assertEqual(self.ativo.status, Ativo.Status.MANUTENCAO)
         self.assertEqual(self.ativo.localizacao_atual, "Oficina")
         self.assertTrue(self.ativo.permite_rastreamento)
+
+    def test_lista_equipamentos_filtra_por_status(self):
+        Ativo.objects.create(
+            codigo="RET-001",
+            nome="Retroescavadeira",
+            categoria=self.categoria,
+            status=Ativo.Status.LOCADO,
+        )
+
+        response = self.client.get(reverse("equipamentos"), {"status": Ativo.Status.LOCADO})
+
+        self.assertContains(response, "RET-001")
+        self.assertNotContains(response, "BET-001")
