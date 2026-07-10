@@ -220,3 +220,17 @@ class LocacaoOperacaoTests(TestCase):
 
         self.assertFalse(form.is_valid())
         self.assertIn("status", form.errors)
+
+    def test_lista_locacoes_filtra_por_status(self):
+        Locacao.objects.create(
+            codigo="LOC-0002",
+            cliente=self.cliente,
+            data_inicio=date(2026, 7, 10),
+            data_fim=date(2026, 7, 12),
+            status=Locacao.Status.AGENDADA,
+        )
+
+        response = self.client.get(reverse("locacoes"), {"status": Locacao.Status.AGENDADA})
+
+        self.assertContains(response, "LOC-0002")
+        self.assertNotContains(response, "LOC-0001")

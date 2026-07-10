@@ -12,6 +12,8 @@ from .models import ItemLocacao, Locacao
 
 def locacoes_list(request):
     query = request.GET.get("q", "").strip()
+    status_filter = request.GET.get("status", "").strip()
+    status_validos = [status for status, _label in Locacao.Status.choices]
     locacoes = Locacao.objects.select_related("cliente").annotate(total_itens=Count("itens")).order_by("-data_inicio")
 
     if query:
@@ -22,8 +24,12 @@ def locacoes_list(request):
             | Q(observacoes__icontains=query)
         )
 
+    if status_filter in status_validos:
+        locacoes = locacoes.filter(status=status_filter)
+
     status_counts = {
         "todos": Locacao.objects.count(),
+        "orcamentos": Locacao.objects.filter(status=Locacao.Status.ORCAMENTO).count(),
         "ativas": Locacao.objects.filter(status=Locacao.Status.ATIVA).count(),
         "agendadas": Locacao.objects.filter(status=Locacao.Status.AGENDADA).count(),
         "finalizadas": Locacao.objects.filter(status=Locacao.Status.FINALIZADA).count(),
@@ -38,6 +44,7 @@ def locacoes_list(request):
                 "page_title": "Locacoes",
                 "locacoes": locacoes,
                 "query": query,
+                "status_filter": status_filter if status_filter in status_validos else "",
                 "status_counts": status_counts,
             }
         ),

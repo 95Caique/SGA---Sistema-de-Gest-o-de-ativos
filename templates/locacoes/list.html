@@ -17,11 +17,12 @@
 
 <section class="panel">
     <div class="tabs">
-        <a class="is-active" href="#">Todas <span>{{ status_counts.todos }}</span></a>
-        <a href="#">Ativas <span>{{ status_counts.ativas }}</span></a>
-        <a href="#">Agendadas <span>{{ status_counts.agendadas }}</span></a>
-        <a href="#">Finalizadas <span>{{ status_counts.finalizadas }}</span></a>
-        <a href="#">Canceladas <span>{{ status_counts.canceladas }}</span></a>
+        <a class="{% if not status_filter %}is-active{% endif %}" href="{% url 'locacoes' %}{% if query %}?q={{ query|urlencode }}{% endif %}">Todas <span>{{ status_counts.todos }}</span></a>
+        <a class="{% if status_filter == 'orcamento' %}is-active{% endif %}" href="{% url 'locacoes' %}?status=orcamento{% if query %}&q={{ query|urlencode }}{% endif %}">Orcamentos <span>{{ status_counts.orcamentos }}</span></a>
+        <a class="{% if status_filter == 'ativa' %}is-active{% endif %}" href="{% url 'locacoes' %}?status=ativa{% if query %}&q={{ query|urlencode }}{% endif %}">Ativas <span>{{ status_counts.ativas }}</span></a>
+        <a class="{% if status_filter == 'agendada' %}is-active{% endif %}" href="{% url 'locacoes' %}?status=agendada{% if query %}&q={{ query|urlencode }}{% endif %}">Agendadas <span>{{ status_counts.agendadas }}</span></a>
+        <a class="{% if status_filter == 'finalizada' %}is-active{% endif %}" href="{% url 'locacoes' %}?status=finalizada{% if query %}&q={{ query|urlencode }}{% endif %}">Finalizadas <span>{{ status_counts.finalizadas }}</span></a>
+        <a class="{% if status_filter == 'cancelada' %}is-active{% endif %}" href="{% url 'locacoes' %}?status=cancelada{% if query %}&q={{ query|urlencode }}{% endif %}">Canceladas <span>{{ status_counts.canceladas }}</span></a>
     </div>
 
     {% if locacoes %}
