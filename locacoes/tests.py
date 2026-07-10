@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from ativos.models import Ativo, CategoriaAtivo
-from clientes.models import Cliente
+from clientes.models import Cliente, EnderecoCliente
 from rastreamento.models import Rastreador
 
 from .forms import ItemLocacaoForm, LocacaoForm
@@ -266,3 +266,54 @@ class LocacaoOperacaoTests(TestCase):
         response = self.client.get(reverse("locacao_update", kwargs={"pk": self.locacao.pk}))
 
         self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
+
+    def test_form_locacao_filtra_enderecos_pelo_cliente(self):
+        endereco_cliente = EnderecoCliente.objects.create(
+            cliente=self.cliente,
+            nome="Obra",
+            logradouro="Rua A",
+            cidade="Sao Paulo",
+            estado="SP",
+        )
+        outro_cliente = Cliente.objects.create(nome="Outro Cliente", documento="98765432000199")
+        endereco_outro_cliente = EnderecoCliente.objects.create(
+            cliente=outro_cliente,
+            nome="Matriz",
+            logradouro="Rua B",
+            cidade="Campinas",
+            estado="SP",
+        )
+
+        form = LocacaoForm(data={"cliente": self.cliente.pk})
+
+        self.assertIn(endereco_cliente, form.fields["endereco_entrega"].queryset)
+        self.assertNotIn(endereco_outro_cliente, form.fields["endereco_entrega"].queryset)
+
+    def test_form_locacao_rejeita_endereco_de_outro_cliente(self):
+        outro_cliente = Cliente.objects.create(nome="Outro Cliente", documento="98765432000199")
+        endereco_outro_cliente = EnderecoCliente.objects.create(
+            cliente=outro_cliente,
+            nome="Matriz",
+            logradouro="Rua B",
+            cidade="Campinas",
+            estado="SP",
+        )
+
+        form = LocacaoForm(
+            data={
+                "codigo": "LOC-0002",
+                "cliente": self.cliente.pk,
+                "data_inicio": "2026-07-10",
+                "data_fim": "2026-07-12",
+                "status": Locacao.Status.ORCAMENTO,
+                "endereco_entrega": endereco_outro_cliente.pk,
+                "valor_equipamentos": "0.00",
+                "valor_servicos": "0.00",
+                "valor_desconto": "0.00",
+                "valor_total": "0.00",
+                "observacoes": "",
+            }
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("endereco_entrega", form.errors)

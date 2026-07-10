@@ -1,6 +1,7 @@
 from django import forms
 
 from ativos.models import Ativo
+from clientes.models import EnderecoCliente
 
 from .models import ItemLocacao, Locacao
 
@@ -48,13 +49,24 @@ class LocacaoForm(forms.ModelForm):
             if field_name in placeholders:
                 field.widget.attrs.update({"placeholder": placeholders[field_name]})
 
+        cliente_id = self.data.get("cliente") if self.is_bound else self.instance.cliente_id
+        self.fields["endereco_entrega"].queryset = EnderecoCliente.objects.none()
+
+        if cliente_id:
+            self.fields["endereco_entrega"].queryset = EnderecoCliente.objects.filter(cliente_id=cliente_id)
+
     def clean(self):
         cleaned_data = super().clean()
+        cliente = cleaned_data.get("cliente")
         data_inicio = cleaned_data.get("data_inicio")
         data_fim = cleaned_data.get("data_fim")
+        endereco_entrega = cleaned_data.get("endereco_entrega")
 
         if data_inicio and data_fim and data_fim < data_inicio:
             raise forms.ValidationError("A data final nao pode ser anterior a data inicial.")
+
+        if cliente and endereco_entrega and endereco_entrega.cliente_id != cliente.id:
+            self.add_error("endereco_entrega", "Selecione um endereco vinculado ao cliente da locacao.")
 
         return cleaned_data
 
