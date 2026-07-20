@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>Alertas</h1>
+        <p>Ocorrencias calculadas a partir de locacoes, manutencao e rastreamento.</p>
+    </div>
+    <form class="toolbar" method="get">
+        <div class="module-search">
+            <input class="ui-input" type="search" name="q" value="{{ query }}" placeholder="Buscar alertas..." aria-label="Buscar alertas">
+        </div>
+        <button class="button button-muted" type="submit">Filtros</button>
+        <a class="button button-primary" href="{% url 'rastreamento' %}">Ver rastreamento</a>
+    </form>
+</div>
+
+<section class="metric-grid">
+    <article class="metric-card">
+        <span>Total de alertas</span>
+        <strong>{{ status_counts.todos }}</strong>
+        <small class="text-neutral">ocorrencias abertas</small>
+    </article>
+    <article class="metric-card">
+        <span>Alta prioridade</span>
+        <strong>{{ status_counts.altas }}</strong>
+        <small class="text-danger">exigem acao imediata</small>
+    </article>
+    <article class="metric-card">
+        <span>Media prioridade</span>
+        <strong>{{ status_counts.medias }}</strong>
+        <small class="text-warning">acompanhar hoje</small>
+    </article>
+    <article class="metric-card">
+        <span>Baixa prioridade</span>
+        <strong>{{ status_counts.baixas }}</strong>
+        <small class="text-success">monitoramento</small>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="tabs">
+        <a class="{% if not tipo_filter %}is-active{% endif %}" href="{% url 'alertas' %}{% if query %}?q={{ query|urlencode }}{% endif %}">Todos</a>
+        <a class="{% if tipo_filter == 'rastreamento' %}is-active{% endif %}" href="{% url 'alertas' %}?tipo=rastreamento{% if query %}&q={{ query|urlencode }}{% endif %}">Rastreamento</a>
+        <a class="{% if tipo_filter == 'manutencao' %}is-active{% endif %}" href="{% url 'alertas' %}?tipo=manutencao{% if query %}&q={{ query|urlencode }}{% endif %}">Manutencao</a>
+        <a class="{% if tipo_filter == 'locacao' %}is-active{% endif %}" href="{% url 'alertas' %}?tipo=locacao{% if query %}&q={{ query|urlencode }}{% endif %}">Locacoes</a>
+    </div>
+
+    {% if alertas %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Origem</th>
+                        <th>Referencia</th>
+                        <th>Mensagem</th>
+                        <th>Prioridade</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alerta in alertas %}
+                        <tr>
+                            <td>{{ alerta.tipo_label }}</td>
+                            <td><a href="{{ alerta.link }}">{{ alerta.origem }}</a></td>
+                            <td>{{ alerta.referencia }}</td>
+                            <td>{{ alerta.mensagem }}</td>
+                            <td><span class="badge badge-alert-{{ alerta.prioridade }}">{{ alerta.prioridade_label }}</span></td>
+                            <td class="actions-cell">
+                                <a href="{{ alerta.link }}">Ver</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="table-footer">
+            <span>Exibindo {{ alertas|length }} alerta{{ alertas|length|pluralize }}</span>
+            <div class="pagination">
+                <span class="is-current">1</span>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <strong>Nenhum alerta aberto</strong>
+            <p>Alertas serao exibidos quando houver risco em rastreamento, locacao ou manutencao.</p>
+            <a class="button button-primary" href="{% url 'dashboard' %}">Ver dashboard</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

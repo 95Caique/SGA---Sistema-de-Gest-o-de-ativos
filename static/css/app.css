@@ -731,6 +731,21 @@ td strong {
     color: var(--danger);
 }
 
+.badge-alert-alta {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.badge-alert-media {
+    background: var(--warning-soft);
+    color: #a16207;
+}
+
+.badge-alert-baixa {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
 .muted-text {
     color: #94a3b8;
     font-weight: 800;

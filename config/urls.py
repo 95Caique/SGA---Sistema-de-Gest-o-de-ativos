@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path
 
 from agenda.views import agenda_list
+from alertas.views import alertas_list
 from ativos.views import equipamento_create, equipamento_update, equipamentos_list
 from clientes.views import (
     cliente_contato_create,
@@ -87,7 +88,7 @@ urlpatterns = [
     path('manutencao/<int:pk>/finalizar/', manutencao_finalizar, name='manutencao_finalizar'),
     path('manutencao/<int:pk>/cancelar/', manutencao_cancelar, name='manutencao_cancelar'),
     path('rastreamento/', rastreamento_mapa, name='rastreamento'),
-    path('alertas/', views.module_page, {'module': 'alertas'}, name='alertas'),
+    path('alertas/', alertas_list, name='alertas'),
     path('relatorios/', relatorios_list, name='relatorios'),
     path('admin/', admin.site.urls),
 ]
