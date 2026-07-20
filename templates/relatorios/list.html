@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>Relatorios</h1>
+        <p>Indicadores consolidados de locacoes, equipamentos e operacao.</p>
+    </div>
+    <div class="toolbar">
+        <a class="button button-muted" href="{% url 'financeiro' %}">Financeiro</a>
+        <a class="button button-primary" href="{% url 'locacoes' %}">Ver locacoes</a>
+    </div>
+</div>
+
+<section class="metric-grid">
+    {% for indicador in indicadores %}
+        <article class="metric-card">
+            <span>{{ indicador.label }}</span>
+            <strong>{{ indicador.value }}</strong>
+            <small class="text-{{ indicador.tone }}">{{ indicador.trend }}</small>
+        </article>
+    {% endfor %}
+</section>
+
+<section class="dashboard-grid">
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Locacoes por status</h2>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Quantidade</th>
+                        <th>Participacao</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in locacoes_status %}
+                        <tr>
+                            <td><span class="badge badge-status-{{ item.status }}">{{ item.label }}</span></td>
+                            <td>{{ item.count }}</td>
+                            <td>{{ item.percent }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Equipamentos por status</h2>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Quantidade</th>
+                        <th>Participacao</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in ativos_status %}
+                        <tr>
+                            <td><span class="badge badge-status-{{ item.status }}">{{ item.label }}</span></td>
+                            <td>{{ item.count }}</td>
+                            <td>{{ item.percent }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
+
+<section class="dashboard-grid">
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Clientes por receita</h2>
+        </div>
+        {% if clientes_receita %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Locacoes</th>
+                            <th>Receita</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cliente in clientes_receita %}
+                            <tr>
+                                <td>
+                                    <strong>{{ cliente.nome }}</strong>
+                                    <small class="table-subtext">{{ cliente.documento }}</small>
+                                </td>
+                                <td>{{ cliente.total_locacoes }}</td>
+                                <td>{{ cliente.receita }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state compact">
+                <strong>Nenhuma receita registrada</strong>
+                <p>As receitas aparecem conforme locacoes forem cadastradas.</p>
+            </div>
+        {% endif %}
+    </article>
+
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Estoque e rastreamento</h2>
+        </div>
+        <div class="financial-grid">
+            <div>
+                <span>Rastreadores</span>
+                <strong>{{ rastreadores.total }}</strong>
+            </div>
+            <div>
+                <span>Online</span>
+                <strong class="text-success">{{ rastreadores.online }}</strong>
+            </div>
+            <div>
+                <span>Sem comunicacao</span>
+                <strong class="text-danger">{{ rastreadores.sem_comunicacao }}</strong>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Categoria</th>
+                        <th>Equipamentos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for categoria in categorias %}
+                        <tr>
+                            <td>{{ categoria.nome }}</td>
+                            <td>{{ categoria.total_ativos }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="2">
+                                <div class="empty-state compact">
+                                    <strong>Nenhuma categoria cadastrada</strong>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
+{% endblock %}

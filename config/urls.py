@@ -46,6 +46,7 @@ from manutencao.views import (
     manutencoes_list,
 )
 from rastreamento.views import rastreamento_mapa
+from relatorios.views import relatorios_list
 
 from . import views
 
@@ -87,6 +88,6 @@ urlpatterns = [
     path('manutencao/<int:pk>/cancelar/', manutencao_cancelar, name='manutencao_cancelar'),
     path('rastreamento/', rastreamento_mapa, name='rastreamento'),
     path('alertas/', views.module_page, {'module': 'alertas'}, name='alertas'),
-    path('relatorios/', views.module_page, {'module': 'relatorios'}, name='relatorios'),
+    path('relatorios/', relatorios_list, name='relatorios'),
     path('admin/', admin.site.urls),
 ]
