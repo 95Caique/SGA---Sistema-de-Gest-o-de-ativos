@@ -57,6 +57,25 @@ class ManutencaoOperacaoTests(TestCase):
         self.assertEqual(self.ativo.status, Ativo.Status.DISPONIVEL)
         self.assertIsNotNone(ordem.data_conclusao)
 
+    def test_cancela_ordem_e_libera_ativo(self):
+        ordem = OrdemManutencao.objects.create(
+            codigo="MAN-0001",
+            ativo=self.ativo,
+            tipo=OrdemManutencao.Tipo.CORRETIVA,
+            prioridade=OrdemManutencao.Prioridade.MEDIA,
+            descricao="Reparo cancelado",
+        )
+        ordem.colocar_ativo_em_manutencao()
+
+        response = self.client.post(reverse("manutencao_cancelar", kwargs={"pk": ordem.pk}))
+
+        self.ativo.refresh_from_db()
+        ordem.refresh_from_db()
+        self.assertRedirects(response, reverse("manutencao"))
+        self.assertEqual(ordem.status, OrdemManutencao.Status.CANCELADA)
+        self.assertEqual(self.ativo.status, Ativo.Status.DISPONIVEL)
+        self.assertIsNotNone(ordem.data_conclusao)
+
     def test_inicia_ordem_aberta(self):
         ordem = OrdemManutencao.objects.create(
             codigo="MAN-0001",
@@ -85,6 +104,22 @@ class ManutencaoOperacaoTests(TestCase):
         )
 
         response = self.client.post(reverse("manutencao_iniciar", kwargs={"pk": ordem.pk}))
+
+        ordem.refresh_from_db()
+        self.assertRedirects(response, reverse("manutencao"))
+        self.assertEqual(ordem.status, OrdemManutencao.Status.FINALIZADA)
+
+    def test_cancelar_bloqueia_ordem_finalizada(self):
+        ordem = OrdemManutencao.objects.create(
+            codigo="MAN-0001",
+            ativo=self.ativo,
+            tipo=OrdemManutencao.Tipo.CORRETIVA,
+            status=OrdemManutencao.Status.FINALIZADA,
+            prioridade=OrdemManutencao.Prioridade.MEDIA,
+            descricao="Reparo",
+        )
+
+        response = self.client.post(reverse("manutencao_cancelar", kwargs={"pk": ordem.pk}))
 
         ordem.refresh_from_db()
         self.assertRedirects(response, reverse("manutencao"))

@@ -60,10 +60,18 @@
                                         {% csrf_token %}
                                         <button class="button button-small button-muted" type="submit">Finalizar</button>
                                     </form>
+                                    <form class="inline-form" method="post" action="{% url 'manutencao_cancelar' ordem.pk %}">
+                                        {% csrf_token %}
+                                        <button class="button button-small button-muted" type="submit">Cancelar</button>
+                                    </form>
                                 {% elif ordem.status == 'em_andamento' %}
                                     <form class="inline-form" method="post" action="{% url 'manutencao_finalizar' ordem.pk %}">
                                         {% csrf_token %}
                                         <button class="button button-small button-muted" type="submit">Finalizar</button>
+                                    </form>
+                                    <form class="inline-form" method="post" action="{% url 'manutencao_cancelar' ordem.pk %}">
+                                        {% csrf_token %}
+                                        <button class="button button-small button-muted" type="submit">Cancelar</button>
                                     </form>
                                 {% else %}
                                     <span class="muted-text">-</span>

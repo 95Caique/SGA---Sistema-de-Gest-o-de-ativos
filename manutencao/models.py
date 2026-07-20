@@ -63,3 +63,12 @@ class OrdemManutencao(models.Model):
         self.save(update_fields=["status", "data_conclusao", "atualizado_em"])
         self.ativo.status = Ativo.Status.DISPONIVEL
         self.ativo.save(update_fields=["status", "atualizado_em"])
+
+    def cancelar(self):
+        from ativos.models import Ativo
+
+        self.status = self.Status.CANCELADA
+        self.data_conclusao = date.today()
+        self.save(update_fields=["status", "data_conclusao", "atualizado_em"])
+        self.ativo.status = Ativo.Status.DISPONIVEL
+        self.ativo.save(update_fields=["status", "atualizado_em"])

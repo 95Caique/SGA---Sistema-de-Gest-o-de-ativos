@@ -100,3 +100,18 @@ def manutencao_finalizar(request, pk):
     ordem.finalizar()
     messages.success(request, f"Ordem {ordem.codigo} finalizada com sucesso.")
     return redirect("manutencao")
+
+
+def manutencao_cancelar(request, pk):
+    ordem = get_object_or_404(OrdemManutencao, pk=pk)
+
+    if request.method != "POST":
+        return redirect("manutencao")
+
+    if ordem.status in [OrdemManutencao.Status.FINALIZADA, OrdemManutencao.Status.CANCELADA]:
+        messages.error(request, "Esta ordem nao pode ser cancelada.")
+        return redirect("manutencao")
+
+    ordem.cancelar()
+    messages.success(request, f"Ordem {ordem.codigo} cancelada com sucesso.")
+    return redirect("manutencao")
