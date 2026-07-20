@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+from agenda.views import agenda_list
 from ativos.views import equipamento_create, equipamento_update, equipamentos_list
 from clientes.views import (
     cliente_contato_create,
@@ -50,7 +51,7 @@ from . import views
 urlpatterns = [
     path('', views.home, name='home'),
     path('dashboard/', views.dashboard, name='dashboard'),
-    path('agenda/', views.module_page, {'module': 'agenda'}, name='agenda'),
+    path('agenda/', agenda_list, name='agenda'),
     path('locacoes/', locacoes_list, name='locacoes'),
     path('locacoes/nova/', locacao_create, name='locacao_create'),
     path('locacoes/<int:pk>/editar/', locacao_update, name='locacao_update'),
