@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>Financeiro</h1>
+        <p>Resumo de valores gerados pelas locacoes.</p>
+    </div>
+    <form class="toolbar" method="get">
+        <div class="module-search">
+            <input class="ui-input" type="search" name="q" value="{{ query }}" placeholder="Buscar financeiro..." aria-label="Buscar financeiro">
+        </div>
+        <button class="button button-muted" type="submit">Filtros</button>
+        <a class="button button-primary" href="{% url 'locacao_create' %}">+ Nova locacao</a>
+    </form>
+</div>
+
+<section class="metric-grid">
+    <article class="metric-card">
+        <span>Total previsto</span>
+        <strong>{{ resumo.total }}</strong>
+        <small class="text-success">Em aberto + recebido</small>
+    </article>
+    <article class="metric-card">
+        <span>Em aberto</span>
+        <strong>{{ resumo.aberto.valor }}</strong>
+        <small class="text-warning">{{ resumo.aberto.count }} locacao{{ resumo.aberto.count|pluralize:"es" }}</small>
+    </article>
+    <article class="metric-card">
+        <span>Recebido</span>
+        <strong>{{ resumo.recebido.valor }}</strong>
+        <small class="text-success">{{ resumo.recebido.count }} locacao{{ resumo.recebido.count|pluralize:"es" }}</small>
+    </article>
+    <article class="metric-card">
+        <span>Cancelado</span>
+        <strong>{{ resumo.cancelado.valor }}</strong>
+        <small class="text-danger">{{ resumo.cancelado.count }} locacao{{ resumo.cancelado.count|pluralize:"es" }}</small>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="tabs">
+        <a class="{% if not status_filter %}is-active{% endif %}" href="{% url 'financeiro' %}{% if query %}?q={{ query|urlencode }}{% endif %}">Todos</a>
+        <a class="{% if status_filter == 'aberto' %}is-active{% endif %}" href="{% url 'financeiro' %}?status=aberto{% if query %}&q={{ query|urlencode }}{% endif %}">Em aberto <span>{{ resumo.aberto.count }}</span></a>
+        <a class="{% if status_filter == 'recebido' %}is-active{% endif %}" href="{% url 'financeiro' %}?status=recebido{% if query %}&q={{ query|urlencode }}{% endif %}">Recebidos <span>{{ resumo.recebido.count }}</span></a>
+        <a class="{% if status_filter == 'cancelado' %}is-active{% endif %}" href="{% url 'financeiro' %}?status=cancelado{% if query %}&q={{ query|urlencode }}{% endif %}">Cancelados <span>{{ resumo.cancelado.count }}</span></a>
+    </div>
+
+    {% if locacoes %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Vencimento</th>
+                        <th>Descricao</th>
+                        <th>Cliente</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for locacao in locacoes %}
+                        <tr>
+                            <td>{{ locacao.data_fim|date:"d/m/Y" }}</td>
+                            <td><a href="{% url 'locacao_detail' locacao.pk %}">Locacao {{ locacao.codigo }}</a></td>
+                            <td>
+                                <strong>{{ locacao.cliente.nome }}</strong>
+                                <small class="table-subtext">{{ locacao.cliente.documento }}</small>
+                            </td>
+                            <td>R$ {{ locacao.valor_total }}</td>
+                            <td><span class="badge badge-status-{{ locacao.status }}">{{ locacao.get_status_display }}</span></td>
+                            <td class="actions-cell">
+                                <a href="{% url 'locacao_detail' locacao.pk %}">Ver</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="table-footer">
+            <span>Exibindo {{ locacoes|length }} lancamento{{ locacoes|length|pluralize }}</span>
+            <div class="pagination">
+                <span class="is-current">1</span>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <strong>Nenhum lancamento financeiro</strong>
+            <p>Os valores aparecem aqui conforme as locacoes forem cadastradas no sistema.</p>
+            <a class="button button-primary" href="{% url 'locacao_create' %}">+ Nova locacao</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

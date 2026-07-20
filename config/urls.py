@@ -28,6 +28,7 @@ from clientes.views import (
     cliente_update,
     clientes_list,
 )
+from financeiro.views import financeiro_list
 from locacoes.views import (
     locacao_ativar,
     locacao_create,
@@ -78,7 +79,7 @@ urlpatterns = [
         name='cliente_endereco_update',
     ),
     path('contratos/', views.module_page, {'module': 'contratos'}, name='contratos'),
-    path('financeiro/', views.module_page, {'module': 'financeiro'}, name='financeiro'),
+    path('financeiro/', financeiro_list, name='financeiro'),
     path('manutencao/', manutencoes_list, name='manutencao'),
     path('manutencao/nova/', manutencao_create, name='manutencao_create'),
     path('manutencao/<int:pk>/iniciar/', manutencao_iniciar, name='manutencao_iniciar'),
