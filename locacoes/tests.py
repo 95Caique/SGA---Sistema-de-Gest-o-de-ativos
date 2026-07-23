@@ -107,6 +107,32 @@ class LocacaoOperacaoTests(TestCase):
 
         self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
 
+    @patch("wkhtmltopdf.views.render_pdf_from_template", return_value=b"%PDF-1.4")
+    def test_gera_pdf_do_termo_de_devolucao(self, _render_pdf):
+        self.locacao.status = Locacao.Status.ATIVA
+        self.locacao.save()
+
+        response = self.client.get(reverse("termo_devolucao_pdf", kwargs={"pk": self.locacao.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertIn("inline", response["Content-Disposition"])
+        self.assertIn("termo-devolucao-LOC-0001.pdf", response["Content-Disposition"])
+
+    @patch("wkhtmltopdf.views.render_pdf_from_template", return_value=b"%PDF-1.4")
+    def test_gera_pdf_do_termo_de_devolucao_finalizada(self, _render_pdf):
+        self.locacao.status = Locacao.Status.FINALIZADA
+        self.locacao.save()
+
+        response = self.client.get(reverse("termo_devolucao_pdf", kwargs={"pk": self.locacao.pk}))
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_termo_de_devolucao_bloqueia_orcamento(self):
+        response = self.client.get(reverse("termo_devolucao_pdf", kwargs={"pk": self.locacao.pk}))
+
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
+
     def test_form_item_locacao_lista_apenas_ativos_disponiveis(self):
         ativo_locado = Ativo.objects.create(
             codigo="BET-002",

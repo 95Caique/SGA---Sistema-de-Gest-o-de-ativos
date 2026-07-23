@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <title>Termo de Devolucao {{ locacao.codigo }}</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 8mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            color: #111827;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10.5px;
+            line-height: 1.35;
+            margin: 0;
+        }
+
+        .document {
+            border: 2px solid #d1d5db;
+            min-height: 190mm;
+            padding: 18px 20px 14px;
+            position: relative;
+        }
+
+        .top,
+        .info-grid,
+        .return-grid,
+        .signatures {
+            display: table;
+            width: 100%;
+        }
+
+        .top {
+            margin-bottom: 14px;
+        }
+
+        .brand,
+        .company,
+        .title {
+            display: table-cell;
+            vertical-align: top;
+        }
+
+        .brand {
+            width: 245px;
+        }
+
+        .company {
+            width: 360px;
+            padding-left: 16px;
+        }
+
+        .title {
+            padding-right: 96px;
+            text-align: left;
+        }
+
+        .brand-mark {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 8px solid #f8b414;
+            border-right-color: #4f2ff0;
+            border-radius: 50%;
+            vertical-align: middle;
+        }
+
+        .brand-name {
+            display: inline-block;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        .brand-name strong {
+            display: block;
+            color: #050816;
+            font-size: 29px;
+            line-height: 1;
+        }
+
+        .brand-name span {
+            display: block;
+            color: #374151;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+
+        .company strong {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .title h1 {
+            color: #050816;
+            font-size: 25px;
+            letter-spacing: 1px;
+            line-height: 1;
+            margin: 0 0 8px;
+            text-transform: uppercase;
+        }
+
+        .title h2 {
+            font-size: 13px;
+            margin: 0 0 14px;
+        }
+
+        .meta {
+            display: table;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            min-width: 320px;
+        }
+
+        .meta div {
+            display: table-cell;
+            padding: 10px 14px;
+            vertical-align: top;
+        }
+
+        .meta div + div {
+            border-left: 1px solid #d1d5db;
+        }
+
+        .meta span,
+        .meta strong {
+            display: block;
+        }
+
+        .meta span {
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .qr {
+            position: absolute;
+            right: 34px;
+            top: 24px;
+            width: 72px;
+            height: 72px;
+            border: 4px solid #111827;
+            background:
+                repeating-linear-gradient(90deg, #111827 0 6px, #ffffff 6px 12px),
+                repeating-linear-gradient(0deg, rgba(17, 24, 39, 0.42) 0 6px, transparent 6px 12px);
+        }
+
+        .info-grid {
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .info-box {
+            display: table-cell;
+            width: 33.333%;
+            padding: 11px 14px;
+            vertical-align: top;
+        }
+
+        .info-box + .info-box {
+            border-left: 1px solid #d1d5db;
+        }
+
+        h3 {
+            color: #111827;
+            font-size: 11px;
+            font-weight: bold;
+            margin: 0 0 8px;
+            text-transform: uppercase;
+        }
+
+        .data-row {
+            display: table;
+            width: 100%;
+            margin-bottom: 4px;
+        }
+
+        .data-row span,
+        .data-row strong {
+            display: table-cell;
+            vertical-align: top;
+        }
+
+        .data-row span {
+            width: 74px;
+            font-weight: bold;
+        }
+
+        .items {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+        }
+
+        .items th,
+        .items td {
+            border-bottom: 1px solid #d1d5db;
+            border-right: 1px solid #e5e7eb;
+            padding: 6px 8px;
+            vertical-align: middle;
+        }
+
+        .items th {
+            background: #f3f4f6;
+            font-size: 9.5px;
+            text-align: center;
+        }
+
+        .items td {
+            font-weight: bold;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .check {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border: 2px solid #c7ccd4;
+            color: #111827;
+            font-size: 11px;
+            line-height: 12px;
+            text-align: center;
+        }
+
+        .return-grid {
+            margin-bottom: 8px;
+        }
+
+        .accessories,
+        .boolean-box {
+            display: table-cell;
+            border: 1px solid #d1d5db;
+            padding: 10px 14px;
+            vertical-align: top;
+        }
+
+        .accessories {
+            width: 55%;
+        }
+
+        .boolean-box {
+            width: 22.5%;
+            text-align: center;
+        }
+
+        .option {
+            display: inline-block;
+            margin-right: 22px;
+            white-space: nowrap;
+        }
+
+        .observations {
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            min-height: 48px;
+            margin-bottom: 18px;
+            padding: 10px 14px;
+        }
+
+        .signatures {
+            margin-top: 8px;
+        }
+
+        .signature {
+            display: table-cell;
+            width: 50%;
+            border: 1px solid #d1d5db;
+            height: 82px;
+            padding: 11px 18px;
+            vertical-align: top;
+        }
+
+        .signature + .signature {
+            border-left: 0;
+        }
+
+        .line {
+            border-top: 1px solid #6b7280;
+            margin: 30px auto 4px;
+            width: 70%;
+        }
+
+        .signature p {
+            margin: 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="document">
+        <div class="qr"></div>
+
+        <header class="top">
+            <div class="brand">
+                <span class="brand-mark"></span>
+                <span class="brand-name">
+                    <strong>Loca360</strong>
+                    <span>Gestao de Ativos</span>
+                </span>
+            </div>
+            <div class="company">
+                <strong>Locadora Alpha LTDA</strong>
+                CNPJ: 12.345.678/0001-99<br>
+                (62) 99999-1111 | contato@loca360.com.br<br>
+                Av. Perimetral Norte, 1234 - Setor Aeroporto<br>
+                Goiania - GO - CEP: 74435-020
+            </div>
+            <div class="title">
+                <h1>Termo de Devolucao</h1>
+                <h2>Nº CT-{{ locacao.codigo }}</h2>
+                <div class="meta">
+                    <div>
+                        <span>Data da Devolucao</span>
+                        <strong>{{ data_devolucao|date:"d/m/Y" }} as {{ data_devolucao|date:"H:i" }}</strong>
+                    </div>
+                    <div>
+                        <span>Contrato / Locacao</span>
+                        <strong>{{ locacao.codigo }}</strong>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <section class="info-grid">
+            <div class="info-box">
+                <h3>Dados do Cliente</h3>
+                <div class="data-row"><span>Cliente:</span><strong>{{ locacao.cliente.nome }}</strong></div>
+                <div class="data-row"><span>CNPJ/CPF:</span><strong>{{ locacao.cliente.documento }}</strong></div>
+                <div class="data-row"><span>Telefone:</span><strong>{{ locacao.cliente.telefone|default:"-" }}</strong></div>
+            </div>
+            <div class="info-box">
+                <h3>Local de Devolucao</h3>
+                <strong>Locadora Alpha LTDA</strong><br>
+                Av. Perimetral Norte, 1234<br>
+                Setor Aeroporto - Goiania - GO
+            </div>
+            <div class="info-box">
+                <h3>Responsavel pela Devolucao</h3>
+                <div class="data-row"><span>Nome:</span><strong>________________________</strong></div>
+                <div class="data-row"><span>CPF:</span><strong>________________________</strong></div>
+                <div class="data-row"><span>Cargo:</span><strong>________________________</strong></div>
+                <div class="data-row"><span>Telefone:</span><strong>________________________</strong></div>
+            </div>
+        </section>
+
+        <h3>Equipamentos Devolvidos</h3>
+        <table class="items">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Equipamento</th>
+                    <th>Codigo</th>
+                    <th>Patrimonio</th>
+                    <th>Qtd</th>
+                    <th colspan="3">Estado de Conservacao</th>
+                    <th>Ocorrencias / Observacoes</th>
+                </tr>
+                <tr>
+                    <th colspan="5"></th>
+                    <th>Otimo</th>
+                    <th>Bom</th>
+                    <th>Regular</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in itens %}
+                    <tr>
+                        <td class="center">{{ forloop.counter }}</td>
+                        <td>{{ item.ativo.nome }}</td>
+                        <td class="center">{{ item.ativo.codigo }}</td>
+                        <td class="center">{{ item.ativo.patrimonio|default:"-" }}</td>
+                        <td class="center">{{ item.quantidade }}</td>
+                        <td class="center"><span class="check"></span></td>
+                        <td class="center"><span class="check">x</span></td>
+                        <td class="center"><span class="check"></span></td>
+                        <td>{{ item.observacoes|default:"Sem ocorrencias." }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="9" class="center">Nenhum equipamento vinculado a locacao.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <section class="return-grid">
+            <div class="accessories">
+                <h3>Acessorios / Itens Complementares</h3>
+                <span class="option"><span class="check">x</span> Cabos</span>
+                <span class="option"><span class="check"></span> Chaves</span>
+                <span class="option"><span class="check"></span> Carregadores</span>
+                <span class="option"><span class="check"></span> Manuais</span>
+                <span class="option"><span class="check"></span> Outros ________</span>
+            </div>
+            <div class="boolean-box">
+                <h3>Houve Avaria?</h3>
+                <span class="option"><span class="check"></span> Sim</span>
+                <span class="option"><span class="check">x</span> Nao</span>
+            </div>
+            <div class="boolean-box">
+                <h3>Houve Falta de Itens?</h3>
+                <span class="option"><span class="check"></span> Sim</span>
+                <span class="option"><span class="check">x</span> Nao</span>
+            </div>
+        </section>
+
+        <section class="observations">
+            <h3>Observacoes Gerais</h3>
+            {{ locacao.observacoes|default:"Desgaste normal conforme uso em obra." }}
+        </section>
+
+        <section class="signatures">
+            <div class="signature">
+                <h3>Locadora</h3>
+                <div class="line"></div>
+                <p>Assinatura / Carimbo</p>
+            </div>
+            <div class="signature">
+                <h3>Cliente / Responsavel</h3>
+                <div class="line"></div>
+                <p>Assinatura</p>
+                <p>Data: ______ / ______ / ______</p>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

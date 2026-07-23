@@ -43,6 +43,7 @@ from locacoes.views import (
     orcamento_aprovar,
     orcamento_pdf,
     orcamentos_list,
+    termo_devolucao_pdf,
     termo_entrega_pdf,
 )
 from manutencao.views import (
@@ -67,6 +68,7 @@ urlpatterns = [
     path('locacoes/<int:pk>/ativar/', locacao_ativar, name='locacao_ativar'),
     path('locacoes/<int:pk>/cancelar/', locacao_cancelar, name='locacao_cancelar'),
     path('locacoes/<int:pk>/finalizar/', locacao_finalizar, name='locacao_finalizar'),
+    path('locacoes/<int:pk>/termo-devolucao/', termo_devolucao_pdf, name='termo_devolucao_pdf'),
     path('locacoes/<int:pk>/termo-entrega/', termo_entrega_pdf, name='termo_entrega_pdf'),
     path('locacoes/<int:pk>/itens/<int:item_pk>/remover/', locacao_item_remove, name='locacao_item_remove'),
     path('locacoes/<int:pk>/', locacao_detail, name='locacao_detail'),

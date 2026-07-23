@@ -16,10 +16,13 @@
         {% endif %}
         {% if locacao.status == 'ativa' %}
             <a class="button button-muted" href="{% url 'termo_entrega_pdf' locacao.pk %}">Termo entrega</a>
+            <a class="button button-muted" href="{% url 'termo_devolucao_pdf' locacao.pk %}">Termo devolucao</a>
             <form method="post" action="{% url 'locacao_finalizar' locacao.pk %}" class="inline-form">
                 {% csrf_token %}
                 <button class="button button-muted" type="submit">Finalizar locacao</button>
             </form>
+        {% elif locacao.status == 'finalizada' %}
+            <a class="button button-muted" href="{% url 'termo_devolucao_pdf' locacao.pk %}">Termo devolucao</a>
         {% elif locacao.status != 'finalizada' and locacao.status != 'cancelada' %}
             <form method="post" action="{% url 'locacao_ativar' locacao.pk %}" class="inline-form">
                 {% csrf_token %}
