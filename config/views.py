@@ -13,6 +13,7 @@ NAV_ITEMS = [
     {"label": "Dashboard", "url_name": "dashboard", "icon": "D"},
     {"label": "Agenda", "url_name": "agenda", "icon": "A"},
     {"label": "Locacoes", "url_name": "locacoes", "icon": "L"},
+    {"label": "Orcamentos", "url_name": "orcamentos", "icon": "O"},
     {"label": "Equipamentos", "url_name": "equipamentos", "icon": "E"},
     {"label": "Clientes", "url_name": "clientes", "icon": "C"},
     {"label": "Contratos", "url_name": "contratos", "icon": "K"},

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>Orcamentos</h1>
+        <p>Propostas comerciais ainda nao aprovadas para locacao.</p>
+    </div>
+    <form class="toolbar" method="get">
+        <div class="module-search">
+            <input class="ui-input" type="search" name="q" value="{{ query }}" placeholder="Buscar orcamentos..." aria-label="Buscar orcamentos">
+        </div>
+        <button class="button button-muted" type="submit">Filtros</button>
+        <a class="button button-primary" href="{% url 'locacao_create' %}">+ Novo orcamento</a>
+    </form>
+</div>
+
+<section class="metric-grid">
+    <article class="metric-card">
+        <span>Orcamentos</span>
+        <strong>{{ status_counts.todos }}</strong>
+        <small class="text-neutral">em elaboracao</small>
+    </article>
+    <article class="metric-card">
+        <span>Prontos</span>
+        <strong>{{ status_counts.prontos }}</strong>
+        <small class="text-success">com itens adicionados</small>
+    </article>
+    <article class="metric-card">
+        <span>Sem itens</span>
+        <strong>{{ status_counts.sem_itens }}</strong>
+        <small class="text-warning">aguardando equipamentos</small>
+    </article>
+    <article class="metric-card">
+        <span>Proxima etapa</span>
+        <strong>Agenda</strong>
+        <small class="text-neutral">aprovado vira locacao agendada</small>
+    </article>
+</section>
+
+<section class="panel">
+    {% if orcamentos %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Orcamento</th>
+                        <th>Cliente</th>
+                        <th>Periodo</th>
+                        <th>Itens</th>
+                        <th>Valor total</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for orcamento in orcamentos %}
+                        <tr>
+                            <td><a href="{% url 'locacao_detail' orcamento.pk %}">{{ orcamento.codigo }}</a></td>
+                            <td>
+                                <strong>{{ orcamento.cliente.nome }}</strong>
+                                <small class="table-subtext">{{ orcamento.cliente.documento }}</small>
+                            </td>
+                            <td>{{ orcamento.data_inicio|date:"d/m/Y" }} - {{ orcamento.data_fim|date:"d/m/Y" }}</td>
+                            <td>{{ orcamento.total_itens }} item{{ orcamento.total_itens|pluralize }}</td>
+                            <td>R$ {{ orcamento.valor_total }}</td>
+                            <td><span class="badge badge-status-{{ orcamento.status }}">{{ orcamento.get_status_display }}</span></td>
+                            <td class="actions-cell">
+                                {% if orcamento.total_itens %}
+                                    <form class="inline-form" method="post" action="{% url 'orcamento_aprovar' orcamento.pk %}">
+                                        {% csrf_token %}
+                                        <button class="button button-small button-muted" type="submit">Aprovar</button>
+                                    </form>
+                                {% endif %}
+                                <a href="{% url 'locacao_detail' orcamento.pk %}">Ver</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="table-footer">
+            <span>Exibindo {{ orcamentos|length }} orcamento{{ orcamentos|length|pluralize }}</span>
+            <div class="pagination">
+                <span class="is-current">1</span>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <strong>Nenhum orcamento aberto</strong>
+            <p>Crie uma locacao como orcamento para montar a proposta e aprovar quando estiver pronta.</p>
+            <a class="button button-primary" href="{% url 'locacao_create' %}">+ Novo orcamento</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

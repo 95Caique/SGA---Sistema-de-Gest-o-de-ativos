@@ -247,6 +247,42 @@ class LocacaoOperacaoTests(TestCase):
         self.assertContains(response, "LOC-0002")
         self.assertNotContains(response, "LOC-0001")
 
+    def test_lista_orcamentos_exibe_apenas_locacoes_em_orcamento(self):
+        Locacao.objects.create(
+            codigo="LOC-0002",
+            cliente=self.cliente,
+            data_inicio=date(2026, 7, 10),
+            data_fim=date(2026, 7, 12),
+            status=Locacao.Status.AGENDADA,
+        )
+
+        response = self.client.get(reverse("orcamentos"))
+
+        self.assertContains(response, "LOC-0001")
+        self.assertNotContains(response, "LOC-0002")
+
+    def test_aprova_orcamento_com_item(self):
+        ItemLocacao.objects.create(
+            locacao=self.locacao,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("400.00"),
+        )
+
+        response = self.client.post(reverse("orcamento_aprovar", kwargs={"pk": self.locacao.pk}))
+
+        self.locacao.refresh_from_db()
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
+        self.assertEqual(self.locacao.status, Locacao.Status.AGENDADA)
+
+    def test_aprovar_orcamento_bloqueia_sem_item(self):
+        response = self.client.post(reverse("orcamento_aprovar", kwargs={"pk": self.locacao.pk}))
+
+        self.locacao.refresh_from_db()
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
+        self.assertEqual(self.locacao.status, Locacao.Status.ORCAMENTO)
+
     def test_edita_locacao_em_orcamento(self):
         response = self.client.post(
             reverse("locacao_update", kwargs={"pk": self.locacao.pk}),

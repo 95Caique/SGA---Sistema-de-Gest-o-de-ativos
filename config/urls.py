@@ -39,6 +39,8 @@ from locacoes.views import (
     locacao_item_remove,
     locacao_update,
     locacoes_list,
+    orcamento_aprovar,
+    orcamentos_list,
 )
 from manutencao.views import (
     manutencao_cancelar,
@@ -63,6 +65,8 @@ urlpatterns = [
     path('locacoes/<int:pk>/finalizar/', locacao_finalizar, name='locacao_finalizar'),
     path('locacoes/<int:pk>/itens/<int:item_pk>/remover/', locacao_item_remove, name='locacao_item_remove'),
     path('locacoes/<int:pk>/', locacao_detail, name='locacao_detail'),
+    path('orcamentos/', orcamentos_list, name='orcamentos'),
+    path('orcamentos/<int:pk>/aprovar/', orcamento_aprovar, name='orcamento_aprovar'),
     path('equipamentos/', equipamentos_list, name='equipamentos'),
     path('equipamentos/novo/', equipamento_create, name='equipamento_create'),
     path('equipamentos/<int:pk>/editar/', equipamento_update, name='equipamento_update'),

@@ -51,6 +51,43 @@ def locacoes_list(request):
     )
 
 
+def orcamentos_list(request):
+    query = request.GET.get("q", "").strip()
+    orcamentos = (
+        Locacao.objects.select_related("cliente")
+        .filter(status=Locacao.Status.ORCAMENTO)
+        .annotate(total_itens=Count("itens"))
+        .order_by("-data_inicio", "codigo")
+    )
+
+    if query:
+        orcamentos = orcamentos.filter(
+            Q(codigo__icontains=query)
+            | Q(cliente__nome__icontains=query)
+            | Q(cliente__documento__icontains=query)
+            | Q(observacoes__icontains=query)
+        )
+
+    status_counts = {
+        "todos": orcamentos.count(),
+        "sem_itens": orcamentos.filter(total_itens=0).count(),
+        "prontos": orcamentos.filter(total_itens__gt=0).count(),
+    }
+
+    return render(
+        request,
+        "orcamentos/list.html",
+        with_layout(
+            {
+                "page_title": "Orcamentos",
+                "orcamentos": orcamentos,
+                "query": query,
+                "status_counts": status_counts,
+            }
+        ),
+    )
+
+
 def locacao_create(request):
     if request.method == "POST":
         form = LocacaoForm(request.POST)
@@ -168,6 +205,26 @@ def locacao_item_remove(request, pk, item_pk):
     item.delete()
     locacao.recalcular_totais()
     messages.success(request, f"Ativo {codigo_ativo} removido da locacao.")
+    return redirect("locacao_detail", pk=locacao.pk)
+
+
+def orcamento_aprovar(request, pk):
+    locacao = get_object_or_404(Locacao, pk=pk)
+
+    if request.method != "POST":
+        return redirect("orcamentos")
+
+    if locacao.status != Locacao.Status.ORCAMENTO:
+        messages.error(request, "Somente orcamentos podem ser aprovados.")
+        return redirect("locacao_detail", pk=locacao.pk)
+
+    if not locacao.itens.exists():
+        messages.error(request, "Adicione pelo menos um equipamento antes de aprovar o orcamento.")
+        return redirect("locacao_detail", pk=locacao.pk)
+
+    locacao.status = Locacao.Status.AGENDADA
+    locacao.save(update_fields=["status", "atualizado_em"])
+    messages.success(request, f"Orcamento {locacao.codigo} aprovado com sucesso.")
     return redirect("locacao_detail", pk=locacao.pk)
 
 
