@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -282,6 +283,50 @@ class LocacaoOperacaoTests(TestCase):
         self.locacao.refresh_from_db()
         self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
         self.assertEqual(self.locacao.status, Locacao.Status.ORCAMENTO)
+
+    @patch("wkhtmltopdf.views.render_pdf_from_template", return_value=b"%PDF-1.4")
+    def test_gera_pdf_do_orcamento(self, _render_pdf):
+        response = self.client.get(reverse("orcamento_pdf", kwargs={"pk": self.locacao.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertIn("inline", response["Content-Disposition"])
+        self.assertIn("orcamento-LOC-0001.pdf", response["Content-Disposition"])
+
+    def test_pdf_de_orcamento_bloqueia_locacao_agendada(self):
+        self.locacao.status = Locacao.Status.AGENDADA
+        self.locacao.save()
+
+        response = self.client.get(reverse("orcamento_pdf", kwargs={"pk": self.locacao.pk}))
+
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
+
+    def test_cancela_orcamento(self):
+        response = self.client.post(reverse("locacao_cancelar", kwargs={"pk": self.locacao.pk}))
+
+        self.locacao.refresh_from_db()
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
+        self.assertEqual(self.locacao.status, Locacao.Status.CANCELADA)
+
+    def test_cancela_locacao_agendada(self):
+        self.locacao.status = Locacao.Status.AGENDADA
+        self.locacao.save()
+
+        response = self.client.post(reverse("locacao_cancelar", kwargs={"pk": self.locacao.pk}))
+
+        self.locacao.refresh_from_db()
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
+        self.assertEqual(self.locacao.status, Locacao.Status.CANCELADA)
+
+    def test_cancelar_bloqueia_locacao_ativa(self):
+        self.locacao.status = Locacao.Status.ATIVA
+        self.locacao.save()
+
+        response = self.client.post(reverse("locacao_cancelar", kwargs={"pk": self.locacao.pk}))
+
+        self.locacao.refresh_from_db()
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
+        self.assertEqual(self.locacao.status, Locacao.Status.ATIVA)
 
     def test_edita_locacao_em_orcamento(self):
         response = self.client.post(

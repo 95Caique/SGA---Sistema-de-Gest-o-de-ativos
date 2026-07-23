@@ -1,7 +1,11 @@
+from datetime import timedelta
+
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from wkhtmltopdf.views import PDFTemplateResponse
 
 from ativos.models import Ativo
 from config.views import with_layout
@@ -225,6 +229,52 @@ def orcamento_aprovar(request, pk):
     locacao.status = Locacao.Status.AGENDADA
     locacao.save(update_fields=["status", "atualizado_em"])
     messages.success(request, f"Orcamento {locacao.codigo} aprovado com sucesso.")
+    return redirect("locacao_detail", pk=locacao.pk)
+
+
+def orcamento_pdf(request, pk):
+    locacao = get_object_or_404(Locacao.objects.select_related("cliente", "endereco_entrega"), pk=pk)
+
+    if locacao.status != Locacao.Status.ORCAMENTO:
+        messages.error(request, "PDF de orcamento disponivel apenas para locacoes em orcamento.")
+        return redirect("locacao_detail", pk=locacao.pk)
+
+    itens = locacao.itens.select_related("ativo", "ativo__categoria").order_by("ativo__codigo")
+    data_emissao = timezone.localdate()
+    filename = f"orcamento-{locacao.codigo}.pdf"
+    return PDFTemplateResponse(
+        request=request,
+        template="orcamentos/pdf.html",
+        context={
+            "locacao": locacao,
+            "itens": itens,
+            "data_emissao": data_emissao,
+            "data_validade": data_emissao + timedelta(days=10),
+            "periodo_dias": max((locacao.data_fim - locacao.data_inicio).days + 1, 1),
+        },
+        filename=filename,
+        show_content_in_browser=True,
+        cmd_options={
+            "quiet": True,
+            "encoding": "utf8",
+            "enable_local_file_access": True,
+        },
+    )
+
+
+def locacao_cancelar(request, pk):
+    locacao = get_object_or_404(Locacao, pk=pk)
+
+    if request.method != "POST":
+        return redirect("locacao_detail", pk=locacao.pk)
+
+    if locacao.status not in [Locacao.Status.ORCAMENTO, Locacao.Status.AGENDADA]:
+        messages.error(request, "Somente orcamentos ou locacoes agendadas podem ser cancelados.")
+        return redirect("locacao_detail", pk=locacao.pk)
+
+    locacao.status = Locacao.Status.CANCELADA
+    locacao.save(update_fields=["status", "atualizado_em"])
+    messages.success(request, f"Locacao {locacao.codigo} cancelada com sucesso.")
     return redirect("locacao_detail", pk=locacao.pk)
 
 

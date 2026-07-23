@@ -11,6 +11,9 @@
         {% if can_edit_itens %}
             <a class="button button-muted" href="{% url 'locacao_update' locacao.pk %}">Editar</a>
         {% endif %}
+        {% if locacao.status == 'orcamento' %}
+            <a class="button button-muted" href="{% url 'orcamento_pdf' locacao.pk %}">PDF</a>
+        {% endif %}
         {% if locacao.status == 'ativa' %}
             <form method="post" action="{% url 'locacao_finalizar' locacao.pk %}" class="inline-form">
                 {% csrf_token %}
@@ -20,6 +23,10 @@
             <form method="post" action="{% url 'locacao_ativar' locacao.pk %}" class="inline-form">
                 {% csrf_token %}
                 <button class="button button-primary" type="submit">Ativar locacao</button>
+            </form>
+            <form method="post" action="{% url 'locacao_cancelar' locacao.pk %}" class="inline-form">
+                {% csrf_token %}
+                <button class="button button-danger" type="submit">Cancelar</button>
             </form>
         {% endif %}
         <a class="button button-primary" href="{% url 'locacao_create' %}">+ Nova locacao</a>

@@ -72,6 +72,11 @@
                                         <button class="button button-small button-muted" type="submit">Aprovar</button>
                                     </form>
                                 {% endif %}
+                                <a href="{% url 'orcamento_pdf' orcamento.pk %}">PDF</a>
+                                <form class="inline-form" method="post" action="{% url 'locacao_cancelar' orcamento.pk %}">
+                                    {% csrf_token %}
+                                    <button class="button button-small button-danger" type="submit">Cancelar</button>
+                                </form>
                                 <a href="{% url 'locacao_detail' orcamento.pk %}">Ver</a>
                             </td>
                         </tr>

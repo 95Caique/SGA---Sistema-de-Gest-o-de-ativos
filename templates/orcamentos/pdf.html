@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <title>Orcamento {{ locacao.codigo }}</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 8mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            color: #111827;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            line-height: 1.35;
+            margin: 0;
+        }
+
+        .document {
+            border: 2px solid #d1d5db;
+            min-height: 190mm;
+            padding: 18px 20px 12px;
+        }
+
+        .top {
+            display: table;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .brand,
+        .company,
+        .title {
+            display: table-cell;
+            vertical-align: top;
+        }
+
+        .brand {
+            width: 255px;
+        }
+
+        .company {
+            width: 390px;
+            padding-left: 18px;
+        }
+
+        .title {
+            text-align: right;
+        }
+
+        .brand-mark {
+            display: inline-block;
+            width: 52px;
+            height: 52px;
+            border: 8px solid #f8b414;
+            border-right-color: #4f2ff0;
+            border-bottom-color: #f8b414;
+            border-radius: 50%;
+            vertical-align: middle;
+        }
+
+        .brand-name {
+            display: inline-block;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        .brand-name strong {
+            display: block;
+            color: #050816;
+            font-size: 30px;
+            line-height: 1;
+        }
+
+        .brand-name span {
+            display: block;
+            color: #374151;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+
+        .company strong {
+            display: block;
+            font-size: 15px;
+            margin-bottom: 3px;
+        }
+
+        .title h1 {
+            color: #050816;
+            font-size: 30px;
+            letter-spacing: 1px;
+            line-height: 1;
+            margin: 0 0 8px;
+            text-transform: uppercase;
+        }
+
+        .title h2 {
+            font-size: 15px;
+            margin: 0 0 24px;
+        }
+
+        .title-meta {
+            display: inline-table;
+            margin-right: 96px;
+            text-align: left;
+        }
+
+        .title-meta div {
+            display: table-row;
+        }
+
+        .title-meta span,
+        .title-meta strong {
+            display: table-cell;
+            padding: 2px 6px;
+        }
+
+        .qr {
+            position: absolute;
+            right: 34px;
+            top: 24px;
+            width: 72px;
+            height: 72px;
+            border: 4px solid #111827;
+            background:
+                repeating-linear-gradient(90deg, #111827 0 6px, #ffffff 6px 12px),
+                repeating-linear-gradient(0deg, rgba(17, 24, 39, 0.42) 0 6px, transparent 6px 12px);
+        }
+
+        .box-grid {
+            display: table;
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            margin-bottom: 14px;
+        }
+
+        .box {
+            display: table-cell;
+            width: 50%;
+            padding: 12px 16px;
+            vertical-align: top;
+        }
+
+        .box + .box {
+            border-left: 1px solid #d1d5db;
+        }
+
+        .box h3,
+        .section-title {
+            color: #111827;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 0 0 10px;
+            text-transform: uppercase;
+        }
+
+        .data-row {
+            display: table;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        .data-row span,
+        .data-row strong {
+            display: table-cell;
+            vertical-align: top;
+        }
+
+        .data-row span {
+            width: 86px;
+            font-weight: bold;
+        }
+
+        .items {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+        .items th,
+        .items td {
+            border-bottom: 1px solid #d1d5db;
+            border-right: 1px solid #e5e7eb;
+            padding: 7px 8px;
+            vertical-align: middle;
+        }
+
+        .items th {
+            background: #f3f4f6;
+            font-size: 10px;
+            text-align: center;
+        }
+
+        .items td {
+            font-weight: bold;
+        }
+
+        .items .center {
+            text-align: center;
+        }
+
+        .items .money {
+            text-align: right;
+        }
+
+        .equipment {
+            display: table;
+            width: 100%;
+        }
+
+        .thumb,
+        .equipment-text {
+            display: table-cell;
+            vertical-align: middle;
+        }
+
+        .thumb {
+            width: 52px;
+        }
+
+        .thumb span {
+            display: inline-block;
+            width: 44px;
+            height: 34px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            background: #fff7db;
+            color: #0F4D0F;
+            font-size: 10px;
+            font-weight: bold;
+            line-height: 34px;
+            text-align: center;
+        }
+
+        .equipment-text small {
+            display: block;
+            color: #374151;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+
+        .bottom-grid {
+            display: table;
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .conditions,
+        .totals {
+            display: table-cell;
+            vertical-align: top;
+        }
+
+        .conditions {
+            width: 62%;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            padding: 10px 14px;
+        }
+
+        .conditions ul {
+            margin: 0;
+            padding-left: 15px;
+        }
+
+        .conditions li {
+            margin-bottom: 4px;
+        }
+
+        .totals {
+            padding-left: 24px;
+        }
+
+        .totals table {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-collapse: collapse;
+        }
+
+        .totals td {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 7px 10px;
+            font-weight: bold;
+        }
+
+        .totals td:last-child {
+            text-align: right;
+        }
+
+        .totals .total-row td {
+            color: #050816;
+            font-size: 16px;
+            padding-top: 10px;
+            text-transform: uppercase;
+        }
+
+        .signatures {
+            display: table;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .signature {
+            display: table-cell;
+            width: 50%;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            height: 72px;
+            padding: 10px 18px;
+            vertical-align: top;
+        }
+
+        .signature + .signature {
+            border-left: 0;
+        }
+
+        .line {
+            border-top: 1px solid #6b7280;
+            margin: 32px auto 4px;
+            width: 72%;
+        }
+
+        .signature p {
+            margin: 0;
+            text-align: center;
+        }
+
+        .thanks {
+            font-weight: bold;
+            margin-top: 4px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="document">
+        <div class="qr"></div>
+
+        <header class="top">
+            <div class="brand">
+                <span class="brand-mark"></span>
+                <span class="brand-name">
+                    <strong>Loca360</strong>
+                    <span>Gestao de Ativos</span>
+                </span>
+            </div>
+            <div class="company">
+                <strong>Locadora Alpha LTDA</strong>
+                CNPJ: 12.345.678/0001-99<br>
+                (62) 99999-1111 | contato@loca360.com.br<br>
+                Av. Perimetral Norte, 1234 - Setor Aeroporto<br>
+                Goiania - GO - CEP: 74435-020
+            </div>
+            <div class="title">
+                <h1>Orcamento</h1>
+                <h2>Nº ORC-{{ locacao.codigo }}</h2>
+                <div class="title-meta">
+                    <div>
+                        <span>Data:</span>
+                        <strong>{{ data_emissao|date:"d/m/Y" }}</strong>
+                    </div>
+                    <div>
+                        <span>Validade:</span>
+                        <strong>{{ data_validade|date:"d/m/Y" }}</strong>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <section class="box-grid">
+            <div class="box">
+                <h3>Dados do Cliente</h3>
+                <div class="data-row"><span>Cliente:</span><strong>{{ locacao.cliente.nome }}</strong></div>
+                <div class="data-row"><span>CNPJ/CPF:</span><strong>{{ locacao.cliente.documento }}</strong></div>
+                <div class="data-row"><span>Telefone:</span><strong>{{ locacao.cliente.telefone|default:"-" }}</strong></div>
+                <div class="data-row"><span>E-mail:</span><strong>{{ locacao.cliente.email|default:"-" }}</strong></div>
+            </div>
+            <div class="box">
+                <h3>Endereco de Entrega</h3>
+                {% if locacao.endereco_entrega %}
+                    <strong>{{ locacao.endereco_entrega.logradouro }}, {{ locacao.endereco_entrega.numero|default:"S/N" }}</strong><br>
+                    {{ locacao.endereco_entrega.bairro|default:"-" }} - {{ locacao.endereco_entrega.cidade }} - {{ locacao.endereco_entrega.estado }}<br>
+                    CEP: {{ locacao.endereco_entrega.cep|default:"-" }}
+                {% else %}
+                    <strong>Endereco nao informado</strong><br>
+                    Definir endereco antes da aprovacao final.
+                {% endif %}
+            </div>
+        </section>
+
+        <h3 class="section-title">Itens do Orcamento</h3>
+        <table class="items">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Equipamento</th>
+                    <th>Codigo</th>
+                    <th>Categoria</th>
+                    <th>Qtd</th>
+                    <th>Periodo</th>
+                    <th>Valor Unit.</th>
+                    <th>Valor Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in itens %}
+                    <tr>
+                        <td class="center">{{ forloop.counter }}</td>
+                        <td>
+                            <div class="equipment">
+                                <div class="thumb"><span>{{ item.ativo.codigo|slice:":3" }}</span></div>
+                                <div class="equipment-text">
+                                    {{ item.ativo.nome }}
+                                    <small>{{ item.ativo.codigo }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="center">{{ item.ativo.codigo }}</td>
+                        <td class="center">{{ item.ativo.categoria.nome }}</td>
+                        <td class="center">{{ item.quantidade }}</td>
+                        <td class="center">{{ periodo_dias }} dia{{ periodo_dias|pluralize }}</td>
+                        <td class="money">R$ {{ item.valor_diaria }}</td>
+                        <td class="money">R$ {{ item.valor_total }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" class="center">Nenhum equipamento adicionado.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <section class="bottom-grid">
+            <div class="conditions">
+                <h3 class="section-title">Condicoes Gerais</h3>
+                <ul>
+                    <li>Orcamento valido ate a data informada acima.</li>
+                    <li>Os equipamentos sao entregues em perfeitas condicoes de uso.</li>
+                    <li>Frete, seguro ou servicos adicionais devem estar discriminados no orcamento.</li>
+                    <li>Pagamento a vista via boleto ou transferencia bancaria.</li>
+                    <li>Em caso de aprovacao, este orcamento sera convertido em contrato de locacao.</li>
+                </ul>
+            </div>
+            <div class="totals">
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Subtotal</td>
+                            <td>R$ {{ locacao.valor_equipamentos }}</td>
+                        </tr>
+                        <tr>
+                            <td>Desconto</td>
+                            <td>R$ {{ locacao.valor_desconto }}</td>
+                        </tr>
+                        <tr>
+                            <td>Frete / Servicos</td>
+                            <td>R$ {{ locacao.valor_servicos }}</td>
+                        </tr>
+                        <tr class="total-row">
+                            <td>Total</td>
+                            <td>R$ {{ locacao.valor_total }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="signatures">
+            <div class="signature">
+                <h3 class="section-title">Responsavel</h3>
+                <div class="line"></div>
+                <p>Assinatura / Carimbo</p>
+            </div>
+            <div class="signature">
+                <h3 class="section-title">Cliente</h3>
+                <div class="line"></div>
+                <p>Assinatura / Carimbo</p>
+                <p>Data: ______ / ______ / ______</p>
+            </div>
+        </section>
+
+        <div class="thanks">Obrigado pela preferencia!</div>
+    </div>
+</body>
+</html>
