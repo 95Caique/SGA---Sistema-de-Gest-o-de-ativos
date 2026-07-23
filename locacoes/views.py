@@ -313,6 +313,33 @@ def locacao_ativar(request, pk):
     return redirect("locacao_detail", pk=locacao.pk)
 
 
+def termo_entrega_pdf(request, pk):
+    locacao = get_object_or_404(Locacao.objects.select_related("cliente", "endereco_entrega"), pk=pk)
+
+    if locacao.status != Locacao.Status.ATIVA:
+        messages.error(request, "Termo de entrega disponivel apenas para locacoes ativas.")
+        return redirect("locacao_detail", pk=locacao.pk)
+
+    itens = locacao.itens.select_related("ativo", "ativo__categoria").order_by("ativo__codigo")
+    filename = f"termo-entrega-{locacao.codigo}.pdf"
+    return PDFTemplateResponse(
+        request=request,
+        template="locacoes/termo_entrega_pdf.html",
+        context={
+            "locacao": locacao,
+            "itens": itens,
+            "data_entrega": timezone.localtime(),
+        },
+        filename=filename,
+        show_content_in_browser=True,
+        cmd_options={
+            "quiet": True,
+            "encoding": "utf8",
+            "enable_local_file_access": True,
+        },
+    )
+
+
 def locacao_finalizar(request, pk):
     locacao = get_object_or_404(Locacao, pk=pk)
 

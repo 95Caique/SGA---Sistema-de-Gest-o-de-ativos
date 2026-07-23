@@ -90,6 +90,23 @@ class LocacaoOperacaoTests(TestCase):
         self.assertEqual(self.ativo.status, Ativo.Status.DISPONIVEL)
         self.assertEqual(rastreador.status, Rastreador.Status.OFFLINE)
 
+    @patch("wkhtmltopdf.views.render_pdf_from_template", return_value=b"%PDF-1.4")
+    def test_gera_pdf_do_termo_de_entrega(self, _render_pdf):
+        self.locacao.status = Locacao.Status.ATIVA
+        self.locacao.save()
+
+        response = self.client.get(reverse("termo_entrega_pdf", kwargs={"pk": self.locacao.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertIn("inline", response["Content-Disposition"])
+        self.assertIn("termo-entrega-LOC-0001.pdf", response["Content-Disposition"])
+
+    def test_termo_de_entrega_bloqueia_locacao_nao_ativa(self):
+        response = self.client.get(reverse("termo_entrega_pdf", kwargs={"pk": self.locacao.pk}))
+
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
+
     def test_form_item_locacao_lista_apenas_ativos_disponiveis(self):
         ativo_locado = Ativo.objects.create(
             codigo="BET-002",

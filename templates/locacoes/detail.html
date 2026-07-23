@@ -15,6 +15,7 @@
             <a class="button button-muted" href="{% url 'orcamento_pdf' locacao.pk %}">PDF</a>
         {% endif %}
         {% if locacao.status == 'ativa' %}
+            <a class="button button-muted" href="{% url 'termo_entrega_pdf' locacao.pk %}">Termo entrega</a>
             <form method="post" action="{% url 'locacao_finalizar' locacao.pk %}" class="inline-form">
                 {% csrf_token %}
                 <button class="button button-muted" type="submit">Finalizar locacao</button>
