@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>Contratos</h1>
+        <p>Contratos operacionais gerados a partir das locacoes.</p>
+    </div>
+    <form class="toolbar" method="get">
+        <div class="module-search">
+            <input class="ui-input" type="search" name="q" value="{{ query }}" placeholder="Buscar contratos..." aria-label="Buscar contratos">
+        </div>
+        <button class="button button-muted" type="submit">Filtros</button>
+        <a class="button button-primary" href="{% url 'locacao_create' %}">+ Nova locacao</a>
+    </form>
+</div>
+
+<section class="panel">
+    <div class="tabs">
+        <a class="{% if not status_filter %}is-active{% endif %}" href="{% url 'contratos' %}{% if query %}?q={{ query|urlencode }}{% endif %}">Todos <span>{{ status_counts.todos }}</span></a>
+        <a class="{% if status_filter == 'minuta' %}is-active{% endif %}" href="{% url 'contratos' %}?status=minuta{% if query %}&q={{ query|urlencode }}{% endif %}">Minutas <span>{{ status_counts.minutas }}</span></a>
+        <a class="{% if status_filter == 'ativo' %}is-active{% endif %}" href="{% url 'contratos' %}?status=ativo{% if query %}&q={{ query|urlencode }}{% endif %}">Ativos <span>{{ status_counts.ativos }}</span></a>
+        <a class="{% if status_filter == 'vencido' %}is-active{% endif %}" href="{% url 'contratos' %}?status=vencido{% if query %}&q={{ query|urlencode }}{% endif %}">Vencidos <span>{{ status_counts.vencidos }}</span></a>
+        <a class="{% if status_filter == 'encerrado' %}is-active{% endif %}" href="{% url 'contratos' %}?status=encerrado{% if query %}&q={{ query|urlencode }}{% endif %}">Encerrados <span>{{ status_counts.encerrados }}</span></a>
+        <a class="{% if status_filter == 'cancelado' %}is-active{% endif %}" href="{% url 'contratos' %}?status=cancelado{% if query %}&q={{ query|urlencode }}{% endif %}">Cancelados <span>{{ status_counts.cancelados }}</span></a>
+    </div>
+
+    {% if contratos %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Contrato</th>
+                        <th>Cliente</th>
+                        <th>Periodo</th>
+                        <th>Itens</th>
+                        <th>Valor total</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contrato in contratos %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'locacao_detail' contrato.locacao.pk %}">{{ contrato.codigo }}</a>
+                                <small class="table-subtext">Locacao {{ contrato.locacao.codigo }}</small>
+                            </td>
+                            <td>
+                                <strong>{{ contrato.cliente.nome }}</strong>
+                                <small class="table-subtext">{{ contrato.cliente.documento }}</small>
+                            </td>
+                            <td>{{ contrato.inicio|date:"d/m/Y" }} - {{ contrato.fim|date:"d/m/Y" }}</td>
+                            <td>{{ contrato.total_itens }} item{{ contrato.total_itens|pluralize }}</td>
+                            <td>{{ contrato.valor_total }}</td>
+                            <td><span class="badge badge-contract-{{ contrato.status_key }}">{{ contrato.status_label }}</span></td>
+                            <td class="actions-cell">
+                                <a href="{% url 'locacao_detail' contrato.locacao.pk %}">Ver</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="table-footer">
+            <span>Exibindo {{ contratos|length }} contrato{{ contratos|length|pluralize }}</span>
+            <div class="pagination">
+                <span class="is-current">1</span>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <strong>Nenhum contrato encontrado</strong>
+            <p>Contratos aparecem aqui conforme locacoes forem criadas no sistema.</p>
+            <a class="button button-primary" href="{% url 'locacao_create' %}">+ Nova locacao</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

@@ -746,6 +746,27 @@ td strong {
     color: var(--success);
 }
 
+.badge-contract-ativo {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.badge-contract-minuta {
+    background: var(--warning-soft);
+    color: #a16207;
+}
+
+.badge-contract-vencido,
+.badge-contract-cancelado {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.badge-contract-encerrado {
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
 .muted-text {
     color: #94a3b8;
     font-weight: 800;
