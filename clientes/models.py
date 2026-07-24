@@ -49,7 +49,8 @@ class EnderecoCliente(models.Model):
         verbose_name_plural = "enderecos de clientes"
 
     def __str__(self):
-        return f"{self.cliente} - {self.cidade}/{self.estado}"
+        numero = self.numero or "S/N"
+        return f"{self.nome} - {self.logradouro}, {numero} - {self.cidade}/{self.estado}"
 
 
 class ContatoCliente(models.Model):

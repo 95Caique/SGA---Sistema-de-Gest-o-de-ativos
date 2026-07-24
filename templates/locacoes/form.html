@@ -4,14 +4,14 @@
 <div class="page-heading">
     <div>
         <h1>{{ form_title|default:"Nova locacao" }}</h1>
-        <p>{{ form_subtitle|default:"Cadastre os dados principais da locacao. Os equipamentos entram na proxima etapa." }}</p>
+        <p>{{ form_subtitle|default:"Cadastre os dados principais da locacao e informe os equipamentos." }}</p>
     </div>
     <div class="toolbar">
         <a class="button button-muted" href="{% url 'locacoes' %}">Voltar</a>
     </div>
 </div>
 
-<form class="panel form-panel" method="post" novalidate>
+<form class="panel form-panel" method="post" data-locacao-form novalidate>
     {% csrf_token %}
 
     {% if form.non_field_errors %}
@@ -27,12 +27,51 @@
             <div class="form-field {% if field.name == 'observacoes' %}span-2{% endif %}">
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {{ field }}
+                {% if field.name == 'endereco_entrega' and endereco_create_url %}
+                    <small>
+                        Nao encontrou o endereco?
+                        <a href="{{ endereco_create_url }}">Cadastrar endereco de entrega</a>
+                    </small>
+                {% endif %}
                 {% for error in field.errors %}
                     <small class="field-error">{{ error }}</small>
                 {% endfor %}
             </div>
         {% endfor %}
     </div>
+
+    {% if item_formset %}
+        <div class="panel-title form-section-title">
+            <h2>Equipamentos da locacao</h2>
+            <span class="muted-text">Preencha quantas linhas precisar</span>
+        </div>
+
+        {{ item_formset.management_form }}
+
+        {% if item_formset.non_form_errors %}
+            <div class="form-errors">
+                {% for error in item_formset.non_form_errors %}
+                    <span>{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="item-formset">
+            {% for item_form in item_formset %}
+                <div class="item-form-row" data-item-locacao-form>
+                    {% for field in item_form %}
+                        <div class="form-field">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% for error in field.errors %}
+                                <small class="field-error">{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 
     <div class="form-actions">
         <a class="button button-muted" href="{% url 'locacoes' %}">Cancelar</a>

@@ -14,9 +14,9 @@ function setupItemLocacaoCalculator() {
     const forms = document.querySelectorAll("[data-item-locacao-form]");
 
     forms.forEach((form) => {
-        const quantidade = form.querySelector("[name='quantidade']");
-        const valorDiaria = form.querySelector("[name='valor_diaria']");
-        const valorTotal = form.querySelector("[name='valor_total']");
+        const quantidade = form.querySelector("[name$='quantidade']");
+        const valorDiaria = form.querySelector("[name$='valor_diaria']");
+        const valorTotal = form.querySelector("[name$='valor_total']");
 
         if (!quantidade || !valorDiaria || !valorTotal) {
             return;
@@ -32,6 +32,46 @@ function setupItemLocacaoCalculator() {
     });
 }
 
+function setupLocacaoEnderecoLoader() {
+    const forms = document.querySelectorAll("[data-locacao-form]");
+
+    forms.forEach((form) => {
+        const cliente = form.querySelector("[name='cliente']");
+        const endereco = form.querySelector("[name='endereco_entrega']");
+
+        if (!cliente || !endereco) {
+            return;
+        }
+
+        const clearEnderecos = () => {
+            endereco.innerHTML = "";
+            endereco.append(new Option("---------", ""));
+        };
+
+        const loadEnderecos = async () => {
+            const clienteId = cliente.value;
+            const selected = endereco.value;
+            clearEnderecos();
+
+            if (!clienteId) {
+                return;
+            }
+
+            const response = await fetch(`/clientes/${clienteId}/enderecos/opcoes/`);
+            const data = await response.json();
+
+            data.enderecos.forEach((item) => {
+                const option = new Option(item.label, item.id);
+                option.selected = String(item.id) === selected;
+                endereco.append(option);
+            });
+        };
+
+        cliente.addEventListener("change", loadEnderecos);
+    });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     setupItemLocacaoCalculator();
+    setupLocacaoEnderecoLoader();
 });

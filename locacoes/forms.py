@@ -6,7 +6,19 @@ from clientes.models import Cliente, EnderecoCliente
 from .models import ItemLocacao, Locacao
 
 
+class EnderecoEntregaChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return str(obj)
+
+
+class AtivoChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return f"{obj.nome} ({obj.codigo})"
+
+
 class LocacaoForm(forms.ModelForm):
+    endereco_entrega = EnderecoEntregaChoiceField(queryset=EnderecoCliente.objects.none(), required=False)
+
     class Meta:
         model = Locacao
         fields = [
@@ -88,7 +100,13 @@ class LocacaoForm(forms.ModelForm):
         return cliente
 
 
+def _is_blank(value):
+    return value in [None, ""]
+
+
 class ItemLocacaoForm(forms.ModelForm):
+    ativo = AtivoChoiceField(queryset=Ativo.objects.none())
+
     class Meta:
         model = ItemLocacao
         fields = [
@@ -101,11 +119,21 @@ class ItemLocacaoForm(forms.ModelForm):
         widgets = {
             "observacoes": forms.TextInput(),
         }
+        labels = {
+            "ativo": "Equipamento",
+        }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, require_item=True, **kwargs):
+        self.require_item = require_item
         super().__init__(*args, **kwargs)
         self.fields["ativo"].queryset = Ativo.objects.filter(status=Ativo.Status.DISPONIVEL)
+        self.fields["quantidade"].initial = None
         self.fields["valor_total"].required = False
+
+        if not self.require_item:
+            for field in self.fields.values():
+                field.required = False
+
         placeholders = {
             "valor_diaria": "0,00",
             "valor_total": "0,00",
@@ -134,7 +162,42 @@ class ItemLocacaoForm(forms.ModelForm):
         valor_diaria = cleaned_data.get("valor_diaria")
         valor_total = cleaned_data.get("valor_total")
 
+        if not self.require_item:
+            if not cleaned_data.get("ativo"):
+                return {}
+
+            for field_name in ["quantidade", "valor_diaria"]:
+                if _is_blank(cleaned_data.get(field_name)):
+                    self.add_error(field_name, "Preencha este campo.")
+
         if quantidade and valor_diaria and not valor_total:
             cleaned_data["valor_total"] = quantidade * valor_diaria
 
         return cleaned_data
+
+
+class BaseItemLocacaoFormSet(forms.BaseFormSet):
+    def clean(self):
+        super().clean()
+
+        if any(self.errors):
+            return
+
+        ativos = []
+
+        for form in self.forms:
+            ativo = form.cleaned_data.get("ativo") if form.cleaned_data else None
+            if not ativo:
+                continue
+
+            if ativo in ativos:
+                form.add_error("ativo", "Este equipamento ja foi adicionado nesta locacao.")
+                raise forms.ValidationError("Revise os equipamentos informados.")
+
+            ativos.append(ativo)
+
+        if not ativos:
+            raise forms.ValidationError("Informe pelo menos um equipamento para a locacao.")
+
+
+ItemLocacaoFormSet = forms.formset_factory(ItemLocacaoForm, formset=BaseItemLocacaoFormSet, extra=5)

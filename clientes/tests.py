@@ -67,6 +67,24 @@ class ClienteViewTests(TestCase):
         self.assertEqual(endereco.nome, "Obra centro")
         self.assertTrue(endereco.principal)
 
+    def test_endpoint_enderecos_retorna_nome_do_endereco(self):
+        endereco = EnderecoCliente.objects.create(
+            cliente=self.cliente,
+            nome="OD - Principal",
+            logradouro="Rua A",
+            numero="10",
+            cidade="Goiania",
+            estado="GO",
+        )
+
+        response = self.client.get(reverse("cliente_enderecos_options", kwargs={"pk": self.cliente.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json()["enderecos"],
+            [{"id": endereco.pk, "label": "OD - Principal - Rua A, 10 - Goiania/GO"}],
+        )
+
     def test_novo_endereco_principal_desmarca_anterior(self):
         endereco_antigo = EnderecoCliente.objects.create(
             cliente=self.cliente,

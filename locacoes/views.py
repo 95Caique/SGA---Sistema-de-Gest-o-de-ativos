@@ -4,13 +4,14 @@ from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from wkhtmltopdf.views import PDFTemplateResponse
 
 from ativos.models import Ativo
 from config.views import with_layout
 
-from .forms import ItemLocacaoForm, LocacaoForm
+from .forms import ItemLocacaoForm, ItemLocacaoFormSet, LocacaoForm
 from .models import ItemLocacao, Locacao
 
 
@@ -95,12 +96,27 @@ def orcamentos_list(request):
 def locacao_create(request):
     if request.method == "POST":
         form = LocacaoForm(request.POST)
-        if form.is_valid():
-            locacao = form.save()
+        item_formset = ItemLocacaoFormSet(request.POST, prefix="itens", form_kwargs={"require_item": False})
+
+        if form.is_valid() and item_formset.is_valid():
+            with transaction.atomic():
+                locacao = form.save()
+
+                for item_form in item_formset:
+                    if not item_form.cleaned_data:
+                        continue
+
+                    item = item_form.save(commit=False)
+                    item.locacao = locacao
+                    item.save()
+
+                locacao.recalcular_totais()
+
             messages.success(request, f"Locacao {locacao.codigo} cadastrada com sucesso.")
             return redirect("locacao_detail", pk=locacao.pk)
     else:
         form = LocacaoForm()
+        item_formset = ItemLocacaoFormSet(prefix="itens", form_kwargs={"require_item": False})
 
     return render(
         request,
@@ -109,9 +125,10 @@ def locacao_create(request):
             {
                 "page_title": "Nova locacao",
                 "form_title": "Nova locacao",
-                "form_subtitle": "Cadastre os dados principais da locacao. Os equipamentos entram na proxima etapa.",
+                "form_subtitle": "Cadastre os dados principais e informe os equipamentos da locacao.",
                 "submit_label": "Salvar locacao",
                 "form": form,
+                "item_formset": item_formset,
             }
         ),
     )
@@ -143,6 +160,9 @@ def locacao_update(request, pk):
                 "form_subtitle": "Atualize os dados principais antes da ativacao da locacao.",
                 "submit_label": "Salvar alteracoes",
                 "form": form,
+                "endereco_create_url": (
+                    f'{reverse("cliente_endereco_create", kwargs={"pk": locacao.cliente.pk})}?locacao={locacao.pk}'
+                ),
             }
         ),
     )

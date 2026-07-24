@@ -913,6 +913,26 @@ td strong {
     padding-top: 18px;
 }
 
+.form-section-title {
+    border-top: 1px solid var(--panel-border);
+    margin: 22px 0 16px;
+    padding-top: 18px;
+}
+
+.item-formset {
+    display: grid;
+    gap: 12px;
+}
+
+.item-form-row {
+    display: grid;
+    grid-template-columns: minmax(220px, 1.4fr) 90px 130px 130px minmax(160px, 1fr);
+    gap: 12px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 12px;
+}
+
 .empty-state.compact {
     padding: 32px 12px;
 }
