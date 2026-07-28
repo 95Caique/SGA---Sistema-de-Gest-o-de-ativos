@@ -51,6 +51,17 @@
                             <td>{{ ativo.categoria.nome }}</td>
                             <td>
                                 <span class="badge badge-status-{{ ativo.status }}">{{ ativo.get_status_display }}</span>
+                                {% if ativo.itens_locacao_ativos %}
+                                    {% with item_ativo=ativo.itens_locacao_ativos.0 %}
+                                        <small class="table-subtext">
+                                            <a href="{% url 'locacao_detail' item_ativo.locacao.pk %}">
+                                                {{ item_ativo.locacao.codigo }}
+                                            </a>
+                                            | {{ item_ativo.locacao.cliente.nome }}
+                                            | {{ item_ativo.locacao.data_inicio|date:"d/m/Y" }} - {{ item_ativo.locacao.data_fim|date:"d/m/Y" }}
+                                        </small>
+                                    {% endwith %}
+                                {% endif %}
                             </td>
                             <td>
                                 {% if ativo.permite_rastreamento %}
@@ -61,6 +72,11 @@
                             </td>
                             <td>{{ ativo.localizacao_atual|default:"Deposito" }}</td>
                             <td class="actions-cell">
+                                {% if ativo.itens_locacao_ativos %}
+                                    {% with item_ativo=ativo.itens_locacao_ativos.0 %}
+                                        <a href="{% url 'locacao_detail' item_ativo.locacao.pk %}">Locacao</a>
+                                    {% endwith %}
+                                {% endif %}
                                 <a href="{% url 'equipamento_update' ativo.pk %}">Editar</a>
                             </td>
                         </tr>

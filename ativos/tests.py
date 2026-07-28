@@ -1,6 +1,9 @@
 from django.test import TestCase
 from django.urls import reverse
 
+from clientes.models import Cliente
+from locacoes.models import ItemLocacao, Locacao
+
 from .models import Ativo, CategoriaAtivo
 
 
@@ -52,3 +55,27 @@ class EquipamentoViewTests(TestCase):
 
         self.assertContains(response, "RET-001")
         self.assertNotContains(response, "BET-001")
+
+    def test_lista_equipamentos_exibe_locacao_ativa_do_ativo_locado(self):
+        cliente = Cliente.objects.create(nome="Cliente Obra", documento="12345678000190")
+        locacao = Locacao.objects.create(
+            codigo="LOC-0001",
+            cliente=cliente,
+            data_inicio="2026-07-01",
+            data_fim="2026-07-05",
+            status=Locacao.Status.ATIVA,
+        )
+        ItemLocacao.objects.create(
+            locacao=locacao,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria="100.00",
+            valor_total="500.00",
+        )
+        self.ativo.status = Ativo.Status.LOCADO
+        self.ativo.save()
+
+        response = self.client.get(reverse("equipamentos"), {"status": Ativo.Status.LOCADO})
+
+        self.assertContains(response, "LOC-0001")
+        self.assertContains(response, "Cliente Obra")

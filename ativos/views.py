@@ -1,8 +1,9 @@
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 
 from config.views import with_layout
+from locacoes.models import ItemLocacao, Locacao
 
 from .forms import AtivoForm
 from .models import Ativo
@@ -12,7 +13,14 @@ def equipamentos_list(request):
     query = request.GET.get("q", "").strip()
     status_filter = request.GET.get("status", "").strip()
     status_validos = [status for status, _label in Ativo.Status.choices]
-    ativos = Ativo.objects.select_related("categoria").order_by("codigo")
+    itens_ativos = ItemLocacao.objects.select_related("locacao", "locacao__cliente").filter(
+        locacao__status=Locacao.Status.ATIVA
+    )
+    ativos = (
+        Ativo.objects.select_related("categoria")
+        .prefetch_related(Prefetch("itens_locacao", queryset=itens_ativos, to_attr="itens_locacao_ativos"))
+        .order_by("codigo")
+    )
 
     if query:
         ativos = ativos.filter(
