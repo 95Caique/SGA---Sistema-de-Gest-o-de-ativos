@@ -123,10 +123,16 @@ class ItemLocacaoForm(forms.ModelForm):
             "ativo": "Equipamento",
         }
 
-    def __init__(self, *args, require_item=True, **kwargs):
+    def __init__(self, *args, locacao=None, require_item=True, **kwargs):
+        self.locacao = locacao
         self.require_item = require_item
         super().__init__(*args, **kwargs)
-        self.fields["ativo"].queryset = Ativo.objects.filter(status=Ativo.Status.DISPONIVEL)
+        ativos_disponiveis = Ativo.objects.filter(status=Ativo.Status.DISPONIVEL)
+
+        if self.locacao and not self.is_bound:
+            ativos_disponiveis = ativos_disponiveis.exclude(itens_locacao__locacao=self.locacao)
+
+        self.fields["ativo"].queryset = ativos_disponiveis
         self.fields["quantidade"].initial = None
         self.fields["valor_total"].required = False
 
@@ -153,6 +159,9 @@ class ItemLocacaoForm(forms.ModelForm):
 
         if ativo.status != Ativo.Status.DISPONIVEL:
             raise forms.ValidationError("Este ativo nao esta disponivel para locacao.")
+
+        if self.locacao and self.locacao.itens.filter(ativo=ativo).exists():
+            raise forms.ValidationError("Este equipamento ja esta nesta locacao.")
 
         return ativo
 

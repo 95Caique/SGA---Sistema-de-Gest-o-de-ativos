@@ -178,7 +178,7 @@ def locacao_detail(request, pk):
             messages.error(request, "Nao e possivel alterar itens nesta etapa da locacao.")
             return redirect("locacao_detail", pk=locacao.pk)
 
-        form = ItemLocacaoForm(request.POST)
+        form = ItemLocacaoForm(request.POST, locacao=locacao)
         if form.is_valid():
             with transaction.atomic():
                 ativo = Ativo.objects.select_for_update().get(pk=form.cleaned_data["ativo"].pk)
@@ -197,7 +197,7 @@ def locacao_detail(request, pk):
             messages.success(request, f"Ativo {item.ativo.codigo} adicionado a locacao.")
             return redirect("locacao_detail", pk=locacao.pk)
     else:
-        form = ItemLocacaoForm()
+        form = ItemLocacaoForm(locacao=locacao)
 
     return render(
         request,

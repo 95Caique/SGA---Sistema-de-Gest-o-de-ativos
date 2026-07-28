@@ -163,6 +163,48 @@ class LocacaoOperacaoTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("ativo", form.errors)
 
+    def test_form_item_locacao_nao_lista_ativo_ja_adicionado(self):
+        ItemLocacao.objects.create(
+            locacao=self.locacao,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("400.00"),
+        )
+        outro_ativo = Ativo.objects.create(
+            codigo="BET-002",
+            nome="Betoneira extra",
+            categoria=self.categoria,
+        )
+
+        form = ItemLocacaoForm(locacao=self.locacao)
+
+        self.assertNotIn(self.ativo, form.fields["ativo"].queryset)
+        self.assertIn(outro_ativo, form.fields["ativo"].queryset)
+
+    def test_form_item_locacao_rejeita_ativo_duplicado_na_locacao(self):
+        ItemLocacao.objects.create(
+            locacao=self.locacao,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("400.00"),
+        )
+
+        form = ItemLocacaoForm(
+            data={
+                "ativo": self.ativo.pk,
+                "quantidade": 1,
+                "valor_diaria": "100.00",
+                "valor_total": "100.00",
+                "observacoes": "",
+            },
+            locacao=self.locacao,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("ativo", form.errors)
+
     def test_form_item_locacao_calcula_total_quando_nao_informado(self):
         form = ItemLocacaoForm(
             data={
@@ -246,6 +288,30 @@ class LocacaoOperacaoTests(TestCase):
         self.assertEqual(locacao.itens.count(), 3)
         self.assertEqual(locacao.valor_equipamentos, Decimal("675.00"))
         self.assertEqual(locacao.valor_total, Decimal("715.00"))
+
+    def test_detalhe_locacao_bloqueia_item_duplicado_sem_erro_de_banco(self):
+        ItemLocacao.objects.create(
+            locacao=self.locacao,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("400.00"),
+        )
+
+        response = self.client.post(
+            reverse("locacao_detail", kwargs={"pk": self.locacao.pk}),
+            data={
+                "ativo": self.ativo.pk,
+                "quantidade": 1,
+                "valor_diaria": "100.00",
+                "valor_total": "100.00",
+                "observacoes": "",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Este equipamento ja esta nesta locacao.")
+        self.assertEqual(self.locacao.itens.count(), 1)
 
     def test_nova_locacao_exige_apenas_um_equipamento_preenchido(self):
         response = self.client.post(
