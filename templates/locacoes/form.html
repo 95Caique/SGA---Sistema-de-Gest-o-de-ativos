@@ -24,29 +24,54 @@
 
     <div class="form-grid">
         {% for field in form %}
-            <div class="form-field {% if field.name == 'observacoes' %}span-2{% endif %}">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-                {% if field.name == 'endereco_entrega' and endereco_create_url %}
-                    <small>
-                        Nao encontrou o endereco?
-                        <a href="{{ endereco_create_url }}">Cadastrar endereco de entrega</a>
-                    </small>
-                {% endif %}
-                {% for error in field.errors %}
-                    <small class="field-error">{{ error }}</small>
-                {% endfor %}
-            </div>
+            {% if field.name == 'endereco_entrega' %}
+                {% comment %}
+                <div class="form-field">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if endereco_create_url %}
+                        <small>
+                            Nao encontrou o endereco?
+                            <a href="{{ endereco_create_url }}">Cadastrar endereco de entrega</a>
+                        </small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <small class="field-error">{{ error }}</small>
+                    {% endfor %}
+                </div>
+                {% endcomment %}
+            {% else %}
+                <div class="form-field {% if field.name == 'observacoes' %}span-2{% endif %}">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <small class="field-error">{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
         {% endfor %}
     </div>
 
     {% if item_formset %}
         <div class="panel-title form-section-title">
             <h2>Equipamentos da locacao</h2>
-            <span class="muted-text">Preencha quantas linhas precisar</span>
+            <button class="button button-muted button-small" type="button" data-add-item-locacao-row>
+                Adicionar linha
+            </button>
         </div>
 
         {{ item_formset.management_form }}
+
+        <template data-item-locacao-empty-form>
+            <div class="item-form-row" data-item-locacao-form>
+                {% for field in item_formset.empty_form %}
+                    <div class="form-field">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                {% endfor %}
+            </div>
+        </template>
 
         {% if item_formset.non_form_errors %}
             <div class="form-errors">
@@ -56,7 +81,7 @@
             </div>
         {% endif %}
 
-        <div class="item-formset">
+        <div class="item-formset" data-item-locacao-formset>
             {% for item_form in item_formset %}
                 <div class="item-form-row" data-item-locacao-form>
                     {% for field in item_form %}

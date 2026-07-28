@@ -27,7 +27,7 @@ class LocacaoForm(forms.ModelForm):
             "data_inicio",
             "data_fim",
             "status",
-            "endereco_entrega",
+            # "endereco_entrega",
             "valor_equipamentos",
             "valor_servicos",
             "valor_desconto",

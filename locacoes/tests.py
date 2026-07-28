@@ -224,6 +224,8 @@ class LocacaoOperacaoTests(TestCase):
 
         self.assertContains(response, "Equipamentos da locacao")
         self.assertContains(response, "Betoneira 400L (BET-001)")
+        self.assertContains(response, "Adicionar linha")
+        self.assertContains(response, "data-item-locacao-empty-form")
 
     def test_cria_locacao_com_multiplos_equipamentos(self):
         lente = Ativo.objects.create(
@@ -288,6 +290,50 @@ class LocacaoOperacaoTests(TestCase):
         self.assertEqual(locacao.itens.count(), 3)
         self.assertEqual(locacao.valor_equipamentos, Decimal("675.00"))
         self.assertEqual(locacao.valor_total, Decimal("715.00"))
+
+    def test_cria_locacao_com_mais_de_cinco_equipamentos(self):
+        ativos = [self.ativo]
+
+        for index in range(2, 7):
+            ativos.append(
+                Ativo.objects.create(
+                    codigo=f"EQP-00{index}",
+                    nome=f"Equipamento {index}",
+                    categoria=self.categoria,
+                )
+            )
+
+        data = {
+            "codigo": "LOC-0003",
+            "cliente": self.cliente.pk,
+            "data_inicio": "2026-07-10",
+            "data_fim": "2026-07-12",
+            "status": Locacao.Status.ORCAMENTO,
+            "endereco_entrega": "",
+            "valor_equipamentos": "0.00",
+            "valor_servicos": "0.00",
+            "valor_desconto": "0.00",
+            "valor_total": "0.00",
+            "observacoes": "",
+            "itens-TOTAL_FORMS": "6",
+            "itens-INITIAL_FORMS": "0",
+            "itens-MIN_NUM_FORMS": "0",
+            "itens-MAX_NUM_FORMS": "1000",
+        }
+
+        for index, ativo in enumerate(ativos):
+            data[f"itens-{index}-ativo"] = ativo.pk
+            data[f"itens-{index}-quantidade"] = "1"
+            data[f"itens-{index}-valor_diaria"] = "100.00"
+            data[f"itens-{index}-valor_total"] = "300.00"
+            data[f"itens-{index}-observacoes"] = ""
+
+        response = self.client.post(reverse("locacao_create"), data=data)
+
+        locacao = Locacao.objects.get(codigo="LOC-0003")
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": locacao.pk}))
+        self.assertEqual(locacao.itens.count(), 6)
+        self.assertEqual(locacao.valor_equipamentos, Decimal("1800.00"))
 
     def test_detalhe_locacao_bloqueia_item_duplicado_sem_erro_de_banco(self):
         ItemLocacao.objects.create(
@@ -641,11 +687,11 @@ class LocacaoOperacaoTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("endereco_entrega", form.errors)
 
-    def test_edicao_locacao_exibe_atalho_para_cadastrar_endereco(self):
+    def test_form_locacao_nao_exibe_endereco_entrega_no_template(self):
         response = self.client.get(reverse("locacao_update", kwargs={"pk": self.locacao.pk}))
 
-        self.assertContains(response, "Cadastrar endereco de entrega")
-        self.assertContains(response, f"locacao={self.locacao.pk}")
+        self.assertNotContains(response, 'name="endereco_entrega"')
+        self.assertNotContains(response, "Cadastrar endereco de entrega")
 
     def test_cadastro_endereco_pela_locacao_vincula_entrega(self):
         response = self.client.post(
@@ -669,5 +715,4 @@ class LocacaoOperacaoTests(TestCase):
         self.assertEqual(self.locacao.endereco_entrega.nome, "Obra")
 
         response = self.client.get(reverse("locacao_update", kwargs={"pk": self.locacao.pk}))
-        self.assertContains(response, "Obra - Rua A, 10 - Goiania/GO")
-        self.assertNotContains(response, "Cliente Teste - Goiania/GO")
+        self.assertNotContains(response, 'name="endereco_entrega"')

@@ -10,25 +10,59 @@ function formatMoney(value) {
     return value.toFixed(2);
 }
 
-function setupItemLocacaoCalculator() {
-    const forms = document.querySelectorAll("[data-item-locacao-form]");
+function setupItemLocacaoCalculator(row) {
+    if (row.dataset.calculatorReady === "true") {
+        return;
+    }
 
-    forms.forEach((form) => {
-        const quantidade = form.querySelector("[name$='quantidade']");
-        const valorDiaria = form.querySelector("[name$='valor_diaria']");
-        const valorTotal = form.querySelector("[name$='valor_total']");
+    const quantidade = row.querySelector("[name$='quantidade']");
+    const valorDiaria = row.querySelector("[name$='valor_diaria']");
+    const valorTotal = row.querySelector("[name$='valor_total']");
 
-        if (!quantidade || !valorDiaria || !valorTotal) {
-            return;
-        }
+    if (!quantidade || !valorDiaria || !valorTotal) {
+        return;
+    }
 
-        const recalculate = () => {
-            const total = parseMoney(quantidade.value) * parseMoney(valorDiaria.value);
-            valorTotal.value = total ? formatMoney(total) : "";
-        };
+    const recalculate = () => {
+        const total = parseMoney(quantidade.value) * parseMoney(valorDiaria.value);
+        valorTotal.value = total ? formatMoney(total) : "";
+    };
 
-        quantidade.addEventListener("input", recalculate);
-        valorDiaria.addEventListener("input", recalculate);
+    quantidade.addEventListener("input", recalculate);
+    valorDiaria.addEventListener("input", recalculate);
+    row.dataset.calculatorReady = "true";
+}
+
+function setupItemLocacaoRows() {
+    document.querySelectorAll("[data-item-locacao-form]").forEach(setupItemLocacaoCalculator);
+}
+
+function setupItemLocacaoDynamicRows() {
+    const form = document.querySelector("[data-locacao-form]");
+
+    if (!form) {
+        return;
+    }
+
+    const container = form.querySelector("[data-item-locacao-formset]");
+    const template = form.querySelector("[data-item-locacao-empty-form]");
+    const addButton = form.querySelector("[data-add-item-locacao-row]");
+    const totalForms = form.querySelector("[name='itens-TOTAL_FORMS']");
+
+    if (!container || !template || !addButton || !totalForms) {
+        return;
+    }
+
+    addButton.addEventListener("click", () => {
+        const index = Number(totalForms.value);
+        const html = template.innerHTML.replaceAll("__prefix__", String(index));
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = html.trim();
+        const row = wrapper.firstElementChild;
+
+        container.append(row);
+        totalForms.value = String(index + 1);
+        setupItemLocacaoCalculator(row);
     });
 }
 
@@ -72,6 +106,7 @@ function setupLocacaoEnderecoLoader() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    setupItemLocacaoCalculator();
+    setupItemLocacaoRows();
+    setupItemLocacaoDynamicRows();
     setupLocacaoEnderecoLoader();
 });
