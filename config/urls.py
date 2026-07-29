@@ -31,7 +31,7 @@ from clientes.views import (
     clientes_list,
 )
 from contratos.views import contratos_list
-from financeiro.views import financeiro_list
+from financeiro.views import financeiro_list, financeiro_reabrir, financeiro_receber
 from locacoes.views import (
     locacao_ativar,
     locacao_cancelar,
@@ -97,6 +97,8 @@ urlpatterns = [
     ),
     path('contratos/', contratos_list, name='contratos'),
     path('financeiro/', financeiro_list, name='financeiro'),
+    path('financeiro/<int:pk>/receber/', financeiro_receber, name='financeiro_receber'),
+    path('financeiro/<int:pk>/reabrir/', financeiro_reabrir, name='financeiro_reabrir'),
     path('manutencao/', manutencoes_list, name='manutencao'),
     path('manutencao/nova/', manutencao_create, name='manutencao_create'),
     path('manutencao/<int:pk>/iniciar/', manutencao_iniciar, name='manutencao_iniciar'),

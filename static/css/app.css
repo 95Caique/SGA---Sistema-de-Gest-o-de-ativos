@@ -629,6 +629,16 @@ td a {
     font-weight: 900;
 }
 
+.link-button {
+    border: 0;
+    background: transparent;
+    color: #4f46e5;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 900;
+    padding: 0;
+}
+
 td strong {
     display: block;
 }
@@ -663,6 +673,7 @@ td strong {
 }
 
 .badge-status-disponivel,
+.badge-status-recebido,
 .badge-tracking {
     background: var(--success-soft);
     color: var(--success);
@@ -701,6 +712,7 @@ td strong {
 .badge-status-agendada,
 .badge-status-orcamento,
 .badge-status-aberta,
+.badge-status-aberto,
 .badge-status-em_andamento {
     background: var(--warning-soft);
     color: #a16207;

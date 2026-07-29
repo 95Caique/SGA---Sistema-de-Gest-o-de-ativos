@@ -11,11 +11,22 @@ class Locacao(models.Model):
         FINALIZADA = "finalizada", "Finalizada"
         CANCELADA = "cancelada", "Cancelada"
 
+    class StatusPagamento(models.TextChoices):
+        ABERTO = "aberto", "Em aberto"
+        RECEBIDO = "recebido", "Recebido"
+        CANCELADO = "cancelado", "Cancelado"
+
     codigo = models.CharField(max_length=30, unique=True)
     cliente = models.ForeignKey("clientes.Cliente", on_delete=models.PROTECT, related_name="locacoes")
     data_inicio = models.DateField()
     data_fim = models.DateField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.ORCAMENTO)
+    status_pagamento = models.CharField(
+        max_length=20,
+        choices=StatusPagamento.choices,
+        default=StatusPagamento.ABERTO,
+    )
+    data_pagamento = models.DateField(null=True, blank=True)
     endereco_entrega = models.ForeignKey(
         "clientes.EnderecoCliente",
         on_delete=models.PROTECT,
@@ -74,6 +85,21 @@ class Locacao(models.Model):
         ativos = Ativo.objects.filter(itens_locacao__locacao=self).exclude(status=Ativo.Status.MANUTENCAO)
         ativos.update(status=Ativo.Status.DISPONIVEL)
         Rastreador.objects.filter(ativo__in=ativos, usando_dados_simulados=True).update(status=Rastreador.Status.OFFLINE)
+
+    def marcar_recebida(self, data_pagamento):
+        self.status_pagamento = self.StatusPagamento.RECEBIDO
+        self.data_pagamento = data_pagamento
+        self.save(update_fields=["status_pagamento", "data_pagamento", "atualizado_em"])
+
+    def reabrir_pagamento(self):
+        self.status_pagamento = self.StatusPagamento.ABERTO
+        self.data_pagamento = None
+        self.save(update_fields=["status_pagamento", "data_pagamento", "atualizado_em"])
+
+    def cancelar_pagamento(self):
+        self.status_pagamento = self.StatusPagamento.CANCELADO
+        self.data_pagamento = None
+        self.save(update_fields=["status_pagamento", "data_pagamento", "atualizado_em"])
 
 
 class ItemLocacao(models.Model):

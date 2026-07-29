@@ -11,8 +11,8 @@ class ItemLocacaoInline(admin.TabularInline):
 
 @admin.register(Locacao)
 class LocacaoAdmin(admin.ModelAdmin):
-    list_display = ("codigo", "cliente", "data_inicio", "data_fim", "status", "valor_total")
-    list_filter = ("status", "data_inicio", "data_fim")
+    list_display = ("codigo", "cliente", "data_inicio", "data_fim", "status", "status_pagamento", "valor_total")
+    list_filter = ("status", "status_pagamento", "data_inicio", "data_fim")
     search_fields = ("codigo", "cliente__nome", "cliente__documento")
     autocomplete_fields = ("cliente", "endereco_entrega")
     inlines = (ItemLocacaoInline,)

@@ -294,6 +294,7 @@ def locacao_cancelar(request, pk):
 
     locacao.status = Locacao.Status.CANCELADA
     locacao.save(update_fields=["status", "atualizado_em"])
+    locacao.cancelar_pagamento()
     messages.success(request, f"Locacao {locacao.codigo} cancelada com sucesso.")
     return redirect("locacao_detail", pk=locacao.pk)
 

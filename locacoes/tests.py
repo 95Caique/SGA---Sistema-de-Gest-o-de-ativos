@@ -583,6 +583,7 @@ class LocacaoOperacaoTests(TestCase):
         self.locacao.refresh_from_db()
         self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
         self.assertEqual(self.locacao.status, Locacao.Status.CANCELADA)
+        self.assertEqual(self.locacao.status_pagamento, Locacao.StatusPagamento.CANCELADO)
 
     def test_cancela_locacao_agendada(self):
         self.locacao.status = Locacao.Status.AGENDADA
@@ -593,6 +594,7 @@ class LocacaoOperacaoTests(TestCase):
         self.locacao.refresh_from_db()
         self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
         self.assertEqual(self.locacao.status, Locacao.Status.CANCELADA)
+        self.assertEqual(self.locacao.status_pagamento, Locacao.StatusPagamento.CANCELADO)
 
     def test_cancelar_bloqueia_locacao_ativa(self):
         self.locacao.status = Locacao.Status.ATIVA

@@ -55,7 +55,8 @@
                         <th>Descricao</th>
                         <th>Cliente</th>
                         <th>Valor</th>
-                        <th>Status</th>
+                        <th>Operacao</th>
+                        <th>Pagamento</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -70,7 +71,26 @@
                             </td>
                             <td>R$ {{ locacao.valor_total }}</td>
                             <td><span class="badge badge-status-{{ locacao.status }}">{{ locacao.get_status_display }}</span></td>
+                            <td>
+                                <span class="badge badge-status-{{ locacao.status_pagamento }}">
+                                    {{ locacao.get_status_pagamento_display }}
+                                </span>
+                                {% if locacao.data_pagamento %}
+                                    <small class="table-subtext">Pago em {{ locacao.data_pagamento|date:"d/m/Y" }}</small>
+                                {% endif %}
+                            </td>
                             <td class="actions-cell">
+                                {% if locacao.status_pagamento == 'aberto' %}
+                                    <form method="post" action="{% url 'financeiro_receber' locacao.pk %}" class="inline-form">
+                                        {% csrf_token %}
+                                        <button class="link-button" type="submit">Receber</button>
+                                    </form>
+                                {% elif locacao.status_pagamento == 'recebido' %}
+                                    <form method="post" action="{% url 'financeiro_reabrir' locacao.pk %}" class="inline-form">
+                                        {% csrf_token %}
+                                        <button class="link-button" type="submit">Reabrir</button>
+                                    </form>
+                                {% endif %}
                                 <a href="{% url 'locacao_detail' locacao.pk %}">Ver</a>
                             </td>
                         </tr>

@@ -1,13 +1,12 @@
 from decimal import Decimal
 
+from django.contrib import messages
 from django.db.models import Q, Sum
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from config.views import money_br, with_layout
 from locacoes.models import Locacao
-
-
-STATUS_ABERTOS = [Locacao.Status.ORCAMENTO, Locacao.Status.AGENDADA, Locacao.Status.ATIVA]
 
 
 def financeiro_list(request):
@@ -23,12 +22,8 @@ def financeiro_list(request):
             | Q(observacoes__icontains=query)
         )
 
-    if status_filter == "aberto":
-        locacoes = locacoes.filter(status__in=STATUS_ABERTOS)
-    elif status_filter == "recebido":
-        locacoes = locacoes.filter(status=Locacao.Status.FINALIZADA)
-    elif status_filter == "cancelado":
-        locacoes = locacoes.filter(status=Locacao.Status.CANCELADA)
+    if status_filter in [status for status, _label in Locacao.StatusPagamento.choices]:
+        locacoes = locacoes.filter(status_pagamento=status_filter)
     else:
         status_filter = ""
 
@@ -49,18 +44,51 @@ def financeiro_list(request):
     )
 
 
-def _total_por_status(status):
-    return Locacao.objects.filter(status__in=status).aggregate(total=Sum("valor_total"))["total"] or Decimal("0")
+def financeiro_receber(request, pk):
+    locacao = get_object_or_404(Locacao, pk=pk)
+
+    if request.method != "POST":
+        return redirect("financeiro")
+
+    if locacao.status_pagamento == Locacao.StatusPagamento.CANCELADO:
+        messages.error(request, "Nao e possivel receber uma locacao cancelada.")
+        return redirect("financeiro")
+
+    locacao.marcar_recebida(timezone.localdate())
+    messages.success(request, f"Pagamento da locacao {locacao.codigo} marcado como recebido.")
+    return redirect("financeiro")
+
+
+def financeiro_reabrir(request, pk):
+    locacao = get_object_or_404(Locacao, pk=pk)
+
+    if request.method != "POST":
+        return redirect("financeiro")
+
+    if locacao.status_pagamento != Locacao.StatusPagamento.RECEBIDO:
+        messages.error(request, "Somente pagamentos recebidos podem ser reabertos.")
+        return redirect("financeiro")
+
+    locacao.reabrir_pagamento()
+    messages.success(request, f"Pagamento da locacao {locacao.codigo} reaberto.")
+    return redirect("financeiro")
+
+
+def _total_por_status_pagamento(status_pagamento):
+    return (
+        Locacao.objects.filter(status_pagamento=status_pagamento).aggregate(total=Sum("valor_total"))["total"]
+        or Decimal("0")
+    )
 
 
 def _resumo_financeiro():
-    aberto = _total_por_status(STATUS_ABERTOS)
-    recebido = _total_por_status([Locacao.Status.FINALIZADA])
-    cancelado = _total_por_status([Locacao.Status.CANCELADA])
+    aberto = _total_por_status_pagamento(Locacao.StatusPagamento.ABERTO)
+    recebido = _total_por_status_pagamento(Locacao.StatusPagamento.RECEBIDO)
+    cancelado = _total_por_status_pagamento(Locacao.StatusPagamento.CANCELADO)
 
     return {
-        "aberto": {"valor": money_br(aberto), "count": Locacao.objects.filter(status__in=STATUS_ABERTOS).count()},
-        "recebido": {"valor": money_br(recebido), "count": Locacao.objects.filter(status=Locacao.Status.FINALIZADA).count()},
-        "cancelado": {"valor": money_br(cancelado), "count": Locacao.objects.filter(status=Locacao.Status.CANCELADA).count()},
+        "aberto": {"valor": money_br(aberto), "count": Locacao.objects.filter(status_pagamento=Locacao.StatusPagamento.ABERTO).count()},
+        "recebido": {"valor": money_br(recebido), "count": Locacao.objects.filter(status_pagamento=Locacao.StatusPagamento.RECEBIDO).count()},
+        "cancelado": {"valor": money_br(cancelado), "count": Locacao.objects.filter(status_pagamento=Locacao.StatusPagamento.CANCELADO).count()},
         "total": money_br(aberto + recebido),
     }
