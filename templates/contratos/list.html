@@ -55,6 +55,9 @@
                             <td>{{ contrato.valor_total }}</td>
                             <td><span class="badge badge-contract-{{ contrato.status_key }}">{{ contrato.status_label }}</span></td>
                             <td class="actions-cell">
+                                {% if contrato.status_key != 'minuta' and contrato.status_key != 'cancelado' %}
+                                    <a href="{% url 'contrato_pdf' contrato.locacao.pk %}">PDF</a>
+                                {% endif %}
                                 <a href="{% url 'locacao_detail' contrato.locacao.pk %}">Ver</a>
                             </td>
                         </tr>

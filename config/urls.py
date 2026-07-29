@@ -30,7 +30,7 @@ from clientes.views import (
     cliente_update,
     clientes_list,
 )
-from contratos.views import contratos_list
+from contratos.views import contrato_pdf, contratos_list
 from financeiro.views import financeiro_list, financeiro_reabrir, financeiro_receber
 from locacoes.views import (
     locacao_ativar,
@@ -96,6 +96,7 @@ urlpatterns = [
         name='cliente_endereco_update',
     ),
     path('contratos/', contratos_list, name='contratos'),
+    path('contratos/<int:pk>/pdf/', contrato_pdf, name='contrato_pdf'),
     path('financeiro/', financeiro_list, name='financeiro'),
     path('financeiro/<int:pk>/receber/', financeiro_receber, name='financeiro_receber'),
     path('financeiro/<int:pk>/reabrir/', financeiro_reabrir, name='financeiro_reabrir'),

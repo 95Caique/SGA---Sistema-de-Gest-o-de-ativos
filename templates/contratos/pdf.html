@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <title>Contrato {{ contrato.codigo }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 12mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            color: #111827;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            line-height: 1.45;
+            margin: 0;
+        }
+
+        .document {
+            border: 2px solid #d1d5db;
+            min-height: 273mm;
+            padding: 18px 20px;
+        }
+
+        .top {
+            display: table;
+            width: 100%;
+            margin-bottom: 18px;
+        }
+
+        .brand,
+        .title {
+            display: table-cell;
+            vertical-align: top;
+        }
+
+        .brand {
+            width: 45%;
+        }
+
+        .brand-mark {
+            display: inline-block;
+            width: 46px;
+            height: 46px;
+            border: 7px solid #f8b414;
+            border-right-color: #4f2ff0;
+            border-radius: 50%;
+            vertical-align: middle;
+        }
+
+        .brand-name {
+            display: inline-block;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        .brand-name strong {
+            display: block;
+            color: #050816;
+            font-size: 26px;
+            line-height: 1;
+        }
+
+        .brand-name span {
+            display: block;
+            color: #374151;
+            font-size: 10px;
+            font-weight: bold;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+
+        .title {
+            text-align: right;
+        }
+
+        .title h1 {
+            color: #050816;
+            font-size: 23px;
+            line-height: 1;
+            margin: 0 0 8px;
+            text-transform: uppercase;
+        }
+
+        .title strong,
+        .title span {
+            display: block;
+        }
+
+        .box-grid {
+            display: table;
+            width: 100%;
+            border: 1px solid #d1d5db;
+            margin-bottom: 14px;
+        }
+
+        .box {
+            display: table-cell;
+            width: 50%;
+            padding: 12px;
+            vertical-align: top;
+        }
+
+        .box + .box {
+            border-left: 1px solid #d1d5db;
+        }
+
+        h2 {
+            border-bottom: 1px solid #d1d5db;
+            font-size: 12px;
+            margin: 18px 0 9px;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .data-row {
+            display: table;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        .data-row span,
+        .data-row strong {
+            display: table-cell;
+            vertical-align: top;
+        }
+
+        .data-row span {
+            width: 95px;
+            font-weight: bold;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th,
+        td {
+            border: 1px solid #d1d5db;
+            padding: 7px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f3f4f6;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .money,
+        .center {
+            text-align: right;
+        }
+
+        .clauses p {
+            margin: 0 0 7px;
+        }
+
+        .signatures {
+            display: table;
+            width: 100%;
+            margin-top: 30px;
+        }
+
+        .signature {
+            display: table-cell;
+            width: 50%;
+            padding: 0 18px;
+            text-align: center;
+        }
+
+        .line {
+            border-top: 1px solid #111827;
+            margin: 34px 0 7px;
+        }
+
+        .footer {
+            color: #6b7280;
+            font-size: 10px;
+            margin-top: 18px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <main class="document">
+        <section class="top">
+            <div class="brand">
+                <span class="brand-mark"></span>
+                <span class="brand-name">
+                    <strong>Loca360</strong>
+                    <span>Gestao de ativos</span>
+                </span>
+            </div>
+            <div class="title">
+                <h1>Contrato de Locacao</h1>
+                <strong>{{ contrato.codigo }}</strong>
+                <span>Emissao: {{ data_emissao|date:"d/m/Y" }}</span>
+            </div>
+        </section>
+
+        <section class="box-grid">
+            <div class="box">
+                <h2>Locadora</h2>
+                <div class="data-row"><span>Razao</span><strong>Locadora Alpha</strong></div>
+                <div class="data-row"><span>Documento</span><strong>00.000.000/0001-00</strong></div>
+                <div class="data-row"><span>Contato</span><strong>contato@loca360.local</strong></div>
+            </div>
+            <div class="box">
+                <h2>Cliente</h2>
+                <div class="data-row"><span>Nome</span><strong>{{ locacao.cliente.nome }}</strong></div>
+                <div class="data-row"><span>Documento</span><strong>{{ locacao.cliente.documento }}</strong></div>
+                <div class="data-row"><span>Contato</span><strong>{{ locacao.cliente.telefone|default:"-" }}</strong></div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Condicoes comerciais</h2>
+            <div class="data-row"><span>Locacao</span><strong>{{ locacao.codigo }}</strong></div>
+            <div class="data-row"><span>Periodo</span><strong>{{ locacao.data_inicio|date:"d/m/Y" }} a {{ locacao.data_fim|date:"d/m/Y" }} ({{ periodo_dias }} dia{{ periodo_dias|pluralize }})</strong></div>
+            <div class="data-row"><span>Valor total</span><strong>R$ {{ locacao.valor_total }}</strong></div>
+            <div class="data-row"><span>Pagamento</span><strong>{{ locacao.get_status_pagamento_display }}</strong></div>
+        </section>
+
+        <section>
+            <h2>Equipamentos locados</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Codigo</th>
+                        <th>Equipamento</th>
+                        <th>Categoria</th>
+                        <th class="center">Qtd</th>
+                        <th class="money">Diaria</th>
+                        <th class="money">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in itens %}
+                        <tr>
+                            <td>{{ item.ativo.codigo }}</td>
+                            <td>{{ item.ativo.nome }}</td>
+                            <td>{{ item.ativo.categoria.nome }}</td>
+                            <td class="center">{{ item.quantidade }}</td>
+                            <td class="money">R$ {{ item.valor_diaria }}</td>
+                            <td class="money">R$ {{ item.valor_total }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <section class="clauses">
+            <h2>Clausulas iniciais</h2>
+            <p>1. A locadora disponibiliza ao cliente os equipamentos relacionados neste contrato durante o periodo informado.</p>
+            <p>2. O cliente declara receber os equipamentos em condicoes de uso e se responsabiliza por guarda, conservacao e devolucao.</p>
+            <p>3. Danos, extravios, atrasos de devolucao ou uso fora das condicoes acordadas poderao gerar cobrancas adicionais.</p>
+            <p>4. Equipamentos com rastreamento poderao utilizar acompanhamento simulado ou real, conforme disponibilidade tecnica do ativo.</p>
+        </section>
+
+        <section class="signatures">
+            <div class="signature">
+                <div class="line"></div>
+                <strong>Locadora Alpha</strong>
+                <span>Locadora</span>
+            </div>
+            <div class="signature">
+                <div class="line"></div>
+                <strong>{{ locacao.cliente.nome }}</strong>
+                <span>Cliente</span>
+            </div>
+        </section>
+
+        <div class="footer">
+            Documento gerado pelo Loca360 a partir da locacao {{ locacao.codigo }}.
+        </div>
+    </main>
+</body>
+</html>

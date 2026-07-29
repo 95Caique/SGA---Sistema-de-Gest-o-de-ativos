@@ -1,6 +1,8 @@
 from django.db.models import Count, Q
-from django.shortcuts import render
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from wkhtmltopdf.views import PDFTemplateResponse
 
 from config.views import money_br, with_layout
 from locacoes.models import Locacao
@@ -38,9 +40,39 @@ def contratos_list(request):
                 "contratos": contratos,
                 "query": query,
                 "status_filter": status_filter,
-                "status_counts": _status_counts(),
-            }
-        ),
+                            "status_counts": _status_counts(),
+                        }
+                    ),
+                )
+
+
+def contrato_pdf(request, pk):
+    locacao = get_object_or_404(Locacao.objects.select_related("cliente", "endereco_entrega"), pk=pk)
+
+    if locacao.status in [Locacao.Status.ORCAMENTO, Locacao.Status.CANCELADA]:
+        messages.error(request, "Contrato disponivel apenas para locacoes agendadas, ativas ou finalizadas.")
+        return redirect("locacao_detail", pk=locacao.pk)
+
+    itens = locacao.itens.select_related("ativo", "ativo__categoria").order_by("ativo__codigo")
+    filename = f"contrato-{locacao.codigo}.pdf"
+
+    return PDFTemplateResponse(
+        request=request,
+        template="contratos/pdf.html",
+        context={
+            "contrato": _contrato_from_locacao(locacao),
+            "locacao": locacao,
+            "itens": itens,
+            "data_emissao": timezone.localdate(),
+            "periodo_dias": max((locacao.data_fim - locacao.data_inicio).days + 1, 1),
+        },
+        filename=filename,
+        show_content_in_browser=True,
+        cmd_options={
+            "quiet": True,
+            "encoding": "utf8",
+            "enable_local_file_access": True,
+        },
     )
 
 
@@ -52,7 +84,7 @@ def _contrato_from_locacao(locacao):
         "cliente": locacao.cliente,
         "inicio": locacao.data_inicio,
         "fim": locacao.data_fim,
-        "total_itens": locacao.total_itens,
+        "total_itens": getattr(locacao, "total_itens", locacao.itens.count()),
         "valor_total": money_br(locacao.valor_total),
         "status_key": status_key,
         "status_label": status_label,

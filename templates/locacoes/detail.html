@@ -14,6 +14,9 @@
         {% if locacao.status == 'orcamento' %}
             <a class="button button-muted" href="{% url 'orcamento_pdf' locacao.pk %}">PDF</a>
         {% endif %}
+        {% if locacao.status == 'agendada' or locacao.status == 'ativa' or locacao.status == 'finalizada' %}
+            <a class="button button-muted" href="{% url 'contrato_pdf' locacao.pk %}">Contrato</a>
+        {% endif %}
         {% if locacao.status == 'ativa' %}
             <a class="button button-muted" href="{% url 'termo_entrega_pdf' locacao.pk %}">Termo entrega</a>
             <a class="button button-muted" href="{% url 'termo_devolucao_pdf' locacao.pk %}">Termo devolucao</a>

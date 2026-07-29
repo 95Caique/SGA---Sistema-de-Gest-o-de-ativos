@@ -1,11 +1,14 @@
 from datetime import timedelta
+from decimal import Decimal
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from ativos.models import Ativo, CategoriaAtivo
 from clientes.models import Cliente
-from locacoes.models import Locacao
+from locacoes.models import ItemLocacao, Locacao
 
 
 class ContratosListTests(TestCase):
@@ -13,6 +16,12 @@ class ContratosListTests(TestCase):
         self.cliente = Cliente.objects.create(
             nome="Construtora Forte",
             documento="12.345.678/0001-90",
+        )
+        self.categoria = CategoriaAtivo.objects.create(nome="Construcao")
+        self.ativo = Ativo.objects.create(
+            codigo="BET-001",
+            nome="Betoneira 400L",
+            categoria=self.categoria,
         )
 
     def criar_locacao(self, codigo, status, data_inicio=None, data_fim=None):
@@ -34,6 +43,7 @@ class ContratosListTests(TestCase):
         self.assertContains(response, "CTR-LOC-0001")
         self.assertContains(response, "Construtora Forte")
         self.assertContains(response, "Ativo")
+        self.assertContains(response, "PDF")
 
     def test_filtra_contratos_vencidos(self):
         hoje = timezone.localdate()
@@ -67,3 +77,28 @@ class ContratosListTests(TestCase):
 
         self.assertContains(response, "CTR-LOC-0002")
         self.assertNotContains(response, "CTR-LOC-0001")
+
+    @patch("wkhtmltopdf.views.render_pdf_from_template", return_value=b"%PDF-1.4")
+    def test_gera_pdf_do_contrato(self, _render_pdf):
+        locacao = self.criar_locacao("LOC-0001", Locacao.Status.AGENDADA)
+        ItemLocacao.objects.create(
+            locacao=locacao,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("500.00"),
+        )
+
+        response = self.client.get(reverse("contrato_pdf", kwargs={"pk": locacao.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertIn("inline", response["Content-Disposition"])
+        self.assertIn("contrato-LOC-0001.pdf", response["Content-Disposition"])
+
+    def test_pdf_contrato_bloqueia_orcamento(self):
+        locacao = self.criar_locacao("LOC-0001", Locacao.Status.ORCAMENTO)
+
+        response = self.client.get(reverse("contrato_pdf", kwargs={"pk": locacao.pk}))
+
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": locacao.pk}))
