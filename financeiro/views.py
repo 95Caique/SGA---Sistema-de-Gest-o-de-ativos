@@ -9,6 +9,9 @@ from config.views import money_br, with_layout
 from locacoes.models import Locacao
 
 
+STATUS_PAGAMENTO_VALIDOS = [status for status, _label in Locacao.StatusPagamento.choices]
+
+
 def financeiro_list(request):
     query = request.GET.get("q", "").strip()
     status_filter = request.GET.get("status", "").strip()
@@ -22,7 +25,7 @@ def financeiro_list(request):
             | Q(observacoes__icontains=query)
         )
 
-    if status_filter in [status for status, _label in Locacao.StatusPagamento.choices]:
+    if status_filter in STATUS_PAGAMENTO_VALIDOS:
         locacoes = locacoes.filter(status_pagamento=status_filter)
     else:
         status_filter = ""
@@ -75,10 +78,20 @@ def financeiro_reabrir(request, pk):
 
 
 def _total_por_status_pagamento(status_pagamento):
-    return (
-        Locacao.objects.filter(status_pagamento=status_pagamento).aggregate(total=Sum("valor_total"))["total"]
-        or Decimal("0")
-    )
+    return _locacoes_por_pagamento(status_pagamento).aggregate(total=Sum("valor_total"))["total"] or Decimal("0")
+
+
+def _locacoes_por_pagamento(status_pagamento):
+    return Locacao.objects.filter(status_pagamento=status_pagamento)
+
+
+def _resumo_status(status_pagamento, valor):
+    locacoes = _locacoes_por_pagamento(status_pagamento)
+
+    return {
+        "valor": money_br(valor),
+        "count": locacoes.count(),
+    }
 
 
 def _resumo_financeiro():
@@ -87,8 +100,8 @@ def _resumo_financeiro():
     cancelado = _total_por_status_pagamento(Locacao.StatusPagamento.CANCELADO)
 
     return {
-        "aberto": {"valor": money_br(aberto), "count": Locacao.objects.filter(status_pagamento=Locacao.StatusPagamento.ABERTO).count()},
-        "recebido": {"valor": money_br(recebido), "count": Locacao.objects.filter(status_pagamento=Locacao.StatusPagamento.RECEBIDO).count()},
-        "cancelado": {"valor": money_br(cancelado), "count": Locacao.objects.filter(status_pagamento=Locacao.StatusPagamento.CANCELADO).count()},
+        "aberto": _resumo_status(Locacao.StatusPagamento.ABERTO, aberto),
+        "recebido": _resumo_status(Locacao.StatusPagamento.RECEBIDO, recebido),
+        "cancelado": _resumo_status(Locacao.StatusPagamento.CANCELADO, cancelado),
         "total": money_br(aberto + recebido),
     }

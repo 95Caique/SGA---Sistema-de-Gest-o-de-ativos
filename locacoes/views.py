@@ -15,6 +15,13 @@ from .forms import ItemLocacaoForm, ItemLocacaoFormSet, LocacaoForm
 from .models import ItemLocacao, Locacao
 
 
+PDF_OPTIONS = {
+    "quiet": True,
+    "encoding": "utf8",
+    "enable_local_file_access": True,
+}
+
+
 def locacoes_list(request):
     query = request.GET.get("q", "").strip()
     status_filter = request.GET.get("status", "").strip()
@@ -259,7 +266,6 @@ def orcamento_pdf(request, pk):
         messages.error(request, "PDF de orcamento disponivel apenas para locacoes em orcamento.")
         return redirect("locacao_detail", pk=locacao.pk)
 
-    itens = locacao.itens.select_related("ativo", "ativo__categoria").order_by("ativo__codigo")
     data_emissao = timezone.localdate()
     filename = f"orcamento-{locacao.codigo}.pdf"
     return PDFTemplateResponse(
@@ -267,18 +273,14 @@ def orcamento_pdf(request, pk):
         template="orcamentos/pdf.html",
         context={
             "locacao": locacao,
-            "itens": itens,
+            "itens": _itens_locacao(locacao),
             "data_emissao": data_emissao,
             "data_validade": data_emissao + timedelta(days=10),
-            "periodo_dias": max((locacao.data_fim - locacao.data_inicio).days + 1, 1),
+            "periodo_dias": _periodo_dias(locacao),
         },
         filename=filename,
         show_content_in_browser=True,
-        cmd_options={
-            "quiet": True,
-            "encoding": "utf8",
-            "enable_local_file_access": True,
-        },
+        cmd_options=PDF_OPTIONS,
     )
 
 
@@ -341,23 +343,18 @@ def termo_entrega_pdf(request, pk):
         messages.error(request, "Termo de entrega disponivel apenas para locacoes ativas.")
         return redirect("locacao_detail", pk=locacao.pk)
 
-    itens = locacao.itens.select_related("ativo", "ativo__categoria").order_by("ativo__codigo")
     filename = f"termo-entrega-{locacao.codigo}.pdf"
     return PDFTemplateResponse(
         request=request,
         template="locacoes/termo_entrega_pdf.html",
         context={
             "locacao": locacao,
-            "itens": itens,
+            "itens": _itens_locacao(locacao),
             "data_entrega": timezone.localtime(),
         },
         filename=filename,
         show_content_in_browser=True,
-        cmd_options={
-            "quiet": True,
-            "encoding": "utf8",
-            "enable_local_file_access": True,
-        },
+        cmd_options=PDF_OPTIONS,
     )
 
 
@@ -368,24 +365,27 @@ def termo_devolucao_pdf(request, pk):
         messages.error(request, "Termo de devolucao disponivel apenas para locacoes ativas ou finalizadas.")
         return redirect("locacao_detail", pk=locacao.pk)
 
-    itens = locacao.itens.select_related("ativo", "ativo__categoria").order_by("ativo__codigo")
     filename = f"termo-devolucao-{locacao.codigo}.pdf"
     return PDFTemplateResponse(
         request=request,
         template="locacoes/termo_devolucao_pdf.html",
         context={
             "locacao": locacao,
-            "itens": itens,
+            "itens": _itens_locacao(locacao),
             "data_devolucao": timezone.localtime(),
         },
         filename=filename,
         show_content_in_browser=True,
-        cmd_options={
-            "quiet": True,
-            "encoding": "utf8",
-            "enable_local_file_access": True,
-        },
+        cmd_options=PDF_OPTIONS,
     )
+
+
+def _itens_locacao(locacao):
+    return locacao.itens.select_related("ativo", "ativo__categoria").order_by("ativo__codigo")
+
+
+def _periodo_dias(locacao):
+    return max((locacao.data_fim - locacao.data_inicio).days + 1, 1)
 
 
 def locacao_finalizar(request, pk):

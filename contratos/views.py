@@ -1,5 +1,5 @@
-from django.db.models import Count, Q
 from django.contrib import messages
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from wkhtmltopdf.views import PDFTemplateResponse
@@ -8,7 +8,13 @@ from config.views import money_br, with_layout
 from locacoes.models import Locacao
 
 
-STATUS_FILTROS = ["minuta", "ativo", "vencido", "encerrado", "cancelado"]
+CONTRATO_STATUS_FILTROS = ["minuta", "ativo", "vencido", "encerrado", "cancelado"]
+PDF_STATUS_BLOQUEADOS = [Locacao.Status.ORCAMENTO, Locacao.Status.CANCELADA]
+PDF_OPTIONS = {
+    "quiet": True,
+    "encoding": "utf8",
+    "enable_local_file_access": True,
+}
 
 
 def contratos_list(request):
@@ -26,7 +32,7 @@ def contratos_list(request):
 
     contratos = [_contrato_from_locacao(locacao) for locacao in locacoes]
 
-    if status_filter in STATUS_FILTROS:
+    if status_filter in CONTRATO_STATUS_FILTROS:
         contratos = [contrato for contrato in contratos if contrato["status_key"] == status_filter]
     else:
         status_filter = ""
@@ -40,16 +46,16 @@ def contratos_list(request):
                 "contratos": contratos,
                 "query": query,
                 "status_filter": status_filter,
-                            "status_counts": _status_counts(),
-                        }
-                    ),
-                )
+                "status_counts": _status_counts(),
+            }
+        ),
+    )
 
 
 def contrato_pdf(request, pk):
     locacao = get_object_or_404(Locacao.objects.select_related("cliente", "endereco_entrega"), pk=pk)
 
-    if locacao.status in [Locacao.Status.ORCAMENTO, Locacao.Status.CANCELADA]:
+    if locacao.status in PDF_STATUS_BLOQUEADOS:
         messages.error(request, "Contrato disponivel apenas para locacoes agendadas, ativas ou finalizadas.")
         return redirect("locacao_detail", pk=locacao.pk)
 
@@ -68,11 +74,7 @@ def contrato_pdf(request, pk):
         },
         filename=filename,
         show_content_in_browser=True,
-        cmd_options={
-            "quiet": True,
-            "encoding": "utf8",
-            "enable_local_file_access": True,
-        },
+        cmd_options=PDF_OPTIONS,
     )
 
 
@@ -106,14 +108,20 @@ def _status_contrato(locacao):
 
 
 def _status_counts():
-    contratos = [_contrato_from_locacao(locacao) for locacao in Locacao.objects.select_related("cliente").annotate(total_itens=Count("itens"))]
+    contratos = [
+        _contrato_from_locacao(locacao)
+        for locacao in Locacao.objects.select_related("cliente").annotate(total_itens=Count("itens"))
+    ]
+    counts = {status: 0 for status in CONTRATO_STATUS_FILTROS}
+
+    for contrato in contratos:
+        counts[contrato["status_key"]] += 1
+
     return {
         "todos": len(contratos),
-        "minutas": sum(1 for contrato in contratos if contrato["status_key"] == "minuta"),
-        "ativos": sum(1 for contrato in contratos if contrato["status_key"] == "ativo"),
-        "vencidos": sum(1 for contrato in contratos if contrato["status_key"] == "vencido"),
-        "encerrados": sum(1 for contrato in contratos if contrato["status_key"] == "encerrado"),
-        "cancelados": sum(1 for contrato in contratos if contrato["status_key"] == "cancelado"),
+        "minutas": counts["minuta"],
+        "ativos": counts["ativo"],
+        "vencidos": counts["vencido"],
+        "encerrados": counts["encerrado"],
+        "cancelados": counts["cancelado"],
     }
-
-# Create your views here.
