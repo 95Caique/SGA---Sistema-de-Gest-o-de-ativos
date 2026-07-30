@@ -2,9 +2,9 @@ from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
-from config.views import with_layout
+from config.views import money_br, with_layout
 
-from .forms import OrdemManutencaoForm
+from .forms import ConclusaoManutencaoForm, OrdemManutencaoForm
 from .models import OrdemManutencao
 
 
@@ -25,6 +25,10 @@ def manutencoes_list(request):
 
     if status_filter in status_validos:
         ordens = ordens.filter(status=status_filter)
+
+    for ordem in ordens:
+        ordem.custo_estimado_display = money_br(ordem.custo_estimado)
+        ordem.custo_real_display = money_br(ordem.custo_real)
 
     status_counts = {
         "todos": OrdemManutencao.objects.count(),
@@ -90,16 +94,33 @@ def manutencao_iniciar(request, pk):
 def manutencao_finalizar(request, pk):
     ordem = get_object_or_404(OrdemManutencao, pk=pk)
 
-    if request.method != "POST":
-        return redirect("manutencao")
-
     if ordem.status in [OrdemManutencao.Status.FINALIZADA, OrdemManutencao.Status.CANCELADA]:
         messages.error(request, "Esta ordem nao pode ser finalizada.")
         return redirect("manutencao")
 
-    ordem.finalizar()
-    messages.success(request, f"Ordem {ordem.codigo} finalizada com sucesso.")
-    return redirect("manutencao")
+    if request.method == "POST":
+        form = ConclusaoManutencaoForm(request.POST, instance=ordem)
+        if form.is_valid():
+            ordem.finalizar(
+                solucao=form.cleaned_data["solucao"],
+                custo_real=form.cleaned_data["custo_real"],
+            )
+            messages.success(request, f"Ordem {ordem.codigo} finalizada com sucesso.")
+            return redirect("manutencao")
+    else:
+        form = ConclusaoManutencaoForm(instance=ordem)
+
+    return render(
+        request,
+        "manutencao/conclusao_form.html",
+        with_layout(
+            {
+                "page_title": f"Finalizar {ordem.codigo}",
+                "ordem": ordem,
+                "form": form,
+            }
+        ),
+    )
 
 
 def manutencao_cancelar(request, pk):

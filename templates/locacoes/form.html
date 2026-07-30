@@ -24,23 +24,7 @@
 
     <div class="form-grid">
         {% for field in form %}
-            {% if field.name == 'endereco_entrega' %}
-                {% comment %}
-                <div class="form-field">
-                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                    {{ field }}
-                    {% if endereco_create_url %}
-                        <small>
-                            Nao encontrou o endereco?
-                            <a href="{{ endereco_create_url }}">Cadastrar endereco de entrega</a>
-                        </small>
-                    {% endif %}
-                    {% for error in field.errors %}
-                        <small class="field-error">{{ error }}</small>
-                    {% endfor %}
-                </div>
-                {% endcomment %}
-            {% else %}
+            {% if field.name != 'endereco_entrega' %}
                 <div class="form-field {% if field.name == 'observacoes' %}span-2{% endif %}">
                     <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                     {{ field }}

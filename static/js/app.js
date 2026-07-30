@@ -10,6 +10,56 @@ function formatMoney(value) {
     return value.toFixed(2);
 }
 
+function formatMoneyBR(value) {
+    return value.toFixed(2).replace(".", ",");
+}
+
+function setCursorPosition(field, position) {
+    window.requestAnimationFrame(() => {
+        field.setSelectionRange(position, position);
+    });
+}
+
+function formatMoneyInput(field, { padDecimals = false } = {}) {
+    const value = field.value;
+    const cursor = field.selectionStart ?? value.length;
+    const separatorIndex = Math.max(value.lastIndexOf(","), value.lastIndexOf("."));
+
+    if (!value.trim()) {
+        return;
+    }
+
+    const hasSeparator = separatorIndex >= 0;
+    const integerText = hasSeparator ? value.slice(0, separatorIndex) : value;
+    const decimalText = hasSeparator ? value.slice(separatorIndex + 1) : "";
+    const integerDigits = integerText.replace(/\D/g, "") || "0";
+    let decimalDigits = hasSeparator ? decimalText.replace(/\D/g, "").slice(0, 2) : "00";
+
+    if (padDecimals) {
+        decimalDigits = decimalDigits.padEnd(2, "0").slice(0, 2);
+    }
+
+    const editingDecimals = hasSeparator && cursor > separatorIndex;
+    const integerCursor = value.slice(0, hasSeparator ? Math.min(cursor, separatorIndex) : cursor).replace(/\D/g, "").length;
+    const decimalCursor = editingDecimals ? value.slice(separatorIndex + 1, cursor).replace(/\D/g, "").length : 0;
+
+    field.value = `${integerDigits},${decimalDigits}`;
+
+    if (editingDecimals) {
+        setCursorPosition(field, integerDigits.length + 1 + Math.min(decimalCursor, decimalDigits.length));
+        return;
+    }
+
+    setCursorPosition(field, Math.min(integerCursor, integerDigits.length));
+}
+
+function setupMoneyFields() {
+    document.querySelectorAll("[data-money-field='true']").forEach((field) => {
+        field.addEventListener("input", () => formatMoneyInput(field));
+        field.addEventListener("blur", () => formatMoneyInput(field, { padDecimals: true }));
+    });
+}
+
 function setupItemLocacaoCalculator(row) {
     if (row.dataset.calculatorReady === "true") {
         return;
@@ -109,4 +159,5 @@ document.addEventListener("DOMContentLoaded", () => {
     setupItemLocacaoRows();
     setupItemLocacaoDynamicRows();
     setupLocacaoEnderecoLoader();
+    setupMoneyFields();
 });

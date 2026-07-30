@@ -3,13 +3,36 @@
 {% block content %}
 <div class="page-heading">
     <div>
-        <h1>Nova manutencao</h1>
-        <p>Abra uma ordem para equipamento disponivel.</p>
+        <h1>Finalizar manutencao {{ ordem.codigo }}</h1>
+        <p>{{ ordem.ativo.codigo }} | {{ ordem.ativo.nome }}</p>
     </div>
     <div class="toolbar">
         <a class="button button-muted" href="{% url 'manutencao' %}">Voltar</a>
     </div>
 </div>
+
+<section class="metric-grid">
+    <article class="metric-card">
+        <span>Status</span>
+        <strong>{{ ordem.get_status_display }}</strong>
+        <small class="text-neutral">Situacao atual</small>
+    </article>
+    <article class="metric-card">
+        <span>Prioridade</span>
+        <strong>{{ ordem.get_prioridade_display }}</strong>
+        <small class="text-neutral">{{ ordem.get_tipo_display }}</small>
+    </article>
+    <article class="metric-card">
+        <span>Custo estimado</span>
+        <strong>R$ {{ ordem.custo_estimado }}</strong>
+        <small class="text-neutral">Planejado</small>
+    </article>
+    <article class="metric-card">
+        <span>Prevista</span>
+        <strong>{{ ordem.data_prevista|date:"d/m/Y"|default:"-" }}</strong>
+        <small class="text-neutral">Conclusao esperada</small>
+    </article>
+</section>
 
 <form class="panel form-panel" method="post" novalidate>
     {% csrf_token %}
@@ -24,9 +47,9 @@
 
     <div class="form-grid">
         {% for field in form %}
-            <div class="form-field {% if field.name == 'descricao' %}span-2{% endif %}">
+            <div class="form-field {% if field.name == 'solucao' %}span-2{% endif %}">
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {% if field.name == 'custo_estimado' %}
+                {% if field.name == 'custo_real' %}
                     <div class="money-input">
                         <span>R$</span>
                         {{ field }}
@@ -43,7 +66,7 @@
 
     <div class="form-actions">
         <a class="button button-muted" href="{% url 'manutencao' %}">Cancelar</a>
-        <button class="button button-primary" type="submit">Abrir manutencao</button>
+        <button class="button button-primary" type="submit">Finalizar manutencao</button>
     </div>
 </form>
 {% endblock %}

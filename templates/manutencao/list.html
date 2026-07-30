@@ -34,6 +34,7 @@
                         <th>Tipo</th>
                         <th>Prioridade</th>
                         <th>Prevista</th>
+                        <th>Custos</th>
                         <th>Status</th>
                         <th></th>
                     </tr>
@@ -49,6 +50,12 @@
                             <td>{{ ordem.get_tipo_display }}</td>
                             <td>{{ ordem.get_prioridade_display }}</td>
                             <td>{{ ordem.data_prevista|date:"d/m/Y"|default:"-" }}</td>
+                            <td>
+                                <strong>{{ ordem.custo_estimado_display }}</strong>
+                                {% if ordem.status == 'finalizada' %}
+                                    <small class="table-subtext">Real {{ ordem.custo_real_display }}</small>
+                                {% endif %}
+                            </td>
                             <td><span class="badge badge-status-{{ ordem.status }}">{{ ordem.get_status_display }}</span></td>
                             <td class="actions-cell">
                                 {% if ordem.status == 'aberta' %}
@@ -56,19 +63,13 @@
                                         {% csrf_token %}
                                         <button class="button button-small button-muted" type="submit">Iniciar</button>
                                     </form>
-                                    <form class="inline-form" method="post" action="{% url 'manutencao_finalizar' ordem.pk %}">
-                                        {% csrf_token %}
-                                        <button class="button button-small button-muted" type="submit">Finalizar</button>
-                                    </form>
+                                    <a class="button button-small button-muted" href="{% url 'manutencao_finalizar' ordem.pk %}">Finalizar</a>
                                     <form class="inline-form" method="post" action="{% url 'manutencao_cancelar' ordem.pk %}">
                                         {% csrf_token %}
                                         <button class="button button-small button-muted" type="submit">Cancelar</button>
                                     </form>
                                 {% elif ordem.status == 'em_andamento' %}
-                                    <form class="inline-form" method="post" action="{% url 'manutencao_finalizar' ordem.pk %}">
-                                        {% csrf_token %}
-                                        <button class="button button-small button-muted" type="submit">Finalizar</button>
-                                    </form>
+                                    <a class="button button-small button-muted" href="{% url 'manutencao_finalizar' ordem.pk %}">Finalizar</a>
                                     <form class="inline-form" method="post" action="{% url 'manutencao_cancelar' ordem.pk %}">
                                         {% csrf_token %}
                                         <button class="button button-small button-muted" type="submit">Cancelar</button>

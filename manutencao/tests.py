@@ -38,6 +38,44 @@ class ManutencaoOperacaoTests(TestCase):
         self.assertEqual(ordem.ativo, self.ativo)
         self.assertEqual(self.ativo.status, Ativo.Status.MANUTENCAO)
 
+    def test_cria_ordem_com_custo_estimado_em_formato_brasileiro(self):
+        response = self.client.post(
+            reverse("manutencao_create"),
+            data={
+                "codigo": "MAN-0001",
+                "ativo": self.ativo.pk,
+                "tipo": OrdemManutencao.Tipo.CORRETIVA,
+                "prioridade": OrdemManutencao.Prioridade.ALTA,
+                "data_prevista": "2026-07-15",
+                "responsavel": "Tecnico",
+                "descricao": "Troca de rolamento",
+                "custo_estimado": "400,00",
+            },
+        )
+
+        ordem = OrdemManutencao.objects.get(codigo="MAN-0001")
+        self.assertRedirects(response, reverse("manutencao"))
+        self.assertEqual(str(ordem.custo_estimado), "400.00")
+
+    def test_cria_ordem_com_custo_estimado_sem_centavos(self):
+        response = self.client.post(
+            reverse("manutencao_create"),
+            data={
+                "codigo": "MAN-0001",
+                "ativo": self.ativo.pk,
+                "tipo": OrdemManutencao.Tipo.CORRETIVA,
+                "prioridade": OrdemManutencao.Prioridade.ALTA,
+                "data_prevista": "2026-07-15",
+                "responsavel": "Tecnico",
+                "descricao": "Troca de rolamento",
+                "custo_estimado": "400",
+            },
+        )
+
+        ordem = OrdemManutencao.objects.get(codigo="MAN-0001")
+        self.assertRedirects(response, reverse("manutencao"))
+        self.assertEqual(str(ordem.custo_estimado), "400.00")
+
     def test_finaliza_ordem_e_libera_ativo(self):
         ordem = OrdemManutencao.objects.create(
             codigo="MAN-0001",
@@ -48,7 +86,13 @@ class ManutencaoOperacaoTests(TestCase):
         )
         ordem.colocar_ativo_em_manutencao()
 
-        response = self.client.post(reverse("manutencao_finalizar", kwargs={"pk": ordem.pk}))
+        response = self.client.post(
+            reverse("manutencao_finalizar", kwargs={"pk": ordem.pk}),
+            data={
+                "solucao": "Rolamento substituido",
+                "custo_real": "275,50",
+            },
+        )
 
         self.ativo.refresh_from_db()
         ordem.refresh_from_db()
@@ -56,6 +100,42 @@ class ManutencaoOperacaoTests(TestCase):
         self.assertEqual(ordem.status, OrdemManutencao.Status.FINALIZADA)
         self.assertEqual(self.ativo.status, Ativo.Status.DISPONIVEL)
         self.assertIsNotNone(ordem.data_conclusao)
+        self.assertEqual(ordem.solucao, "Rolamento substituido")
+        self.assertEqual(str(ordem.custo_real), "275.50")
+
+    def test_tela_de_conclusao_exibe_formulario(self):
+        ordem = OrdemManutencao.objects.create(
+            codigo="MAN-0001",
+            ativo=self.ativo,
+            tipo=OrdemManutencao.Tipo.CORRETIVA,
+            prioridade=OrdemManutencao.Prioridade.MEDIA,
+            descricao="Reparo",
+            custo_estimado="250.00",
+        )
+
+        response = self.client.get(reverse("manutencao_finalizar", kwargs={"pk": ordem.pk}))
+
+        self.assertContains(response, "Finalizar manutencao MAN-0001")
+        self.assertContains(response, "Solucao aplicada")
+        self.assertContains(response, "Custo real")
+
+    def test_lista_formata_custos_com_moeda(self):
+        OrdemManutencao.objects.create(
+            codigo="MAN-0001",
+            ativo=self.ativo,
+            tipo=OrdemManutencao.Tipo.CORRETIVA,
+            status=OrdemManutencao.Status.FINALIZADA,
+            prioridade=OrdemManutencao.Prioridade.MEDIA,
+            descricao="Reparo",
+            solucao="Troca feita",
+            custo_estimado="250.00",
+            custo_real="275.50",
+        )
+
+        response = self.client.get(reverse("manutencao"))
+
+        self.assertContains(response, "R$ 250,00")
+        self.assertContains(response, "Real R$ 275,50")
 
     def test_cancela_ordem_e_libera_ativo(self):
         ordem = OrdemManutencao.objects.create(

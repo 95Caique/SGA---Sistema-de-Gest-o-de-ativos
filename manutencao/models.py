@@ -55,12 +55,22 @@ class OrdemManutencao(models.Model):
         self.save(update_fields=["status", "atualizado_em"])
         self.colocar_ativo_em_manutencao()
 
-    def finalizar(self):
+    def finalizar(self, solucao=None, custo_real=None):
         from ativos.models import Ativo
 
         self.status = self.Status.FINALIZADA
         self.data_conclusao = date.today()
-        self.save(update_fields=["status", "data_conclusao", "atualizado_em"])
+        update_fields = ["status", "data_conclusao", "atualizado_em"]
+
+        if solucao is not None:
+            self.solucao = solucao
+            update_fields.append("solucao")
+
+        if custo_real is not None:
+            self.custo_real = custo_real
+            update_fields.append("custo_real")
+
+        self.save(update_fields=update_fields)
         self.ativo.status = Ativo.Status.DISPONIVEL
         self.ativo.save(update_fields=["status", "atualizado_em"])
 
