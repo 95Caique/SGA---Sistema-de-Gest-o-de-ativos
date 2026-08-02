@@ -1,6 +1,8 @@
 from django.test import TestCase
 from django.urls import reverse
 
+from locacoes.models import Locacao
+
 from .models import Cliente, ContatoCliente, EnderecoCliente
 
 
@@ -29,7 +31,7 @@ class ClienteViewTests(TestCase):
         )
 
         self.cliente.refresh_from_db()
-        self.assertRedirects(response, reverse("clientes"))
+        self.assertRedirects(response, reverse("cliente_detail", kwargs={"pk": self.cliente.pk}))
         self.assertEqual(self.cliente.nome, "Construtora Forte Atualizada")
         self.assertEqual(self.cliente.email, "novo@forte.com.br")
         self.assertEqual(self.cliente.responsavel, "Marina")
@@ -63,7 +65,7 @@ class ClienteViewTests(TestCase):
         )
 
         endereco = EnderecoCliente.objects.get(cliente=self.cliente)
-        self.assertRedirects(response, reverse("cliente_update", kwargs={"pk": self.cliente.pk}))
+        self.assertRedirects(response, reverse("cliente_detail", kwargs={"pk": self.cliente.pk}))
         self.assertEqual(endereco.nome, "Obra centro")
         self.assertTrue(endereco.principal)
 
@@ -153,7 +155,7 @@ class ClienteViewTests(TestCase):
         )
 
         endereco.refresh_from_db()
-        self.assertRedirects(response, reverse("cliente_update", kwargs={"pk": self.cliente.pk}))
+        self.assertRedirects(response, reverse("cliente_detail", kwargs={"pk": self.cliente.pk}))
         self.assertEqual(endereco.nome, "Obra norte")
         self.assertEqual(endereco.logradouro, "Rua Norte")
         self.assertTrue(endereco.principal)
@@ -172,7 +174,7 @@ class ClienteViewTests(TestCase):
         )
 
         contato = ContatoCliente.objects.get(cliente=self.cliente)
-        self.assertRedirects(response, reverse("cliente_update", kwargs={"pk": self.cliente.pk}))
+        self.assertRedirects(response, reverse("cliente_detail", kwargs={"pk": self.cliente.pk}))
         self.assertEqual(contato.nome, "Marina")
         self.assertTrue(contato.principal)
 
@@ -211,7 +213,47 @@ class ClienteViewTests(TestCase):
         )
 
         contato.refresh_from_db()
-        self.assertRedirects(response, reverse("cliente_update", kwargs={"pk": self.cliente.pk}))
+        self.assertRedirects(response, reverse("cliente_detail", kwargs={"pk": self.cliente.pk}))
         self.assertEqual(contato.nome, "Marina Silva")
         self.assertEqual(contato.cargo, "Operacoes")
         self.assertTrue(contato.principal)
+
+    def test_lista_clientes_linka_para_detalhe(self):
+        response = self.client.get(reverse("clientes"))
+
+        self.assertContains(response, reverse("cliente_detail", kwargs={"pk": self.cliente.pk}))
+
+    def test_detalhe_cliente_exibe_contatos_enderecos_e_locacoes(self):
+        EnderecoCliente.objects.create(
+            cliente=self.cliente,
+            nome="Obra centro",
+            logradouro="Rua A",
+            numero="100",
+            cidade="Sao Paulo",
+            estado="SP",
+            principal=True,
+        )
+        ContatoCliente.objects.create(
+            cliente=self.cliente,
+            nome="Marina",
+            cargo="Compras",
+            email="marina@forte.com.br",
+            principal=True,
+        )
+        Locacao.objects.create(
+            codigo="LOC-0001",
+            cliente=self.cliente,
+            data_inicio="2026-07-01",
+            data_fim="2026-07-05",
+            status=Locacao.Status.ATIVA,
+            valor_total="500.00",
+        )
+
+        response = self.client.get(reverse("cliente_detail", kwargs={"pk": self.cliente.pk}))
+
+        self.assertContains(response, "Construtora Forte")
+        self.assertContains(response, "Marina")
+        self.assertContains(response, "Obra centro")
+        self.assertContains(response, "LOC-0001")
+        self.assertContains(response, "R$ 500,00")
+        self.assertContains(response, reverse("cliente_update", kwargs={"pk": self.cliente.pk}))

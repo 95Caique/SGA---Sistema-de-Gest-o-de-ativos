@@ -24,6 +24,7 @@ from clientes.views import (
     cliente_contato_create,
     cliente_contato_update,
     cliente_create,
+    cliente_detail,
     cliente_endereco_create,
     cliente_endereco_update,
     cliente_enderecos_options,
@@ -84,6 +85,7 @@ urlpatterns = [
     path('clientes/', clientes_list, name='clientes'),
     path('clientes/novo/', cliente_create, name='cliente_create'),
     path('clientes/<int:pk>/editar/', cliente_update, name='cliente_update'),
+    path('clientes/<int:pk>/', cliente_detail, name='cliente_detail'),
     path('clientes/<int:pk>/contatos/novo/', cliente_contato_create, name='cliente_contato_create'),
     path(
         'clientes/<int:pk>/contatos/<int:contato_pk>/editar/',

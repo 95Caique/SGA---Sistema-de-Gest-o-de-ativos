@@ -1,10 +1,11 @@
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
-from config.views import with_layout
+from config.views import money_br, with_layout
+from locacoes.models import Locacao
 
 from .forms import ClienteForm, ContatoClienteForm, EnderecoClienteForm
 from .models import Cliente, ContatoCliente, EnderecoCliente
@@ -78,6 +79,36 @@ def cliente_create(request):
     )
 
 
+def cliente_detail(request, pk):
+    cliente = get_object_or_404(Cliente, pk=pk)
+    locacoes = cliente.locacoes.order_by("-data_inicio", "codigo")[:8]
+    resumo = cliente.locacoes.exclude(status=Locacao.Status.CANCELADA).aggregate(
+        total=Sum("valor_total"),
+        abertas=Count("pk", filter=Q(status_pagamento=Locacao.StatusPagamento.ABERTO)),
+        recebidas=Count("pk", filter=Q(status_pagamento=Locacao.StatusPagamento.RECEBIDO)),
+    )
+
+    return render(
+        request,
+        "clientes/detail.html",
+        with_layout(
+            {
+                "page_title": cliente.nome,
+                "cliente": cliente,
+                "contatos": cliente.contatos.order_by("-principal", "nome"),
+                "enderecos": cliente.enderecos.order_by("-principal", "nome"),
+                "locacoes": locacoes,
+                "resumo": {
+                    "total_locacoes": cliente.locacoes.count(),
+                    "valor_total": money_br(resumo["total"]),
+                    "abertas": resumo["abertas"],
+                    "recebidas": resumo["recebidas"],
+                },
+            }
+        ),
+    )
+
+
 def cliente_update(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
     enderecos = cliente.enderecos.order_by("-principal", "nome")
@@ -88,7 +119,7 @@ def cliente_update(request, pk):
         if form.is_valid():
             cliente = form.save()
             messages.success(request, f"Cliente {cliente.nome} atualizado com sucesso.")
-            return redirect("clientes")
+            return redirect("cliente_detail", pk=cliente.pk)
     else:
         form = ClienteForm(instance=cliente)
 
@@ -130,12 +161,12 @@ def cliente_endereco_create(request, pk):
                 locacao_retorno.save(update_fields=["endereco_entrega", "atualizado_em"])
                 return redirect("locacao_update", pk=locacao_retorno.pk)
 
-            return redirect("cliente_update", pk=cliente.pk)
+            return redirect("cliente_detail", pk=cliente.pk)
     else:
         form = EnderecoClienteForm()
 
     return_url = reverse("locacao_update", kwargs={"pk": locacao_retorno.pk}) if locacao_retorno else reverse(
-        "cliente_update", kwargs={"pk": cliente.pk}
+        "cliente_detail", kwargs={"pk": cliente.pk}
     )
 
     return render(
@@ -195,7 +226,7 @@ def cliente_endereco_update(request, pk, endereco_pk):
                 EnderecoCliente.objects.filter(cliente=cliente).exclude(pk=endereco.pk).update(principal=False)
 
             messages.success(request, f"Endereco {endereco.nome} atualizado com sucesso.")
-            return redirect("cliente_update", pk=cliente.pk)
+            return redirect("cliente_detail", pk=cliente.pk)
     else:
         form = EnderecoClienteForm(instance=endereco)
 
@@ -209,7 +240,7 @@ def cliente_endereco_update(request, pk, endereco_pk):
                 "submit_label": "Salvar alteracoes",
                 "cliente": cliente,
                 "form": form,
-                "return_url": reverse("cliente_update", kwargs={"pk": cliente.pk}),
+                "return_url": reverse("cliente_detail", kwargs={"pk": cliente.pk}),
             }
         ),
     )
@@ -229,7 +260,7 @@ def cliente_contato_create(request, pk):
                 ContatoCliente.objects.filter(cliente=cliente).exclude(pk=contato.pk).update(principal=False)
 
             messages.success(request, f"Contato {contato.nome} cadastrado para {cliente.nome}.")
-            return redirect("cliente_update", pk=cliente.pk)
+            return redirect("cliente_detail", pk=cliente.pk)
     else:
         form = ContatoClienteForm()
 
@@ -259,7 +290,7 @@ def cliente_contato_update(request, pk, contato_pk):
                 ContatoCliente.objects.filter(cliente=cliente).exclude(pk=contato.pk).update(principal=False)
 
             messages.success(request, f"Contato {contato.nome} atualizado com sucesso.")
-            return redirect("cliente_update", pk=cliente.pk)
+            return redirect("cliente_detail", pk=cliente.pk)
     else:
         form = ContatoClienteForm(instance=contato)
 

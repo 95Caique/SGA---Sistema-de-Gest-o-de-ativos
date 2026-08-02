@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>{{ cliente.nome }}</h1>
+        <p>{{ cliente.documento }} | {{ cliente.get_tipo_pessoa_display }}</p>
+    </div>
+    <div class="toolbar">
+        <a class="button button-muted" href="{% url 'clientes' %}">Voltar</a>
+        <a class="button button-muted" href="{% url 'cliente_endereco_create' cliente.pk %}">Novo endereco</a>
+        <a class="button button-primary" href="{% url 'cliente_update' cliente.pk %}">Editar</a>
+    </div>
+</div>
+
+<section class="metric-grid">
+    <article class="metric-card">
+        <span>Status</span>
+        <strong>{{ cliente.get_status_display }}</strong>
+        <small class="text-neutral">Situacao cadastral</small>
+    </article>
+    <article class="metric-card">
+        <span>Locacoes</span>
+        <strong>{{ resumo.total_locacoes }}</strong>
+        <small class="text-neutral">Historico total</small>
+    </article>
+    <article class="metric-card">
+        <span>Contratado</span>
+        <strong>{{ resumo.valor_total }}</strong>
+        <small class="text-success">Exceto canceladas</small>
+    </article>
+    <article class="metric-card">
+        <span>Financeiro</span>
+        <strong>{{ resumo.abertas }}</strong>
+        <small class="text-warning">Em aberto</small>
+    </article>
+</section>
+
+<section class="dashboard-grid">
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Dados do cliente</h2>
+        </div>
+        <dl class="asset-detail asset-detail-wide">
+            <div>
+                <dt>Email</dt>
+                <dd>{{ cliente.email|default:"-" }}</dd>
+            </div>
+            <div>
+                <dt>Telefone</dt>
+                <dd>{{ cliente.telefone|default:"-" }}</dd>
+            </div>
+            <div>
+                <dt>Responsavel</dt>
+                <dd>{{ cliente.responsavel|default:"-" }}</dd>
+            </div>
+            <div>
+                <dt>Recebidas</dt>
+                <dd>{{ resumo.recebidas }}</dd>
+            </div>
+            <div class="span-2">
+                <dt>Observacoes</dt>
+                <dd>{{ cliente.observacoes|default:"Sem observacoes." }}</dd>
+            </div>
+        </dl>
+    </article>
+
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Contatos</h2>
+            <a href="{% url 'cliente_contato_create' cliente.pk %}">Novo contato</a>
+        </div>
+        {% if contatos %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Cargo</th>
+                            <th>Contato</th>
+                            <th>Principal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contato in contatos %}
+                            <tr>
+                                <td><a href="{% url 'cliente_contato_update' cliente.pk contato.pk %}">{{ contato.nome }}</a></td>
+                                <td>{{ contato.cargo|default:"-" }}</td>
+                                <td>
+                                    {{ contato.telefone|default:contato.whatsapp|default:"-" }}
+                                    {% if contato.email %}
+                                        <small class="table-subtext">{{ contato.email }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if contato.principal %}
+                                        <span class="badge badge-success">Sim</span>
+                                    {% else %}
+                                        <span class="muted-text">Nao</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state compact">
+                <strong>Nenhum contato cadastrado</strong>
+                <p>Cadastre contatos para facilitar a comunicacao operacional.</p>
+            </div>
+        {% endif %}
+    </article>
+</section>
+
+<section class="dashboard-grid">
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Enderecos</h2>
+            <a href="{% url 'cliente_endereco_create' cliente.pk %}">Novo endereco</a>
+        </div>
+        {% if enderecos %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Endereco</th>
+                            <th>Cidade/UF</th>
+                            <th>Principal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for endereco in enderecos %}
+                            <tr>
+                                <td><a href="{% url 'cliente_endereco_update' cliente.pk endereco.pk %}">{{ endereco.nome }}</a></td>
+                                <td>
+                                    {{ endereco.logradouro }}{% if endereco.numero %}, {{ endereco.numero }}{% endif %}
+                                    {% if endereco.bairro %}
+                                        <small class="table-subtext">{{ endereco.bairro }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ endereco.cidade }}/{{ endereco.estado }}</td>
+                                <td>
+                                    {% if endereco.principal %}
+                                        <span class="badge badge-success">Sim</span>
+                                    {% else %}
+                                        <span class="muted-text">Nao</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state compact">
+                <strong>Nenhum endereco cadastrado</strong>
+                <p>Cadastre enderecos para usar na entrega das locacoes.</p>
+            </div>
+        {% endif %}
+    </article>
+
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Locacoes recentes</h2>
+            <a href="{% url 'locacao_create' %}">Nova locacao</a>
+        </div>
+        {% if locacoes %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Locacao</th>
+                            <th>Periodo</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for locacao in locacoes %}
+                            <tr>
+                                <td><a href="{% url 'locacao_detail' locacao.pk %}">{{ locacao.codigo }}</a></td>
+                                <td>{{ locacao.data_inicio|date:"d/m/Y" }} - {{ locacao.data_fim|date:"d/m/Y" }}</td>
+                                <td>R$ {{ locacao.valor_total }}</td>
+                                <td><span class="badge badge-status-{{ locacao.status }}">{{ locacao.get_status_display }}</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state compact">
+                <strong>Nenhuma locacao registrada</strong>
+                <p>As locacoes deste cliente aparecem aqui conforme forem cadastradas.</p>
+            </div>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}
