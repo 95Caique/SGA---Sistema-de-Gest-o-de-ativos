@@ -63,6 +63,18 @@
     </article>
 </section>
 
+{% if locacao.status == 'ativa' and rastreamento_status.total == 0 %}
+    <section class="panel compact-alert">
+        <strong>Esta locacao nao tem rastreamento ativo</strong>
+        <p>Os equipamentos desta locacao nao estao marcados como rastreaveis. Para aparecer no mapa, edite o equipamento e marque "Permite rastreamento".</p>
+    </section>
+{% elif locacao.status == 'ativa' and rastreamento_status.online > 0 %}
+    <section class="panel compact-alert compact-alert-success">
+        <strong>Rastreamento online</strong>
+        <p>Equipamentos rastreaveis desta locacao ja aparecem no mapa com dados simulados.</p>
+    </section>
+{% endif %}
+
 <section class="dashboard-grid">
     <article class="panel">
         <div class="panel-title">

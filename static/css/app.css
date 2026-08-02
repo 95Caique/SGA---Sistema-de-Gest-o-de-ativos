@@ -311,6 +311,11 @@ select {
     gap: 10px;
 }
 
+.toolbar .ui-select {
+    width: auto;
+    min-width: 190px;
+}
+
 .inline-form {
     display: inline-flex;
     margin: 0;
@@ -415,6 +420,27 @@ select {
 .panel {
     margin-bottom: 22px;
     padding: 20px;
+}
+
+.compact-alert {
+    border-color: var(--warning-soft);
+    background: #fffaf0;
+}
+
+.compact-alert strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.compact-alert p {
+    margin: 0;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.compact-alert-success {
+    border-color: var(--success-soft);
+    background: #f2fbf5;
 }
 
 .panel-title {
@@ -1232,6 +1258,7 @@ td strong {
 
     .search-form,
     .toolbar,
+    .toolbar .ui-select,
     .period-select,
     .period-select select,
     .module-search {

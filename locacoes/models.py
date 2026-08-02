@@ -1,6 +1,9 @@
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Sum
+from django.utils import timezone
 
 
 class Locacao(models.Model):
@@ -63,13 +66,13 @@ class Locacao(models.Model):
             return
 
         from ativos.models import Ativo
-        from rastreamento.models import Rastreador
+        from rastreamento.models import PosicaoRastreamento, Rastreador
 
         ativos = Ativo.objects.filter(itens_locacao__locacao=self).exclude(status=Ativo.Status.MANUTENCAO)
         ativos.update(status=Ativo.Status.LOCADO)
 
         for ativo in ativos.filter(permite_rastreamento=True):
-            Rastreador.objects.update_or_create(
+            rastreador, _created = Rastreador.objects.update_or_create(
                 ativo=ativo,
                 defaults={
                     "identificador": f"SIM-{ativo.codigo}",
@@ -77,6 +80,15 @@ class Locacao(models.Model):
                     "usando_dados_simulados": True,
                 },
             )
+            if not rastreador.posicoes.exists():
+                PosicaoRastreamento.objects.create(
+                    rastreador=rastreador,
+                    latitude=_coordenada_simulada(ativo.codigo, Decimal("-16.6869")),
+                    longitude=_coordenada_simulada(ativo.codigo[::-1], Decimal("-49.2648")),
+                    endereco_referencia=_referencia_entrega(self, ativo),
+                    velocidade_kmh=Decimal("0.0"),
+                    registrada_em=timezone.now(),
+                )
 
     def finalizar_operacao(self):
         from ativos.models import Ativo
@@ -135,3 +147,18 @@ class ItemLocacao(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         return super().save(*args, **kwargs)
+
+
+def _coordenada_simulada(texto, base):
+    deslocamento = Decimal(sum(ord(char) for char in texto) % 90) / Decimal("10000")
+    return base + deslocamento
+
+
+def _referencia_entrega(locacao, ativo):
+    if locacao.endereco_entrega:
+        return str(locacao.endereco_entrega)
+
+    if ativo.localizacao_atual:
+        return ativo.localizacao_atual
+
+    return f"Posicao simulada da locacao {locacao.codigo}"

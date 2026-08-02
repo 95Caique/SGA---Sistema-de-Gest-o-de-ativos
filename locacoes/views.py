@@ -177,7 +177,7 @@ def locacao_update(request, pk):
 
 def locacao_detail(request, pk):
     locacao = get_object_or_404(Locacao.objects.select_related("cliente"), pk=pk)
-    itens = locacao.itens.select_related("ativo", "ativo__categoria").order_by("ativo__codigo")
+    itens = list(locacao.itens.select_related("ativo", "ativo__categoria", "ativo__rastreador").order_by("ativo__codigo"))
     can_edit_itens = locacao.status in [Locacao.Status.ORCAMENTO, Locacao.Status.AGENDADA]
 
     if request.method == "POST":
@@ -216,6 +216,7 @@ def locacao_detail(request, pk):
                 "itens": itens,
                 "form": form,
                 "can_edit_itens": can_edit_itens,
+                "rastreamento_status": _rastreamento_status(itens),
             }
         ),
     )
@@ -386,6 +387,15 @@ def _itens_locacao(locacao):
 
 def _periodo_dias(locacao):
     return max((locacao.data_fim - locacao.data_inicio).days + 1, 1)
+
+
+def _rastreamento_status(itens):
+    rastreaveis = [item for item in itens if item.ativo.permite_rastreamento]
+
+    return {
+        "total": len(rastreaveis),
+        "online": sum(1 for item in rastreaveis if getattr(item.ativo, "rastreador", None)),
+    }
 
 
 def locacao_finalizar(request, pk):

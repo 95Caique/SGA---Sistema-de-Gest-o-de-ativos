@@ -89,6 +89,7 @@ def equipamento_update(request, pk):
         form = AtivoForm(request.POST, instance=ativo)
         if form.is_valid():
             ativo = form.save()
+            _sincronizar_rastreamento_locacao_ativa(ativo)
             messages.success(request, f"Equipamento {ativo.codigo} atualizado com sucesso.")
             return redirect("equipamentos")
     else:
@@ -107,3 +108,17 @@ def equipamento_update(request, pk):
             }
         ),
     )
+
+
+def _sincronizar_rastreamento_locacao_ativa(ativo):
+    if not ativo.permite_rastreamento:
+        return
+
+    locacao = (
+        Locacao.objects.filter(status=Locacao.Status.ATIVA, itens__ativo=ativo)
+        .order_by("-data_inicio", "codigo")
+        .first()
+    )
+
+    if locacao:
+        locacao.sincronizar_status_ativos()

@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from clientes.models import Cliente
 from locacoes.models import ItemLocacao, Locacao
+from rastreamento.models import Rastreador
 
 from .models import Ativo, CategoriaAtivo
 
@@ -79,3 +80,44 @@ class EquipamentoViewTests(TestCase):
 
         self.assertContains(response, "LOC-0001")
         self.assertContains(response, "Cliente Obra")
+
+    def test_editar_equipamento_locado_com_rastreio_cria_rastreador_simulado(self):
+        cliente = Cliente.objects.create(nome="Cliente Obra", documento="12345678000190")
+        locacao = Locacao.objects.create(
+            codigo="LOC-0001",
+            cliente=cliente,
+            data_inicio="2026-07-01",
+            data_fim="2026-07-05",
+            status=Locacao.Status.ATIVA,
+        )
+        ItemLocacao.objects.create(
+            locacao=locacao,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria="100.00",
+            valor_total="500.00",
+        )
+        self.ativo.status = Ativo.Status.LOCADO
+        self.ativo.save()
+
+        response = self.client.post(
+            reverse("equipamento_update", kwargs={"pk": self.ativo.pk}),
+            data={
+                "codigo": "BET-001",
+                "patrimonio": "PAT-001",
+                "nome": "Betoneira 400L",
+                "categoria": self.categoria.pk,
+                "nova_categoria": "",
+                "status": Ativo.Status.LOCADO,
+                "localizacao_atual": "Obra",
+                "permite_rastreamento": "on",
+                "horimetro_atual": "0.0",
+                "proxima_manutencao_horas": "",
+                "observacoes": "",
+            },
+        )
+
+        self.assertRedirects(response, reverse("equipamentos"))
+        rastreador = Rastreador.objects.get(ativo=self.ativo)
+        self.assertEqual(rastreador.status, Rastreador.Status.ONLINE)
+        self.assertEqual(rastreador.posicoes.count(), 1)

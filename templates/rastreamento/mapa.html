@@ -10,8 +10,16 @@
         <div class="module-search">
             <input class="ui-input" type="search" name="q" value="{{ query }}" placeholder="Buscar equipamento..." aria-label="Buscar equipamento rastreado">
         </div>
-        <button class="button button-muted" type="submit">Filtros</button>
-        <button class="button button-primary" type="button">Historico</button>
+        <select class="ui-select" name="status" aria-label="Filtrar por status">
+            <option value="">Todos os status</option>
+            {% for value, label in status_options %}
+                <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button class="button button-muted" type="submit">Filtrar</button>
+        {% if query or status_filter %}
+            <a class="button button-muted" href="{% url 'rastreamento' %}">Limpar</a>
+        {% endif %}
     </form>
 </div>
 
@@ -38,6 +46,42 @@
     </article>
 </section>
 
+{% if itens_sem_rastreamento %}
+    <section class="panel compact-alert">
+        <div class="panel-title">
+            <h2>Locacoes ativas sem rastreamento</h2>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Locacao</th>
+                        <th>Cliente</th>
+                        <th>Equipamento</th>
+                        <th>Motivo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in itens_sem_rastreamento %}
+                        <tr>
+                            <td><a href="{% url 'locacao_detail' item.locacao.pk %}">{{ item.locacao.codigo }}</a></td>
+                            <td>{{ item.locacao.cliente.nome }}</td>
+                            <td>{{ item.ativo.nome }} <small class="table-subtext">{{ item.ativo.codigo }}</small></td>
+                            <td>
+                                {% if not item.ativo.permite_rastreamento %}
+                                    Equipamento nao permite rastreamento
+                                {% else %}
+                                    Rastreador ainda nao foi criado
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endif %}
+
 <section class="tracking-grid">
     <aside class="panel tracking-list">
         <div class="panel-title">
@@ -53,6 +97,9 @@
                         <div>
                             <strong>{{ rastreador.ativo.nome }}</strong>
                             <span>{{ rastreador.ativo.codigo }} | {{ rastreador.identificador }}</span>
+                            {% if rastreador.locacao_ativa %}
+                                <small>{{ rastreador.locacao_ativa.codigo }} | {{ rastreador.locacao_ativa.cliente.nome }}</small>
+                            {% endif %}
                             <small>{{ rastreador.ultimo_endereco|default:rastreador.ativo.localizacao_atual|default:"Sem posicao registrada" }}</small>
                         </div>
                         <span class="badge badge-status-{{ rastreador.status }}">{{ rastreador.get_status_display }}</span>
@@ -69,9 +116,8 @@
 
     <div class="panel tracking-map-panel">
         <div class="tracking-map-toolbar">
-            <button class="button button-muted" type="button">Todos os status</button>
-            <button class="button button-muted" type="button">Todos os equipamentos</button>
-            <button class="button button-muted" type="button">Geocerca</button>
+            <span class="badge badge-tracking">Dados simulados</span>
+            <span class="muted-text">Posicao inicial gerada ao ativar a locacao</span>
         </div>
 
         <div class="tracking-map">
@@ -97,6 +143,9 @@
                     <div>
                         <strong>{{ primeiro.ativo.nome }}</strong>
                         <span>{{ primeiro.ativo.codigo }} | Patrimonio {{ primeiro.ativo.patrimonio|default:"-" }}</span>
+                        {% if primeiro.locacao_ativa %}
+                            <span>{{ primeiro.locacao_ativa.codigo }} | {{ primeiro.locacao_ativa.cliente.nome }}</span>
+                        {% endif %}
                     </div>
                     <div>
                         <span>Ultima posicao</span>

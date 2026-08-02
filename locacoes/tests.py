@@ -8,7 +8,7 @@ from django.urls import reverse
 
 from ativos.models import Ativo, CategoriaAtivo
 from clientes.models import Cliente, EnderecoCliente
-from rastreamento.models import Rastreador
+from rastreamento.models import PosicaoRastreamento, Rastreador
 
 from .forms import ItemLocacaoForm, LocacaoForm
 from .models import ItemLocacao, Locacao
@@ -52,6 +52,16 @@ class LocacaoOperacaoTests(TestCase):
         self.assertEqual(self.locacao.valor_total, Decimal("440.00"))
 
     def test_ativar_locacao_marca_ativo_locado_e_cria_rastreador_simulado(self):
+        endereco = EnderecoCliente.objects.create(
+            cliente=self.cliente,
+            nome="Obra",
+            logradouro="Rua A",
+            numero="10",
+            cidade="Goiania",
+            estado="GO",
+        )
+        self.locacao.endereco_entrega = endereco
+        self.locacao.save()
         ItemLocacao.objects.create(
             locacao=self.locacao,
             ativo=self.ativo,
@@ -70,6 +80,24 @@ class LocacaoOperacaoTests(TestCase):
         self.assertEqual(rastreador.identificador, "SIM-BET-001")
         self.assertEqual(rastreador.status, Rastreador.Status.ONLINE)
         self.assertTrue(rastreador.usando_dados_simulados)
+        self.assertEqual(rastreador.posicoes.count(), 1)
+        self.assertIn("Obra - Rua A, 10 - Goiania/GO", rastreador.posicoes.first().endereco_referencia)
+
+    def test_sincronizar_status_nao_duplica_posicao_simulada(self):
+        ItemLocacao.objects.create(
+            locacao=self.locacao,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("400.00"),
+        )
+        self.locacao.status = Locacao.Status.ATIVA
+        self.locacao.save()
+
+        self.locacao.sincronizar_status_ativos()
+        self.locacao.sincronizar_status_ativos()
+
+        self.assertEqual(PosicaoRastreamento.objects.count(), 1)
 
     def test_finalizar_locacao_libera_ativo_e_deixa_rastreador_offline(self):
         ItemLocacao.objects.create(
@@ -89,6 +117,26 @@ class LocacaoOperacaoTests(TestCase):
 
         self.assertEqual(self.ativo.status, Ativo.Status.DISPONIVEL)
         self.assertEqual(rastreador.status, Rastreador.Status.OFFLINE)
+
+    def test_detalhe_locacao_ativa_avisa_quando_nao_tem_equipamento_rastreavel(self):
+        self.ativo.permite_rastreamento = False
+        self.ativo.save()
+        self.locacao.status = Locacao.Status.ATIVA
+        self.locacao.save()
+        ItemLocacao.objects.create(
+            locacao=self.locacao,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("400.00"),
+        )
+        self.ativo.status = Ativo.Status.LOCADO
+        self.ativo.save()
+
+        response = self.client.get(reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
+
+        self.assertContains(response, "Esta locacao nao tem rastreamento ativo")
+        self.assertContains(response, "Permite rastreamento")
 
     @patch("wkhtmltopdf.views.render_pdf_from_template", return_value=b"%PDF-1.4")
     def test_gera_pdf_do_termo_de_entrega(self, _render_pdf):
