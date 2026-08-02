@@ -313,11 +313,10 @@
                 </span>
             </div>
             <div class="company">
-                <strong>Locadora Alpha LTDA</strong>
-                CNPJ: 12.345.678/0001-99<br>
-                (62) 99999-1111 | contato@loca360.com.br<br>
-                Av. Perimetral Norte, 1234 - Setor Aeroporto<br>
-                Goiania - GO - CEP: 74435-020
+                <strong>{{ empresa.razao_social }}</strong>
+                CNPJ: {{ empresa.documento }}<br>
+                {{ empresa.telefone|default:empresa.whatsapp|default:"-" }} | {{ empresa.email }}<br>
+                {{ empresa.endereco|default:"Endereco nao informado" }}
             </div>
             <div class="title">
                 <h1>Termo de Devolucao</h1>
@@ -344,9 +343,8 @@
             </div>
             <div class="info-box">
                 <h3>Local de Devolucao</h3>
-                <strong>Locadora Alpha LTDA</strong><br>
-                Av. Perimetral Norte, 1234<br>
-                Setor Aeroporto - Goiania - GO
+                <strong>{{ empresa.razao_social }}</strong><br>
+                {{ empresa.endereco|default:"Endereco nao informado" }}
             </div>
             <div class="info-box">
                 <h3>Responsavel pela Devolucao</h3>

@@ -209,9 +209,9 @@
         <section class="box-grid">
             <div class="box">
                 <h2>Locadora</h2>
-                <div class="data-row"><span>Razao</span><strong>Locadora Alpha</strong></div>
-                <div class="data-row"><span>Documento</span><strong>00.000.000/0001-00</strong></div>
-                <div class="data-row"><span>Contato</span><strong>contato@loca360.local</strong></div>
+                <div class="data-row"><span>Razao</span><strong>{{ empresa.razao_social }}</strong></div>
+                <div class="data-row"><span>Documento</span><strong>{{ empresa.documento }}</strong></div>
+                <div class="data-row"><span>Contato</span><strong>{{ empresa.email }}</strong></div>
             </div>
             <div class="box">
                 <h2>Cliente</h2>
@@ -268,7 +268,7 @@
         <section class="signatures">
             <div class="signature">
                 <div class="line"></div>
-                <strong>Locadora Alpha</strong>
+                <strong>{{ empresa.razao_social }}</strong>
                 <span>Locadora</span>
             </div>
             <div class="signature">

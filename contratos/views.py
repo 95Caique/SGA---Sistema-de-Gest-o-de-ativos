@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from wkhtmltopdf.views import PDFTemplateResponse
 
+from configuracoes.services import empresa_atual
 from config.views import money_br, with_layout
 from locacoes.models import Locacao
 
@@ -71,6 +72,7 @@ def contrato_pdf(request, pk):
             "contrato": _contrato_from_locacao(locacao),
             "locacao": locacao,
             "itens": itens,
+            "empresa": empresa_atual(),
             "data_emissao": timezone.localdate(),
             "periodo_dias": max((locacao.data_fim - locacao.data_inicio).days + 1, 1),
         },

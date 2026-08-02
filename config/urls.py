@@ -31,6 +31,7 @@ from clientes.views import (
     clientes_list,
 )
 from contratos.views import contrato_pdf, contratos_list
+from configuracoes.views import configuracoes_empresa
 from financeiro.views import financeiro_list, financeiro_reabrir, financeiro_receber
 from locacoes.views import (
     locacao_ativar,
@@ -110,5 +111,6 @@ urlpatterns = [
     path('relatorios/', relatorios_list, name='relatorios'),
     path('relatorios/exportar.csv', relatorios_export_csv, name='relatorios_export_csv'),
     path('relatorios/exportar.pdf', relatorios_export_pdf, name='relatorios_export_pdf'),
+    path('configuracoes/', configuracoes_empresa, name='configuracoes_empresa'),
     path('admin/', admin.site.urls),
 ]

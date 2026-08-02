@@ -9,6 +9,7 @@ from django.utils import timezone
 from wkhtmltopdf.views import PDFTemplateResponse
 
 from ativos.models import Ativo
+from configuracoes.services import empresa_atual
 from config.views import with_layout
 
 from .forms import DevolucaoLocacaoForm, ItemLocacaoForm, ItemLocacaoFormSet, LocacaoForm
@@ -275,6 +276,7 @@ def orcamento_pdf(request, pk):
         context={
             "locacao": locacao,
             "itens": _itens_locacao(locacao),
+            "empresa": empresa_atual(),
             "data_emissao": data_emissao,
             "data_validade": data_emissao + timedelta(days=10),
             "periodo_dias": _periodo_dias(locacao),
@@ -351,6 +353,7 @@ def termo_entrega_pdf(request, pk):
         context={
             "locacao": locacao,
             "itens": _itens_locacao(locacao),
+            "empresa": empresa_atual(),
             "data_entrega": timezone.localtime(),
         },
         filename=filename,
@@ -373,6 +376,7 @@ def termo_devolucao_pdf(request, pk):
         context={
             "locacao": locacao,
             "itens": _itens_locacao(locacao),
+            "empresa": empresa_atual(),
             "data_devolucao": timezone.localtime(),
         },
         filename=filename,

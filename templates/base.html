@@ -25,13 +25,19 @@
                     <span>{{ item.label }}</span>
                 </a>
             {% endfor %}
+            {% if request.user.is_superuser %}
+                <a class="nav-link {% if request.resolver_match.url_name == 'configuracoes_empresa' %}is-active{% endif %}" href="{% url 'configuracoes_empresa' %}">
+                    <span class="nav-icon">S</span>
+                    <span>Configuracoes</span>
+                </a>
+            {% endif %}
         </nav>
 
         <div class="sidebar-footer">
-            <div class="tenant-avatar">LA</div>
+            <div class="tenant-avatar">{{ empresa.nome_fantasia|slice:":2"|upper }}</div>
             <div>
-                <strong>Locadora Alpha</strong>
-                <small>Fernando</small>
+                <strong>{{ empresa.razao_social }}</strong>
+                <small>{{ empresa.email }}</small>
             </div>
         </div>
     </aside>
@@ -47,8 +53,8 @@
                 <button class="icon-button" type="button" aria-label="Notificacoes">!</button>
                 <button class="icon-button" type="button" aria-label="Ajuda">?</button>
                 <div class="user-chip">
-                    <span class="tenant-avatar">LA</span>
-                    <span>Locadora Alpha</span>
+                    <span class="tenant-avatar">{{ empresa.nome_fantasia|slice:":2"|upper }}</span>
+                    <span>{{ empresa.nome_fantasia }}</span>
                 </div>
             </div>
         </header>

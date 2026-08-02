@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from ativos.models import Ativo
 from clientes.models import Cliente
+from configuracoes.services import empresa_atual
 from locacoes.models import Locacao
 from rastreamento.models import Rastreador
 
@@ -141,6 +142,7 @@ MODULES = {
 
 def with_layout(context):
     context["nav_items"] = NAV_ITEMS
+    context["empresa"] = empresa_atual()
     return context
 
 
