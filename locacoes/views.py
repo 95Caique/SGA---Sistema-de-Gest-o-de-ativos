@@ -11,7 +11,7 @@ from wkhtmltopdf.views import PDFTemplateResponse
 from ativos.models import Ativo
 from config.views import with_layout
 
-from .forms import ItemLocacaoForm, ItemLocacaoFormSet, LocacaoForm
+from .forms import DevolucaoLocacaoForm, ItemLocacaoForm, ItemLocacaoFormSet, LocacaoForm
 from .models import ItemLocacao, Locacao
 
 
@@ -399,17 +399,44 @@ def _rastreamento_status(itens):
 
 
 def locacao_finalizar(request, pk):
-    locacao = get_object_or_404(Locacao, pk=pk)
-
-    if request.method != "POST":
-        return redirect("locacao_detail", pk=locacao.pk)
+    locacao = get_object_or_404(Locacao.objects.select_related("cliente"), pk=pk)
+    itens = list(locacao.itens.select_related("ativo", "ativo__categoria", "ativo__rastreador").order_by("ativo__codigo"))
 
     if locacao.status != Locacao.Status.ATIVA:
         messages.error(request, "Somente locacoes ativas podem ser finalizadas.")
         return redirect("locacao_detail", pk=locacao.pk)
 
-    locacao.status = Locacao.Status.FINALIZADA
-    locacao.save(update_fields=["status", "atualizado_em"])
-    locacao.finalizar_operacao()
-    messages.success(request, f"Locacao {locacao.codigo} finalizada com sucesso.")
-    return redirect("locacao_detail", pk=locacao.pk)
+    if request.method == "POST":
+        form = DevolucaoLocacaoForm(request.POST)
+
+        if form.is_valid():
+            with transaction.atomic():
+                locacao = get_object_or_404(Locacao.objects.select_for_update(), pk=pk)
+                locacao.status = Locacao.Status.FINALIZADA
+                update_fields = ["status", "atualizado_em"]
+
+                observacoes = form.cleaned_data["observacoes_devolucao"].strip()
+                if observacoes:
+                    locacao.observacoes = f"{locacao.observacoes}\n\nDevolucao: {observacoes}".strip()
+                    update_fields.append("observacoes")
+
+                locacao.save(update_fields=update_fields)
+                locacao.finalizar_operacao()
+
+            messages.success(request, f"Locacao {locacao.codigo} finalizada com sucesso.")
+            return redirect("locacao_detail", pk=locacao.pk)
+    else:
+        form = DevolucaoLocacaoForm()
+
+    return render(
+        request,
+        "locacoes/finalizacao_form.html",
+        with_layout(
+            {
+                "page_title": f"Finalizar {locacao.codigo}",
+                "locacao": locacao,
+                "itens": itens,
+                "form": form,
+            }
+        ),
+    )

@@ -10,7 +10,19 @@
         <div class="module-search">
             <input class="ui-input" type="search" name="q" value="{{ query }}" placeholder="Buscar financeiro..." aria-label="Buscar financeiro">
         </div>
+        <select class="ui-select" name="situacao" aria-label="Filtrar por vencimento">
+            <option value="">Todas as situacoes</option>
+            {% for value, label in situacao_options %}
+                <option value="{{ value }}" {% if situacao_filter == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        {% if status_filter %}
+            <input type="hidden" name="status" value="{{ status_filter }}">
+        {% endif %}
         <button class="button button-muted" type="submit">Filtros</button>
+        {% if query or status_filter or situacao_filter %}
+            <a class="button button-muted" href="{% url 'financeiro' %}">Limpar</a>
+        {% endif %}
         <a class="button button-primary" href="{% url 'locacao_create' %}">+ Nova locacao</a>
     </form>
 </div>
@@ -27,23 +39,23 @@
         <small class="text-warning">{{ resumo.aberto.count }} locacao{{ resumo.aberto.count|pluralize:"es" }}</small>
     </article>
     <article class="metric-card">
+        <span>Vencido</span>
+        <strong>{{ resumo.vencido.valor }}</strong>
+        <small class="text-danger">{{ resumo.vencido.count }} locacao{{ resumo.vencido.count|pluralize:"es" }}</small>
+    </article>
+    <article class="metric-card">
         <span>Recebido</span>
         <strong>{{ resumo.recebido.valor }}</strong>
         <small class="text-success">{{ resumo.recebido.count }} locacao{{ resumo.recebido.count|pluralize:"es" }}</small>
-    </article>
-    <article class="metric-card">
-        <span>Cancelado</span>
-        <strong>{{ resumo.cancelado.valor }}</strong>
-        <small class="text-danger">{{ resumo.cancelado.count }} locacao{{ resumo.cancelado.count|pluralize:"es" }}</small>
     </article>
 </section>
 
 <section class="panel">
     <div class="tabs">
-        <a class="{% if not status_filter %}is-active{% endif %}" href="{% url 'financeiro' %}{% if query %}?q={{ query|urlencode }}{% endif %}">Todos</a>
-        <a class="{% if status_filter == 'aberto' %}is-active{% endif %}" href="{% url 'financeiro' %}?status=aberto{% if query %}&q={{ query|urlencode }}{% endif %}">Em aberto <span>{{ resumo.aberto.count }}</span></a>
-        <a class="{% if status_filter == 'recebido' %}is-active{% endif %}" href="{% url 'financeiro' %}?status=recebido{% if query %}&q={{ query|urlencode }}{% endif %}">Recebidos <span>{{ resumo.recebido.count }}</span></a>
-        <a class="{% if status_filter == 'cancelado' %}is-active{% endif %}" href="{% url 'financeiro' %}?status=cancelado{% if query %}&q={{ query|urlencode }}{% endif %}">Cancelados <span>{{ resumo.cancelado.count }}</span></a>
+        <a class="{% if not status_filter %}is-active{% endif %}" href="{% url 'financeiro' %}{% if query or situacao_filter %}?{% if query %}q={{ query|urlencode }}{% endif %}{% if query and situacao_filter %}&{% endif %}{% if situacao_filter %}situacao={{ situacao_filter }}{% endif %}{% endif %}">Todos</a>
+        <a class="{% if status_filter == 'aberto' %}is-active{% endif %}" href="{% url 'financeiro' %}?status=aberto{% if query %}&q={{ query|urlencode }}{% endif %}{% if situacao_filter %}&situacao={{ situacao_filter }}{% endif %}">Em aberto <span>{{ resumo.aberto.count }}</span></a>
+        <a class="{% if status_filter == 'recebido' %}is-active{% endif %}" href="{% url 'financeiro' %}?status=recebido{% if query %}&q={{ query|urlencode }}{% endif %}{% if situacao_filter %}&situacao={{ situacao_filter }}{% endif %}">Recebidos <span>{{ resumo.recebido.count }}</span></a>
+        <a class="{% if status_filter == 'cancelado' %}is-active{% endif %}" href="{% url 'financeiro' %}?status=cancelado{% if query %}&q={{ query|urlencode }}{% endif %}{% if situacao_filter %}&situacao={{ situacao_filter }}{% endif %}">Cancelados <span>{{ resumo.cancelado.count }}</span></a>
     </div>
 
     {% if locacoes %}
@@ -55,6 +67,7 @@
                         <th>Descricao</th>
                         <th>Cliente</th>
                         <th>Valor</th>
+                        <th>Situação</th>
                         <th>Operacao</th>
                         <th>Pagamento</th>
                         <th></th>
@@ -69,7 +82,8 @@
                                 <strong>{{ locacao.cliente.nome }}</strong>
                                 <small class="table-subtext">{{ locacao.cliente.documento }}</small>
                             </td>
-                            <td>R$ {{ locacao.valor_total }}</td>
+                            <td>{{ locacao.valor_total_display }}</td>
+                            <td><span class="badge badge-finance-{{ locacao.situacao_financeira }}">{{ locacao.situacao_financeira_label }}</span></td>
                             <td><span class="badge badge-status-{{ locacao.status }}">{{ locacao.get_status_display }}</span></td>
                             <td>
                                 <span class="badge badge-status-{{ locacao.status_pagamento }}">

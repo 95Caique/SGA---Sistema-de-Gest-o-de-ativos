@@ -108,6 +108,29 @@ class LocacaoForm(forms.ModelForm):
         return cliente
 
 
+class DevolucaoLocacaoForm(forms.Form):
+    conferido = forms.BooleanField(
+        label="Equipamentos conferidos",
+        required=True,
+        error_messages={"required": "Confirme a conferencia dos equipamentos antes de finalizar."},
+    )
+    observacoes_devolucao = forms.CharField(
+        label="Observacoes da devolucao",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 4}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["conferido"].widget.attrs.update({"class": "form-check-input"})
+        self.fields["observacoes_devolucao"].widget.attrs.update(
+            {
+                "class": "form-control",
+                "placeholder": "Informe avarias, divergencias ou observacoes da entrega.",
+            }
+        )
+
+
 def _is_blank(value):
     return value in [None, ""]
 

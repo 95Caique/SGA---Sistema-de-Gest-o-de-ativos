@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from clientes.models import Cliente
 from locacoes.models import Locacao
@@ -12,12 +15,20 @@ class FinanceiroListTests(TestCase):
             documento="12.345.678/0001-90",
         )
 
-    def criar_locacao(self, codigo, status, valor_total, status_pagamento=Locacao.StatusPagamento.ABERTO):
+    def criar_locacao(
+        self,
+        codigo,
+        status,
+        valor_total,
+        status_pagamento=Locacao.StatusPagamento.ABERTO,
+        data_fim=None,
+    ):
+        data_fim = data_fim or timezone.localdate() + timedelta(days=5)
         return Locacao.objects.create(
             codigo=codigo,
             cliente=self.cliente,
-            data_inicio="2026-07-20",
-            data_fim="2026-07-25",
+            data_inicio=data_fim - timedelta(days=5),
+            data_fim=data_fim,
             status=status,
             status_pagamento=status_pagamento,
             valor_total=valor_total,
@@ -34,6 +45,29 @@ class FinanceiroListTests(TestCase):
         self.assertContains(response, "R$ 1.200,00")
         self.assertContains(response, "R$ 800,00")
         self.assertContains(response, "R$ 300,00")
+
+    def test_exibe_situacao_financeira_dos_lancamentos(self):
+        hoje = timezone.localdate()
+        self.criar_locacao("LOC-0001", Locacao.Status.ATIVA, "1200.00", data_fim=hoje - timedelta(days=1))
+        self.criar_locacao("LOC-0002", Locacao.Status.ATIVA, "800.00", data_fim=hoje)
+        self.criar_locacao("LOC-0003", Locacao.Status.AGENDADA, "300.00", data_fim=hoje + timedelta(days=5))
+
+        response = self.client.get(reverse("financeiro"))
+
+        self.assertContains(response, "Vencido")
+        self.assertContains(response, "Vence hoje")
+        self.assertContains(response, "A vencer")
+        self.assertContains(response, "R$ 1.200,00")
+
+    def test_filtra_lancamentos_vencidos(self):
+        hoje = timezone.localdate()
+        self.criar_locacao("LOC-0001", Locacao.Status.ATIVA, "1200.00", data_fim=hoje - timedelta(days=1))
+        self.criar_locacao("LOC-0002", Locacao.Status.AGENDADA, "800.00", data_fim=hoje + timedelta(days=3))
+
+        response = self.client.get(reverse("financeiro"), {"situacao": "vencido"})
+
+        self.assertContains(response, "LOC-0001")
+        self.assertNotContains(response, "LOC-0002")
 
     def test_filtra_lancamentos_em_aberto(self):
         self.criar_locacao("LOC-0001", Locacao.Status.AGENDADA, "1200.00")

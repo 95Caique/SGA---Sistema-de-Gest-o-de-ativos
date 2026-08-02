@@ -720,6 +720,72 @@ class LocacaoOperacaoTests(TestCase):
         self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
         self.assertEqual(self.locacao.status, Locacao.Status.ATIVA)
 
+    def test_tela_finalizacao_exibe_conferencia_dos_itens(self):
+        ItemLocacao.objects.create(
+            locacao=self.locacao,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("400.00"),
+        )
+        self.locacao.status = Locacao.Status.ATIVA
+        self.locacao.save()
+
+        response = self.client.get(reverse("locacao_finalizar", kwargs={"pk": self.locacao.pk}))
+
+        self.assertContains(response, "Finalizar locacao LOC-0001")
+        self.assertContains(response, "Betoneira 400L")
+        self.assertContains(response, "Equipamentos conferidos")
+
+    def test_finalizacao_exige_conferencia_dos_equipamentos(self):
+        ItemLocacao.objects.create(
+            locacao=self.locacao,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("400.00"),
+        )
+        self.locacao.status = Locacao.Status.ATIVA
+        self.locacao.save()
+        self.locacao.sincronizar_status_ativos()
+
+        response = self.client.post(reverse("locacao_finalizar", kwargs={"pk": self.locacao.pk}), data={})
+
+        self.locacao.refresh_from_db()
+        self.ativo.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Confirme a conferencia dos equipamentos antes de finalizar.")
+        self.assertEqual(self.locacao.status, Locacao.Status.ATIVA)
+        self.assertEqual(self.ativo.status, Ativo.Status.LOCADO)
+
+    def test_finalizacao_confirmada_libera_ativo_e_registra_observacao(self):
+        ItemLocacao.objects.create(
+            locacao=self.locacao,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("400.00"),
+        )
+        self.locacao.status = Locacao.Status.ATIVA
+        self.locacao.observacoes = "Entrega sem ressalvas."
+        self.locacao.save()
+        self.locacao.sincronizar_status_ativos()
+
+        response = self.client.post(
+            reverse("locacao_finalizar", kwargs={"pk": self.locacao.pk}),
+            data={"conferido": "on", "observacoes_devolucao": "Retorno conferido no patio."},
+        )
+
+        self.locacao.refresh_from_db()
+        self.ativo.refresh_from_db()
+        rastreador = Rastreador.objects.get(ativo=self.ativo)
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
+        self.assertEqual(self.locacao.status, Locacao.Status.FINALIZADA)
+        self.assertEqual(self.ativo.status, Ativo.Status.DISPONIVEL)
+        self.assertEqual(rastreador.status, Rastreador.Status.OFFLINE)
+        self.assertIn("Entrega sem ressalvas.", self.locacao.observacoes)
+        self.assertIn("Devolucao: Retorno conferido no patio.", self.locacao.observacoes)
+
     def test_edita_locacao_em_orcamento(self):
         response = self.client.post(
             reverse("locacao_update", kwargs={"pk": self.locacao.pk}),

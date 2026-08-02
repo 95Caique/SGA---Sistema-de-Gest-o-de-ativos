@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>Finalizar locacao {{ locacao.codigo }}</h1>
+        <p>{{ locacao.cliente.nome }} | {{ locacao.data_inicio|date:"d/m/Y" }} - {{ locacao.data_fim|date:"d/m/Y" }}</p>
+    </div>
+    <div class="toolbar">
+        <a class="button button-muted" href="{% url 'locacao_detail' locacao.pk %}">Voltar</a>
+    </div>
+</div>
+
+<section class="panel">
+    <div class="panel-title">
+        <h2>Conferencia dos equipamentos</h2>
+    </div>
+
+    {% if itens %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Codigo</th>
+                        <th>Equipamento</th>
+                        <th>Categoria</th>
+                        <th>Quantidade</th>
+                        <th>Rastreio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in itens %}
+                        <tr>
+                            <td><a href="#">{{ item.ativo.codigo }}</a></td>
+                            <td>{{ item.ativo.nome }}</td>
+                            <td>{{ item.ativo.categoria.nome }}</td>
+                            <td>{{ item.quantidade }}</td>
+                            <td>
+                                {% if item.ativo.permite_rastreamento %}
+                                    {% if item.ativo.rastreador %}
+                                        <span class="badge badge-tracking">Online</span>
+                                    {% else %}
+                                        <span class="badge badge-status-agendada">Simulado</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="muted-text">Nao</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state compact">
+            <strong>Nenhum equipamento vinculado</strong>
+            <p>Esta locacao nao possui itens para conferir.</p>
+        </div>
+    {% endif %}
+</section>
+
+<form class="panel form-panel" method="post" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+        <div class="form-errors">
+            {% for error in form.non_field_errors %}
+                <span>{{ error }}</span>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="form-grid single-column">
+        <div class="form-field checkbox-field">
+            <label class="checkbox-control">
+                {{ form.conferido }}
+                <span>{{ form.conferido.label }}</span>
+            </label>
+            {% for error in form.conferido.errors %}
+                <small class="field-error">{{ error }}</small>
+            {% endfor %}
+        </div>
+
+        <div class="form-field">
+            <label for="{{ form.observacoes_devolucao.id_for_label }}">{{ form.observacoes_devolucao.label }}</label>
+            {{ form.observacoes_devolucao }}
+            {% for error in form.observacoes_devolucao.errors %}
+                <small class="field-error">{{ error }}</small>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <a class="button button-muted" href="{% url 'locacao_detail' locacao.pk %}">Cancelar</a>
+        <button class="button button-primary" type="submit">Confirmar devolucao</button>
+    </div>
+</form>
+{% endblock %}
