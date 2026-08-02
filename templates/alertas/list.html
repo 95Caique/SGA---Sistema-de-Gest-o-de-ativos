@@ -55,6 +55,7 @@
                         <th>Origem</th>
                         <th>Referencia</th>
                         <th>Mensagem</th>
+                        <th>Prazo</th>
                         <th>Prioridade</th>
                         <th></th>
                     </tr>
@@ -66,6 +67,13 @@
                             <td><a href="{{ alerta.link }}">{{ alerta.origem }}</a></td>
                             <td>{{ alerta.referencia }}</td>
                             <td>{{ alerta.mensagem }}</td>
+                            <td>
+                                {% if alerta.prazo %}
+                                    {{ alerta.prazo_label }} <small class="table-subtext">{{ alerta.prazo|date:"d/m/Y" }}</small>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
                             <td><span class="badge badge-alert-{{ alerta.prioridade }}">{{ alerta.prioridade_label }}</span></td>
                             <td class="actions-cell">
                                 <a href="{{ alerta.link }}">Ver</a>

@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from clientes.models import Cliente
 from locacoes.models import Locacao
@@ -54,3 +57,49 @@ class AgendaListTests(TestCase):
 
         self.assertNotContains(response, "LOC-0001")
         self.assertContains(response, "Nenhum evento na agenda")
+
+    def test_classifica_eventos_por_situacao(self):
+        hoje = timezone.localdate()
+        Locacao.objects.create(
+            codigo="LOC-0001",
+            cliente=self.cliente,
+            data_inicio=hoje - timedelta(days=3),
+            data_fim=hoje,
+            status=Locacao.Status.ATIVA,
+        )
+        Locacao.objects.create(
+            codigo="LOC-0002",
+            cliente=self.cliente,
+            data_inicio=hoje + timedelta(days=1),
+            data_fim=hoje + timedelta(days=5),
+            status=Locacao.Status.AGENDADA,
+        )
+
+        response = self.client.get(reverse("agenda"))
+
+        self.assertContains(response, "Atrasado")
+        self.assertContains(response, "Hoje")
+        self.assertContains(response, "Proximo")
+        self.assertContains(response, "Futuro")
+
+    def test_filtra_eventos_por_situacao(self):
+        hoje = timezone.localdate()
+        Locacao.objects.create(
+            codigo="LOC-0001",
+            cliente=self.cliente,
+            data_inicio=hoje - timedelta(days=3),
+            data_fim=hoje - timedelta(days=1),
+            status=Locacao.Status.ATIVA,
+        )
+        Locacao.objects.create(
+            codigo="LOC-0002",
+            cliente=self.cliente,
+            data_inicio=hoje + timedelta(days=5),
+            data_fim=hoje + timedelta(days=7),
+            status=Locacao.Status.AGENDADA,
+        )
+
+        response = self.client.get(reverse("agenda"), {"situacao": "atrasado"})
+
+        self.assertContains(response, "LOC-0001")
+        self.assertNotContains(response, "LOC-0002")

@@ -65,6 +65,38 @@ class AlertasListTests(TestCase):
 
         self.assertContains(response, "Devolucao prevista")
         self.assertContains(response, "LOC-0001")
+        self.assertContains(response, "Media")
+
+    def test_exibe_alerta_de_devolucao_vencida(self):
+        hoje = timezone.localdate()
+        Locacao.objects.create(
+            codigo="LOC-0001",
+            cliente=self.cliente,
+            data_inicio=hoje - timedelta(days=5),
+            data_fim=hoje - timedelta(days=1),
+            status=Locacao.Status.ATIVA,
+        )
+
+        response = self.client.get(reverse("alertas"))
+
+        self.assertContains(response, "Devolucao vencida.")
+        self.assertContains(response, "Alta")
+
+    def test_exibe_alerta_de_manutencao_vencida(self):
+        hoje = timezone.localdate()
+        OrdemManutencao.objects.create(
+            codigo="MAN-0001",
+            ativo=self.ativo,
+            prioridade=OrdemManutencao.Prioridade.MEDIA,
+            data_prevista=hoje - timedelta(days=1),
+            descricao="Preventiva atrasada",
+        )
+
+        response = self.client.get(reverse("alertas"))
+
+        self.assertContains(response, "Manutencao vencida.")
+        self.assertContains(response, "MAN-0001")
+        self.assertContains(response, "Alta")
 
     def test_filtra_alertas_por_tipo(self):
         OrdemManutencao.objects.create(

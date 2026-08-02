@@ -10,16 +10,51 @@
         <div class="module-search">
             <input class="ui-input" type="search" name="q" value="{{ query }}" placeholder="Buscar agenda..." aria-label="Buscar agenda">
         </div>
+        <select class="ui-select" name="situacao" aria-label="Filtrar por situacao">
+            <option value="">Todas as situacoes</option>
+            {% for value, label in situacao_options %}
+                <option value="{{ value }}" {% if situacao_filter == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        {% if tipo_filter %}
+            <input type="hidden" name="tipo" value="{{ tipo_filter }}">
+        {% endif %}
         <button class="button button-muted" type="submit">Filtros</button>
+        {% if query or tipo_filter or situacao_filter %}
+            <a class="button button-muted" href="{% url 'agenda' %}">Limpar</a>
+        {% endif %}
         <a class="button button-primary" href="{% url 'locacao_create' %}">+ Nova locacao</a>
     </form>
 </div>
 
+<section class="metric-grid">
+    <article class="metric-card">
+        <span>Eventos</span>
+        <strong>{{ status_counts.todos }}</strong>
+        <small class="text-neutral">entregas e devolucoes</small>
+    </article>
+    <article class="metric-card">
+        <span>Atrasados</span>
+        <strong>{{ status_counts.atrasados }}</strong>
+        <small class="text-danger">precisam de acao</small>
+    </article>
+    <article class="metric-card">
+        <span>Hoje</span>
+        <strong>{{ status_counts.hoje }}</strong>
+        <small class="text-warning">agenda do dia</small>
+    </article>
+    <article class="metric-card">
+        <span>Proximos</span>
+        <strong>{{ status_counts.proximos }}</strong>
+        <small class="text-success">ate 2 dias</small>
+    </article>
+</section>
+
 <section class="panel">
     <div class="tabs">
-        <a class="{% if not tipo_filter %}is-active{% endif %}" href="{% url 'agenda' %}{% if query %}?q={{ query|urlencode }}{% endif %}">Todos <span>{{ status_counts.todos }}</span></a>
-        <a class="{% if tipo_filter == 'entrega' %}is-active{% endif %}" href="{% url 'agenda' %}?tipo=entrega{% if query %}&q={{ query|urlencode }}{% endif %}">Entregas <span>{{ status_counts.entregas }}</span></a>
-        <a class="{% if tipo_filter == 'devolucao' %}is-active{% endif %}" href="{% url 'agenda' %}?tipo=devolucao{% if query %}&q={{ query|urlencode }}{% endif %}">Devolucoes <span>{{ status_counts.devolucoes }}</span></a>
+        <a class="{% if not tipo_filter %}is-active{% endif %}" href="{% url 'agenda' %}{% if query or situacao_filter %}?{% if query %}q={{ query|urlencode }}{% endif %}{% if query and situacao_filter %}&{% endif %}{% if situacao_filter %}situacao={{ situacao_filter }}{% endif %}{% endif %}">Todos <span>{{ status_counts.todos }}</span></a>
+        <a class="{% if tipo_filter == 'entrega' %}is-active{% endif %}" href="{% url 'agenda' %}?tipo=entrega{% if query %}&q={{ query|urlencode }}{% endif %}{% if situacao_filter %}&situacao={{ situacao_filter }}{% endif %}">Entregas <span>{{ status_counts.entregas }}</span></a>
+        <a class="{% if tipo_filter == 'devolucao' %}is-active{% endif %}" href="{% url 'agenda' %}?tipo=devolucao{% if query %}&q={{ query|urlencode }}{% endif %}{% if situacao_filter %}&situacao={{ situacao_filter }}{% endif %}">Devolucoes <span>{{ status_counts.devolucoes }}</span></a>
     </div>
 
     {% if eventos %}
@@ -32,6 +67,7 @@
                         <th>Locacao</th>
                         <th>Cliente</th>
                         <th>Itens</th>
+                        <th>Situacao</th>
                         <th>Status</th>
                         <th></th>
                     </tr>
@@ -47,6 +83,7 @@
                                 <small class="table-subtext">{{ evento.locacao.cliente.documento }}</small>
                             </td>
                             <td>{{ evento.total_itens }} item{{ evento.total_itens|pluralize }}</td>
+                            <td><span class="badge badge-schedule-{{ evento.situacao }}">{{ evento.situacao_label }}</span></td>
                             <td><span class="badge badge-status-{{ evento.status_key }}">{{ evento.status }}</span></td>
                             <td class="actions-cell">
                                 <a href="{% url 'locacao_detail' evento.locacao.pk %}">Ver</a>

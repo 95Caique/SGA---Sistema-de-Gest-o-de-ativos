@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.db.models import Q
 from django.shortcuts import render
@@ -32,7 +32,7 @@ def alertas_list(request):
         ]
 
     prioridade_ordem = {"alta": 0, "media": 1, "baixa": 2}
-    alertas.sort(key=lambda alerta: (prioridade_ordem[alerta["prioridade"]], alerta["origem"]))
+    alertas.sort(key=lambda alerta: (prioridade_ordem[alerta["prioridade"]], alerta["prazo"] or date.max, alerta["origem"]))
 
     return render(
         request,
@@ -63,6 +63,8 @@ def _alertas_rastreamento():
             "origem": rastreador.ativo.codigo,
             "referencia": rastreador.ativo.nome,
             "mensagem": "Rastreador sem comunicacao.",
+            "prazo": rastreador.atualizado_em.date(),
+            "prazo_label": "Ultima atualizacao",
             "prioridade": "alta",
             "prioridade_label": "Alta",
             "link": reverse("rastreamento"),
@@ -72,23 +74,21 @@ def _alertas_rastreamento():
 
 
 def _alertas_manutencao():
+    hoje = timezone.localdate()
     ordens = OrdemManutencao.objects.select_related("ativo").filter(
-        prioridade=OrdemManutencao.Prioridade.ALTA,
         status__in=[OrdemManutencao.Status.ABERTA, OrdemManutencao.Status.EM_ANDAMENTO],
     )
-    return [
-        {
-            "tipo": "manutencao",
-            "tipo_label": "Manutencao",
-            "origem": ordem.codigo,
-            "referencia": ordem.ativo.codigo,
-            "mensagem": "Manutencao de alta prioridade em aberto.",
-            "prioridade": "alta",
-            "prioridade_label": "Alta",
-            "link": reverse("manutencao"),
-        }
-        for ordem in ordens
-    ]
+    alertas = []
+
+    for ordem in ordens:
+        if ordem.data_prevista and ordem.data_prevista < hoje:
+            alertas.append(_alerta_manutencao(ordem, "Manutencao vencida.", "alta", "Alta"))
+            continue
+
+        if ordem.prioridade == OrdemManutencao.Prioridade.ALTA:
+            alertas.append(_alerta_manutencao(ordem, "Manutencao de alta prioridade em aberto.", "alta", "Alta"))
+
+    return alertas
 
 
 def _alertas_locacao():
@@ -96,18 +96,44 @@ def _alertas_locacao():
     limite = hoje + timedelta(days=2)
     locacoes = Locacao.objects.select_related("cliente").filter(
         Q(status=Locacao.Status.ATIVA) | Q(status=Locacao.Status.AGENDADA),
-        data_fim__range=(hoje, limite),
+        data_fim__lte=limite,
     )
-    return [
-        {
-            "tipo": "locacao",
-            "tipo_label": "Locacao",
-            "origem": locacao.codigo,
-            "referencia": locacao.cliente.nome,
-            "mensagem": f"Devolucao prevista para {locacao.data_fim:%d/%m/%Y}.",
-            "prioridade": "media",
-            "prioridade_label": "Media",
-            "link": reverse("locacao_detail", kwargs={"pk": locacao.pk}),
-        }
-        for locacao in locacoes
-    ]
+    alertas = []
+
+    for locacao in locacoes:
+        if locacao.data_fim < hoje:
+            alertas.append(_alerta_locacao(locacao, "Devolucao vencida.", "alta", "Alta"))
+        else:
+            alertas.append(_alerta_locacao(locacao, f"Devolucao prevista para {locacao.data_fim:%d/%m/%Y}.", "media", "Media"))
+
+    return alertas
+
+
+def _alerta_manutencao(ordem, mensagem, prioridade, prioridade_label):
+    return {
+        "tipo": "manutencao",
+        "tipo_label": "Manutencao",
+        "origem": ordem.codigo,
+        "referencia": ordem.ativo.codigo,
+        "mensagem": mensagem,
+        "prazo": ordem.data_prevista,
+        "prazo_label": "Previsao",
+        "prioridade": prioridade,
+        "prioridade_label": prioridade_label,
+        "link": reverse("manutencao"),
+    }
+
+
+def _alerta_locacao(locacao, mensagem, prioridade, prioridade_label):
+    return {
+        "tipo": "locacao",
+        "tipo_label": "Locacao",
+        "origem": locacao.codigo,
+        "referencia": locacao.cliente.nome,
+        "mensagem": mensagem,
+        "prazo": locacao.data_fim,
+        "prazo_label": "Devolucao",
+        "prioridade": prioridade,
+        "prioridade_label": prioridade_label,
+        "link": reverse("locacao_detail", kwargs={"pk": locacao.pk}),
+    }
