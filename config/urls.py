@@ -19,7 +19,7 @@ from django.urls import path
 
 from agenda.views import agenda_list
 from alertas.views import alertas_list
-from ativos.views import equipamento_create, equipamento_update, equipamentos_list
+from ativos.views import equipamento_create, equipamento_detail, equipamento_update, equipamentos_list
 from clientes.views import (
     cliente_contato_create,
     cliente_contato_update,
@@ -80,6 +80,7 @@ urlpatterns = [
     path('equipamentos/', equipamentos_list, name='equipamentos'),
     path('equipamentos/novo/', equipamento_create, name='equipamento_create'),
     path('equipamentos/<int:pk>/editar/', equipamento_update, name='equipamento_update'),
+    path('equipamentos/<int:pk>/', equipamento_detail, name='equipamento_detail'),
     path('clientes/', clientes_list, name='clientes'),
     path('clientes/novo/', cliente_create, name='cliente_create'),
     path('clientes/<int:pk>/editar/', cliente_update, name='cliente_update'),

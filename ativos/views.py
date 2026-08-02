@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from config.views import with_layout
 from locacoes.models import ItemLocacao, Locacao
+from manutencao.models import OrdemManutencao
 
 from .forms import AtivoForm
 from .models import Ativo
@@ -77,6 +78,37 @@ def equipamento_create(request):
                 "form_subtitle": "Cadastre um ativo locavel com status, categoria, localizacao e rastreio.",
                 "submit_label": "Salvar equipamento",
                 "form": form,
+            }
+        ),
+    )
+
+
+def equipamento_detail(request, pk):
+    ativo = get_object_or_404(Ativo.objects.select_related("categoria", "rastreador"), pk=pk)
+    locacao_ativa = (
+        Locacao.objects.select_related("cliente")
+        .filter(status=Locacao.Status.ATIVA, itens__ativo=ativo)
+        .order_by("-data_inicio", "codigo")
+        .first()
+    )
+    locacoes = (
+        Locacao.objects.select_related("cliente")
+        .filter(itens__ativo=ativo)
+        .distinct()
+        .order_by("-data_inicio", "codigo")[:6]
+    )
+    manutencoes = OrdemManutencao.objects.filter(ativo=ativo).order_by("-data_abertura", "codigo")[:6]
+
+    return render(
+        request,
+        "ativos/detail.html",
+        with_layout(
+            {
+                "page_title": ativo.codigo,
+                "ativo": ativo,
+                "locacao_ativa": locacao_ativa,
+                "locacoes": locacoes,
+                "manutencoes": manutencoes,
             }
         ),
     )

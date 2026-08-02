@@ -1,8 +1,11 @@
+from datetime import date
+
 from django.test import TestCase
 from django.urls import reverse
 
 from clientes.models import Cliente
 from locacoes.models import ItemLocacao, Locacao
+from manutencao.models import OrdemManutencao
 from rastreamento.models import Rastreador
 
 from .models import Ativo, CategoriaAtivo
@@ -56,6 +59,11 @@ class EquipamentoViewTests(TestCase):
 
         self.assertContains(response, "RET-001")
         self.assertNotContains(response, "BET-001")
+
+    def test_lista_equipamentos_linka_para_detalhe(self):
+        response = self.client.get(reverse("equipamentos"))
+
+        self.assertContains(response, reverse("equipamento_detail", kwargs={"pk": self.ativo.pk}))
 
     def test_lista_equipamentos_exibe_locacao_ativa_do_ativo_locado(self):
         cliente = Cliente.objects.create(nome="Cliente Obra", documento="12345678000190")
@@ -121,3 +129,46 @@ class EquipamentoViewTests(TestCase):
         rastreador = Rastreador.objects.get(ativo=self.ativo)
         self.assertEqual(rastreador.status, Rastreador.Status.ONLINE)
         self.assertEqual(rastreador.posicoes.count(), 1)
+
+    def test_detalhe_equipamento_exibe_dados_e_historico(self):
+        cliente = Cliente.objects.create(nome="Cliente Obra", documento="12345678000190")
+        locacao = Locacao.objects.create(
+            codigo="LOC-0001",
+            cliente=cliente,
+            data_inicio=date(2026, 7, 1),
+            data_fim=date(2026, 7, 5),
+            status=Locacao.Status.ATIVA,
+        )
+        ItemLocacao.objects.create(
+            locacao=locacao,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria="100.00",
+            valor_total="500.00",
+        )
+        OrdemManutencao.objects.create(
+            codigo="OS-0001",
+            ativo=self.ativo,
+            tipo=OrdemManutencao.Tipo.PREVENTIVA,
+            data_prevista=date(2026, 7, 10),
+            descricao="Revisao preventiva",
+        )
+        self.ativo.status = Ativo.Status.LOCADO
+        self.ativo.save()
+
+        response = self.client.get(reverse("equipamento_detail", kwargs={"pk": self.ativo.pk}))
+
+        self.assertContains(response, "BET-001")
+        self.assertContains(response, "Betoneira 400L")
+        self.assertContains(response, "Equipamento em locacao ativa")
+        self.assertContains(response, "LOC-0001")
+        self.assertContains(response, "OS-0001")
+        self.assertContains(response, reverse("equipamento_update", kwargs={"pk": self.ativo.pk}))
+
+    def test_detalhe_equipamento_rastreavel_sem_locacao_mostra_estado_simulado(self):
+        self.ativo.permite_rastreamento = True
+        self.ativo.save()
+
+        response = self.client.get(reverse("equipamento_detail", kwargs={"pk": self.ativo.pk}))
+
+        self.assertContains(response, "Rastreamento simulado aguardando locacao")

@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>{{ ativo.codigo }}</h1>
+        <p>{{ ativo.nome }} | {{ ativo.categoria.nome }}</p>
+    </div>
+    <div class="toolbar">
+        <a class="button button-muted" href="{% url 'equipamentos' %}">Voltar</a>
+        <a class="button button-primary" href="{% url 'equipamento_update' ativo.pk %}">Editar</a>
+    </div>
+</div>
+
+<section class="metric-grid">
+    <article class="metric-card">
+        <span>Status</span>
+        <strong>{{ ativo.get_status_display }}</strong>
+        <small class="text-neutral">Situacao atual</small>
+    </article>
+    <article class="metric-card">
+        <span>Patrimonio</span>
+        <strong>{{ ativo.patrimonio|default:"-" }}</strong>
+        <small class="text-neutral">Codigo interno</small>
+    </article>
+    <article class="metric-card">
+        <span>Horimetro</span>
+        <strong>{{ ativo.horimetro_atual }}</strong>
+        <small class="text-neutral">Horas atuais</small>
+    </article>
+    <article class="metric-card">
+        <span>Rastreio</span>
+        <strong>{% if ativo.permite_rastreamento %}Sim{% else %}Nao{% endif %}</strong>
+        <small class="text-neutral">{% if ativo.rastreador %}{{ ativo.rastreador.get_status_display }}{% else %}Sem aparelho{% endif %}</small>
+    </article>
+</section>
+
+{% if locacao_ativa %}
+    <section class="panel compact-alert compact-alert-success">
+        <strong>Equipamento em locacao ativa</strong>
+        <p>
+            <a href="{% url 'locacao_detail' locacao_ativa.pk %}">{{ locacao_ativa.codigo }}</a>
+            | {{ locacao_ativa.cliente.nome }}
+            | {{ locacao_ativa.data_inicio|date:"d/m/Y" }} - {{ locacao_ativa.data_fim|date:"d/m/Y" }}
+        </p>
+    </section>
+{% endif %}
+
+<section class="dashboard-grid">
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Dados do equipamento</h2>
+        </div>
+        <dl class="asset-detail asset-detail-wide">
+            <div>
+                <dt>Nome</dt>
+                <dd>{{ ativo.nome }}</dd>
+            </div>
+            <div>
+                <dt>Categoria</dt>
+                <dd>{{ ativo.categoria.nome }}</dd>
+            </div>
+            <div>
+                <dt>Localizacao</dt>
+                <dd>{{ ativo.localizacao_atual|default:"Deposito" }}</dd>
+            </div>
+            <div>
+                <dt>Proxima manutencao</dt>
+                <dd>{{ ativo.proxima_manutencao_horas|default:"-" }}</dd>
+            </div>
+            <div class="span-2">
+                <dt>Observacoes</dt>
+                <dd>{{ ativo.observacoes|default:"Sem observacoes." }}</dd>
+            </div>
+        </dl>
+    </article>
+
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Rastreamento</h2>
+            {% if ativo.permite_rastreamento %}
+                <a href="{% url 'rastreamento' %}">Ver mapa</a>
+            {% endif %}
+        </div>
+        {% if ativo.permite_rastreamento and ativo.rastreador %}
+            <dl class="asset-detail asset-detail-wide">
+                <div>
+                    <dt>Identificador</dt>
+                    <dd>{{ ativo.rastreador.identificador }}</dd>
+                </div>
+                <div>
+                    <dt>Status</dt>
+                    <dd>{{ ativo.rastreador.get_status_display }}</dd>
+                </div>
+                <div>
+                    <dt>Bateria</dt>
+                    <dd>{{ ativo.rastreador.bateria_percentual }}%</dd>
+                </div>
+                <div>
+                    <dt>Sinal</dt>
+                    <dd>{{ ativo.rastreador.sinal_gsm_percentual }}%</dd>
+                </div>
+            </dl>
+        {% elif ativo.permite_rastreamento %}
+            <div class="empty-state compact">
+                <strong>Rastreamento simulado aguardando locacao</strong>
+                <p>O rastreador sera criado quando uma locacao com este equipamento for ativada.</p>
+            </div>
+        {% else %}
+            <div class="empty-state compact">
+                <strong>Equipamento sem rastreio</strong>
+                <p>Edite o equipamento para permitir rastreamento quando houver aparelho disponivel.</p>
+            </div>
+        {% endif %}
+    </article>
+</section>
+
+<section class="dashboard-grid">
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Historico de locacoes</h2>
+        </div>
+        {% if locacoes %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Locacao</th>
+                            <th>Cliente</th>
+                            <th>Periodo</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for locacao in locacoes %}
+                            <tr>
+                                <td><a href="{% url 'locacao_detail' locacao.pk %}">{{ locacao.codigo }}</a></td>
+                                <td>{{ locacao.cliente.nome }}</td>
+                                <td>{{ locacao.data_inicio|date:"d/m/Y" }} - {{ locacao.data_fim|date:"d/m/Y" }}</td>
+                                <td><span class="badge badge-status-{{ locacao.status }}">{{ locacao.get_status_display }}</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state compact">
+                <strong>Nenhuma locacao registrada</strong>
+                <p>Quando o equipamento for usado em locacoes, o historico aparece aqui.</p>
+            </div>
+        {% endif %}
+    </article>
+
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Historico de manutencao</h2>
+        </div>
+        {% if manutencoes %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>OS</th>
+                            <th>Tipo</th>
+                            <th>Prevista</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ordem in manutencoes %}
+                            <tr>
+                                <td>{{ ordem.codigo }}</td>
+                                <td>{{ ordem.get_tipo_display }}</td>
+                                <td>{{ ordem.data_prevista|date:"d/m/Y"|default:"-" }}</td>
+                                <td><span class="badge badge-status-{{ ordem.status }}">{{ ordem.get_status_display }}</span></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state compact">
+                <strong>Nenhuma manutencao registrada</strong>
+                <p>Ordens preventivas e corretivas deste equipamento aparecem aqui.</p>
+            </div>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}

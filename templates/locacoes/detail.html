@@ -98,7 +98,7 @@
                     <tbody>
                         {% for item in itens %}
                             <tr>
-                                <td><a href="#">{{ item.ativo.codigo }}</a></td>
+                                <td><a href="{% url 'equipamento_detail' item.ativo.pk %}">{{ item.ativo.codigo }}</a></td>
                                 <td>{{ item.ativo.nome }}</td>
                                 <td>{{ item.ativo.categoria.nome }}</td>
                                 <td>{{ item.quantidade }}</td>

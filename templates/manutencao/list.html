@@ -44,7 +44,7 @@
                         <tr>
                             <td>{{ ordem.codigo }}</td>
                             <td>
-                                <strong>{{ ordem.ativo.codigo }}</strong>
+                                <strong><a href="{% url 'equipamento_detail' ordem.ativo.pk %}">{{ ordem.ativo.codigo }}</a></strong>
                                 <small class="table-subtext">{{ ordem.ativo.nome }}</small>
                             </td>
                             <td>{{ ordem.get_tipo_display }}</td>
