@@ -6,10 +6,17 @@
         <h1>Relatorios</h1>
         <p>Indicadores consolidados de locacoes, equipamentos e operacao.</p>
     </div>
-    <div class="toolbar">
-        <a class="button button-muted" href="{% url 'financeiro' %}">Financeiro</a>
+    <form class="toolbar" method="get">
+        <input class="ui-input date-filter" type="date" name="inicio" value="{{ filters.inicio_value }}" aria-label="Data inicial">
+        <input class="ui-input date-filter" type="date" name="fim" value="{{ filters.fim_value }}" aria-label="Data final">
+        <button class="button button-muted" type="submit">Filtrar</button>
+        {% if filters.inicio or filters.fim %}
+            <a class="button button-muted" href="{% url 'relatorios' %}">Limpar</a>
+        {% endif %}
+        <a class="button button-muted" href="{{ export_csv_url }}">CSV</a>
+        <a class="button button-muted" href="{{ export_pdf_url }}">PDF</a>
         <a class="button button-primary" href="{% url 'locacoes' %}">Ver locacoes</a>
-    </div>
+    </form>
 </div>
 
 <section class="metric-grid">

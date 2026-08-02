@@ -55,7 +55,7 @@ from manutencao.views import (
     manutencoes_list,
 )
 from rastreamento.views import rastreamento_mapa
-from relatorios.views import relatorios_list
+from relatorios.views import relatorios_export_csv, relatorios_export_pdf, relatorios_list
 
 from . import views
 
@@ -108,5 +108,7 @@ urlpatterns = [
     path('rastreamento/', rastreamento_mapa, name='rastreamento'),
     path('alertas/', alertas_list, name='alertas'),
     path('relatorios/', relatorios_list, name='relatorios'),
+    path('relatorios/exportar.csv', relatorios_export_csv, name='relatorios_export_csv'),
+    path('relatorios/exportar.pdf', relatorios_export_pdf, name='relatorios_export_pdf'),
     path('admin/', admin.site.urls),
 ]

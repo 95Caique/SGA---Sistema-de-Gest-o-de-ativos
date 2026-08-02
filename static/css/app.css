@@ -348,6 +348,11 @@ body[data-sidebar-state="collapsed"] .app-shell {
     min-width: 190px;
 }
 
+.toolbar .date-filter {
+    width: auto;
+    min-width: 150px;
+}
+
 .inline-form {
     display: inline-flex;
     margin: 0;
@@ -1393,6 +1398,7 @@ td strong {
     .search-form,
     .toolbar,
     .toolbar .ui-select,
+    .toolbar .date-filter,
     .period-select,
     .period-select select,
     .module-search {
