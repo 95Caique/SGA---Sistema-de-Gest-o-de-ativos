@@ -1,7 +1,10 @@
+from datetime import date
 from decimal import Decimal
 
 from django.db.models import Count, Sum
 from django.shortcuts import redirect, render
+from django.urls import reverse
+from django.utils import timezone
 
 from ativos.models import Ativo
 from clientes.models import Cliente
@@ -158,15 +161,26 @@ def percent(value, total):
 
 
 def dashboard_context():
+    hoje = timezone.localdate()
     total_locacoes = Locacao.objects.count()
     locacoes_ativas = Locacao.objects.filter(status=Locacao.Status.ATIVA).count()
     locacoes_agendadas = Locacao.objects.filter(status=Locacao.Status.AGENDADA).count()
     locacoes_finalizadas = Locacao.objects.filter(status=Locacao.Status.FINALIZADA).count()
     locacoes_canceladas = Locacao.objects.filter(status=Locacao.Status.CANCELADA).count()
     faturamento_total = Locacao.objects.aggregate(total=Sum("valor_total"))["total"] or Decimal("0")
-    valor_em_aberto = Locacao.objects.filter(status__in=[Locacao.Status.ORCAMENTO, Locacao.Status.AGENDADA]).aggregate(
-        total=Sum("valor_total")
-    )["total"] or Decimal("0")
+    locacoes_em_aberto = Locacao.objects.filter(status_pagamento=Locacao.StatusPagamento.ABERTO).exclude(
+        status=Locacao.Status.CANCELADA
+    )
+    locacoes_atrasadas = Locacao.objects.filter(
+        status__in=[Locacao.Status.ATIVA, Locacao.Status.AGENDADA],
+        data_fim__lt=hoje,
+    )
+    devolucoes_hoje = Locacao.objects.filter(
+        status__in=[Locacao.Status.ATIVA, Locacao.Status.AGENDADA],
+        data_fim=hoje,
+    ).count()
+    valor_em_aberto = locacoes_em_aberto.aggregate(total=Sum("valor_total"))["total"] or Decimal("0")
+    valor_atrasado = locacoes_atrasadas.aggregate(total=Sum("valor_total"))["total"] or Decimal("0")
     equipamentos_total = Ativo.objects.count()
     equipamentos_manutencao = Ativo.objects.filter(status=Ativo.Status.MANUTENCAO).count()
     clientes_ativos = Cliente.objects.filter(status=Cliente.Status.ATIVO).count()
@@ -177,6 +191,7 @@ def dashboard_context():
         recent_rentals.append(
             {
                 "code": locacao.codigo,
+                "url": reverse("locacao_detail", kwargs={"pk": locacao.pk}),
                 "client": locacao.cliente.nome,
                 "period": f"{locacao.data_inicio:%d/%m/%Y} - {locacao.data_fim:%d/%m/%Y}",
                 "items": f"{locacao.total_itens} item{'s' if locacao.total_itens != 1 else ''}",
@@ -187,17 +202,19 @@ def dashboard_context():
         )
 
     return {
+        "period_label": f"{hoje.replace(day=1):%d/%m/%Y} - {hoje:%d/%m/%Y}",
         "metrics": [
             {"label": "Faturamento", "value": money_br(faturamento_total), "trend": "Total registrado em locacoes", "tone": "success"},
             {"label": "Locacoes ativas", "value": locacoes_ativas, "trend": f"{total_locacoes} locacoes cadastradas", "tone": "success"},
             {"label": "Equipamentos", "value": equipamentos_total, "trend": f"{equipamentos_manutencao} em manutencao", "tone": "neutral"},
             {"label": "Clientes ativos", "value": clientes_ativos, "trend": "Clientes aptos para locacao", "tone": "warning"},
         ],
+        "revenue_months": _revenue_months(hoje),
         "financial_summary": [
             {"label": "Receitas", "value": money_br(faturamento_total), "tone": "neutral"},
             {"label": "Despesas", "value": money_br(Decimal("0")), "tone": "neutral"},
             {"label": "A receber", "value": money_br(valor_em_aberto), "tone": "warning"},
-            {"label": "Atrasados", "value": money_br(Decimal("0")), "tone": "danger"},
+            {"label": "Atrasados", "value": money_br(valor_atrasado), "tone": "danger"},
         ],
         "rental_status": [
             {"label": "Ativas", "value": locacoes_ativas, "percent": percent(locacoes_ativas, total_locacoes), "color": "purple"},
@@ -206,13 +223,56 @@ def dashboard_context():
             {"label": "Canceladas", "value": locacoes_canceladas, "percent": percent(locacoes_canceladas, total_locacoes), "color": "red"},
         ],
         "alert_cards": [
-            {"label": "Equip. em manutencao", "value": equipamentos_manutencao, "action": "Ver detalhes", "tone": "purple"},
-            {"label": "Equip. sem comunicacao", "value": rastreadores_sem_comunicacao, "action": "Ver no mapa", "tone": "danger"},
-            {"label": "Contratos vencendo", "value": 0, "action": "Ver contratos", "tone": "warning"},
-            {"label": "Devolucoes hoje", "value": 0, "action": "Ver agenda", "tone": "success"},
+            {"label": "Equip. em manutencao", "value": equipamentos_manutencao, "action": "Ver detalhes", "tone": "purple", "url": reverse("manutencao")},
+            {"label": "Equip. sem comunicacao", "value": rastreadores_sem_comunicacao, "action": "Ver no mapa", "tone": "danger", "url": reverse("rastreamento")},
+            {"label": "Locacoes atrasadas", "value": locacoes_atrasadas.count(), "action": "Ver alertas", "tone": "warning", "url": reverse("alertas")},
+            {"label": "Devolucoes hoje", "value": devolucoes_hoje, "action": "Ver agenda", "tone": "success", "url": f"{reverse('agenda')}?situacao=hoje&tipo=devolucao"},
         ],
         "recent_rentals": recent_rentals,
     }
+
+
+def _revenue_months(reference_date):
+    months = [_add_months(_month_start(reference_date), offset) for offset in range(-5, 1)]
+    totals = [_revenue_for_month(month) for month in months]
+    max_total = max(totals) if totals else Decimal("0")
+
+    return [
+        {
+            "label": month.strftime("%b").title(),
+            "amount": money_br(total),
+            "height": _chart_height(total, max_total),
+        }
+        for month, total in zip(months, totals)
+    ]
+
+
+def _revenue_for_month(month):
+    next_month = _add_months(month, 1)
+    return (
+        Locacao.objects.exclude(status=Locacao.Status.CANCELADA)
+        .filter(data_inicio__gte=month, data_inicio__lt=next_month)
+        .aggregate(total=Sum("valor_total"))["total"]
+        or Decimal("0")
+    )
+
+
+def _chart_height(value, max_value):
+    if not max_value:
+        return 4
+
+    return max(round((value / max_value) * 100), 4)
+
+
+def _month_start(value):
+    return date(value.year, value.month, 1)
+
+
+def _add_months(value, offset):
+    month_index = value.month - 1 + offset
+    year = value.year + month_index // 12
+    month = month_index % 12 + 1
+    return date(year, month, 1)
 
 
 def dashboard(request):

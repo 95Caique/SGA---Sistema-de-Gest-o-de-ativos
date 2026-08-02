@@ -495,22 +495,33 @@ select {
 
 .chart-line {
     position: relative;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    align-items: end;
+    gap: 14px;
     min-height: 210px;
     border-bottom: 1px solid var(--panel-border);
-    background:
-        linear-gradient(to bottom, transparent 0 24%, #eef2ff 24% 25%, transparent 25% 49%, #eef2ff 49% 50%, transparent 50% 74%, #eef2ff 74% 75%, transparent 75%),
-        linear-gradient(180deg, rgba(79, 47, 240, 0.18), rgba(79, 47, 240, 0.02));
-    clip-path: polygon(0 72%, 18% 54%, 36% 64%, 54% 50%, 72% 45%, 100% 28%, 100% 100%, 0 100%);
+    background: linear-gradient(to bottom, transparent 0 24%, #eef2ff 24% 25%, transparent 25% 49%, #eef2ff 49% 50%, transparent 50% 74%, #eef2ff 74% 75%, transparent 75%);
+    padding: 10px 4px 0;
 }
 
-.chart-line span {
+.chart-bar {
+    position: relative;
+    height: var(--height);
+    min-height: 8px;
+    border-radius: 8px 8px 0 0;
+    background: linear-gradient(180deg, var(--primary), rgba(79, 47, 240, 0.38));
+}
+
+.chart-bar span {
     position: absolute;
-    left: var(--x);
-    top: var(--y);
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--primary);
+    right: 50%;
+    bottom: calc(100% + 6px);
+    transform: translateX(50%);
+    color: #475569;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
 }
 
 .chart-labels {

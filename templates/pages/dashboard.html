@@ -9,7 +9,7 @@
         <label class="period-select">
             <span>Periodo:</span>
             <select class="ui-select">
-                <option>01/05/2025 - 31/05/2025</option>
+                <option>{{ period_label }}</option>
             </select>
         </label>
         <button class="button button-muted" type="button">Filtros</button>
@@ -46,15 +46,16 @@
             <h2>Faturamento ultimos 6 meses</h2>
         </div>
         <div class="chart-line" aria-label="Grafico de faturamento">
-            <span style="--x: 6%; --y: 68%"></span>
-            <span style="--x: 23%; --y: 50%"></span>
-            <span style="--x: 40%; --y: 60%"></span>
-            <span style="--x: 57%; --y: 46%"></span>
-            <span style="--x: 74%; --y: 40%"></span>
-            <span style="--x: 92%; --y: 24%"></span>
+            {% for month in revenue_months %}
+                <div class="chart-bar" style="--height: {{ month.height }}%;">
+                    <span>{{ month.amount }}</span>
+                </div>
+            {% endfor %}
         </div>
         <div class="chart-labels">
-            <span>Dez</span><span>Jan</span><span>Fev</span><span>Mar</span><span>Abr</span><span>Mai</span>
+            {% for month in revenue_months %}
+                <span>{{ month.label }}</span>
+            {% endfor %}
         </div>
     </article>
 
@@ -83,7 +84,7 @@
             <div class="quick-icon quick-{{ card.tone }}">{{ card.value }}</div>
             <div>
                 <span>{{ card.label }}</span>
-                <a href="#">{{ card.action }}</a>
+                <a href="{{ card.url }}">{{ card.action }}</a>
             </div>
         </article>
     {% endfor %}
@@ -109,7 +110,7 @@
             <tbody>
                 {% for rental in recent_rentals %}
                     <tr>
-                        <td><a href="#">{{ rental.code }}</a></td>
+                        <td><a href="{{ rental.url }}">{{ rental.code }}</a></td>
                         <td>{{ rental.client }}</td>
                         <td>{{ rental.period }}</td>
                         <td>{{ rental.items }}</td>
