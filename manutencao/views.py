@@ -71,6 +71,7 @@ def manutencao_create(request):
             {
                 "page_title": "Nova manutencao",
                 "form": form,
+                "ativos_detalhes": _ativos_detalhes(form.fields["ativo"].queryset),
             }
         ),
     )
@@ -136,3 +137,20 @@ def manutencao_cancelar(request, pk):
     ordem.cancelar()
     messages.success(request, f"Ordem {ordem.codigo} cancelada com sucesso.")
     return redirect("manutencao")
+
+
+def _ativos_detalhes(ativos):
+    return [
+        {
+            "id": ativo.pk,
+            "codigo": ativo.codigo,
+            "nome": ativo.nome,
+            "categoria": ativo.categoria.nome,
+            "status": ativo.get_status_display(),
+            "localizacao": ativo.localizacao_atual or "Deposito",
+            "horimetro": ativo.horimetro_atual,
+            "proxima_manutencao": ativo.proxima_manutencao_horas,
+            "rastreamento": "Sim" if ativo.permite_rastreamento else "Nao",
+        }
+        for ativo in ativos.select_related("categoria")
+    ]

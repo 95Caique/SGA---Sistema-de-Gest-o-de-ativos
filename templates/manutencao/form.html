@@ -37,6 +37,49 @@
                 {% for error in field.errors %}
                     <small class="field-error">{{ error }}</small>
                 {% endfor %}
+
+                {% if field.name == 'ativo' %}
+                    <div class="asset-detail-panel" data-maintenance-asset-panel>
+                        <strong>Detalhes do equipamento</strong>
+                        <p>Selecione um equipamento para revisar os dados antes de abrir a manutencao.</p>
+                        {% for ativo in ativos_detalhes %}
+                            <dl class="asset-detail" data-maintenance-asset-detail="{{ ativo.id }}" hidden>
+                                <div>
+                                    <dt>Codigo</dt>
+                                    <dd>{{ ativo.codigo }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Nome</dt>
+                                    <dd>{{ ativo.nome }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Categoria</dt>
+                                    <dd>{{ ativo.categoria }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Status</dt>
+                                    <dd>{{ ativo.status }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Localizacao</dt>
+                                    <dd>{{ ativo.localizacao }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Horimetro</dt>
+                                    <dd>{{ ativo.horimetro }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Proxima manutencao</dt>
+                                    <dd>{{ ativo.proxima_manutencao|default:"-" }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Rastreamento</dt>
+                                    <dd>{{ ativo.rastreamento }}</dd>
+                                </div>
+                            </dl>
+                        {% endfor %}
+                    </div>
+                {% endif %}
             </div>
         {% endfor %}
     </div>

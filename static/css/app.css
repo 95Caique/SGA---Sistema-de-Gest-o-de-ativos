@@ -951,6 +951,53 @@ td strong {
     box-shadow: none;
 }
 
+.asset-detail-panel {
+    margin-top: 10px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 12px;
+}
+
+.asset-detail-panel strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.asset-detail-panel p {
+    margin: 0;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.asset-detail-panel.is-selected p {
+    display: none;
+}
+
+.asset-detail {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+    margin: 10px 0 0;
+}
+
+.asset-detail div {
+    min-width: 0;
+}
+
+.asset-detail dt {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.asset-detail dd {
+    margin: 2px 0 0;
+    color: var(--text);
+    font-weight: 750;
+}
+
 .form-field small {
     color: #64748b;
     font-weight: 700;
@@ -1110,47 +1157,20 @@ td strong {
     overflow: hidden;
     border: 1px solid var(--panel-border);
     border-radius: 8px;
-    background:
-        linear-gradient(90deg, rgba(148, 163, 184, 0.18) 1px, transparent 1px),
-        linear-gradient(0deg, rgba(148, 163, 184, 0.18) 1px, transparent 1px),
-        #eef4ef;
-    background-size: 54px 54px;
+    background: #eef4ef;
 }
 
-.tracking-map::before,
-.tracking-map::after {
-    content: "";
+.tracking-map-canvas {
     position: absolute;
-    border-radius: 999px;
-    background: rgba(59, 130, 246, 0.18);
+    inset: 0;
+    z-index: 1;
 }
 
-.tracking-map::before {
-    width: 760px;
-    height: 42px;
-    left: -90px;
-    top: 210px;
-    rotate: -22deg;
-}
-
-.tracking-map::after {
-    width: 520px;
-    height: 34px;
-    right: -80px;
-    top: 130px;
-    rotate: 28deg;
-}
-
-.map-pin {
-    position: absolute;
-    left: var(--x);
-    top: var(--y);
-    z-index: 2;
+.tracking-marker {
     display: flex;
     align-items: center;
     gap: 8px;
-    max-width: 230px;
-    transform: translate(-50%, -50%);
+    min-width: 168px;
     border: 1px solid var(--panel-border);
     border-radius: 8px;
     background: #ffffff;
@@ -1158,10 +1178,11 @@ td strong {
     padding: 8px 10px;
 }
 
-.map-pin span {
+.tracking-marker-icon {
     display: grid;
     width: 28px;
     height: 28px;
+    flex: 0 0 28px;
     place-items: center;
     border-radius: 50%;
     background: var(--primary);
@@ -1170,7 +1191,8 @@ td strong {
     font-weight: 900;
 }
 
-.map-pin strong {
+.tracking-marker strong {
+    display: block;
     overflow: hidden;
     color: #334155;
     font-size: 12px;
@@ -1178,9 +1200,33 @@ td strong {
     white-space: nowrap;
 }
 
-.map-pin-online span { background: var(--success); }
-.map-pin-offline span { background: var(--warning); }
-.map-pin-sem_comunicacao span { background: var(--danger); }
+.tracking-marker small {
+    display: block;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.tracking-marker-online .tracking-marker-icon { background: var(--success); }
+.tracking-marker-offline .tracking-marker-icon { background: var(--warning); }
+.tracking-marker-sem_comunicacao .tracking-marker-icon { background: var(--danger); }
+.tracking-marker-manutencao .tracking-marker-icon { background: var(--purple); }
+
+.tracking-popup {
+    display: grid;
+    gap: 4px;
+    min-width: 190px;
+}
+
+.tracking-popup strong {
+    color: #111827;
+}
+
+.tracking-popup span {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+}
 
 .map-empty {
     position: absolute;
@@ -1307,6 +1353,7 @@ td strong {
     .status-content,
     .tracking-grid,
     .tracking-detail,
+    .asset-detail,
     .form-grid {
         grid-template-columns: 1fr;
     }

@@ -27,7 +27,14 @@
             {% if field.name != 'endereco_entrega' %}
                 <div class="form-field {% if field.name == 'observacoes' %}span-2{% endif %}">
                     <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                    {{ field }}
+                    {% if field.name == 'valor_equipamentos' or field.name == 'valor_servicos' or field.name == 'valor_desconto' or field.name == 'valor_total' %}
+                        <div class="money-input">
+                            <span>R$</span>
+                            {{ field }}
+                        </div>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
                     {% for error in field.errors %}
                         <small class="field-error">{{ error }}</small>
                     {% endfor %}
@@ -48,13 +55,20 @@
 
         <template data-item-locacao-empty-form>
             <div class="item-form-row" data-item-locacao-form>
-                {% for field in item_formset.empty_form %}
-                    <div class="form-field">
-                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                        {{ field }}
-                    </div>
-                {% endfor %}
-            </div>
+                    {% for field in item_formset.empty_form %}
+                        <div class="form-field">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {% if field.name == 'valor_diaria' or field.name == 'valor_total' %}
+                                <div class="money-input">
+                                    <span>R$</span>
+                                    {{ field }}
+                                </div>
+                            {% else %}
+                                {{ field }}
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
         </template>
 
         {% if item_formset.non_form_errors %}
@@ -71,7 +85,14 @@
                     {% for field in item_form %}
                         <div class="form-field">
                             <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                            {{ field }}
+                            {% if field.name == 'valor_diaria' or field.name == 'valor_total' %}
+                                <div class="money-input">
+                                    <span>R$</span>
+                                    {{ field }}
+                                </div>
+                            {% else %}
+                                {{ field }}
+                            {% endif %}
                             {% for error in field.errors %}
                                 <small class="field-error">{{ error }}</small>
                             {% endfor %}

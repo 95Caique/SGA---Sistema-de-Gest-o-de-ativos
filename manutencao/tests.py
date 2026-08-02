@@ -119,6 +119,22 @@ class ManutencaoOperacaoTests(TestCase):
         self.assertContains(response, "Solucao aplicada")
         self.assertContains(response, "Custo real")
 
+    def test_nova_manutencao_exibe_detalhes_do_equipamento(self):
+        self.ativo.localizacao_atual = "Deposito matriz"
+        self.ativo.horimetro_atual = "120.5"
+        self.ativo.proxima_manutencao_horas = "200.0"
+        self.ativo.permite_rastreamento = True
+        self.ativo.save()
+
+        response = self.client.get(reverse("manutencao_create"))
+
+        self.assertContains(response, "Detalhes do equipamento")
+        self.assertContains(response, "BET-001")
+        self.assertContains(response, "Betoneira 400L")
+        self.assertContains(response, "Deposito matriz")
+        self.assertContains(response, "120,5")
+        self.assertContains(response, "Sim")
+
     def test_lista_formata_custos_com_moeda(self):
         OrdemManutencao.objects.create(
             codigo="MAN-0001",

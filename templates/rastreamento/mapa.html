@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block extra_head %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+{% endblock %}
+
 {% block content %}
 <div class="page-heading">
     <div>
@@ -46,7 +50,7 @@
     </article>
 </section>
 
-{% if itens_sem_rastreamento %}
+<!-- {% if itens_sem_rastreamento %}
     <section class="panel compact-alert">
         <div class="panel-title">
             <h2>Locacoes ativas sem rastreamento</h2>
@@ -80,7 +84,7 @@
             </table>
         </div>
     </section>
-{% endif %}
+{% endif %} -->
 
 <section class="tracking-grid">
     <aside class="panel tracking-list">
@@ -120,14 +124,10 @@
             <span class="muted-text">Posicao inicial gerada ao ativar a locacao</span>
         </div>
 
-        <div class="tracking-map">
-            {% if rastreadores %}
-                {% for rastreador in rastreadores %}
-                    <div class="map-pin map-pin-{{ rastreador.status }}" style="--x: {{ forloop.counter|add:20 }}%; --y: {{ forloop.counter|add:28 }}%;">
-                        <span>{{ rastreador.ativo.codigo|slice:":2" }}</span>
-                        <strong>{{ rastreador.ativo.nome }}</strong>
-                    </div>
-                {% endfor %}
+        {{ map_points|json_script:"tracking-map-data" }}
+        <div class="tracking-map" data-tracking-map>
+            {% if map_points %}
+                <div id="tracking-map-canvas" class="tracking-map-canvas" aria-label="Mapa de rastreamento dos equipamentos"></div>
             {% else %}
                 <div class="map-empty">
                     <strong>Mapa aguardando dados</strong>
@@ -168,4 +168,8 @@
         {% endif %}
     </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 {% endblock %}

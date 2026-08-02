@@ -1,21 +1,9 @@
 from django import forms
 
 from ativos.models import Ativo
+from config.forms import MoneyBRField, setup_money_field
 
 from .models import OrdemManutencao
-
-
-class MoneyBRField(forms.DecimalField):
-    widget = forms.TextInput
-
-    def to_python(self, value):
-        if isinstance(value, str):
-            value = value.strip().replace("R$", "").replace(" ", "")
-
-            if "," in value:
-                value = value.replace(".", "").replace(",", ".")
-
-        return super().to_python(value)
 
 
 class OrdemManutencaoForm(forms.ModelForm):
@@ -54,7 +42,7 @@ class OrdemManutencaoForm(forms.ModelForm):
             if field_name in placeholders:
                 field.widget.attrs.update({"placeholder": placeholders[field_name]})
 
-        self.fields["custo_estimado"].widget.attrs.update({"data-money-field": "true", "inputmode": "decimal"})
+        setup_money_field(self.fields["custo_estimado"])
 
 
 class ConclusaoManutencaoForm(forms.ModelForm):
@@ -83,4 +71,4 @@ class ConclusaoManutencaoForm(forms.ModelForm):
             if field_name in placeholders:
                 field.widget.attrs.update({"placeholder": placeholders[field_name]})
 
-        self.fields["custo_real"].widget.attrs.update({"data-money-field": "true", "inputmode": "decimal"})
+        setup_money_field(self.fields["custo_real"])

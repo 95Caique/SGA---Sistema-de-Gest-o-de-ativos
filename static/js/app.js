@@ -6,10 +6,6 @@ function parseMoney(value) {
     return Number(String(value).replace(/\./g, "").replace(",", ".")) || 0;
 }
 
-function formatMoney(value) {
-    return value.toFixed(2);
-}
-
 function formatMoneyBR(value) {
     return value.toFixed(2).replace(".", ",");
 }
@@ -53,10 +49,15 @@ function formatMoneyInput(field, { padDecimals = false } = {}) {
     setCursorPosition(field, Math.min(integerCursor, integerDigits.length));
 }
 
-function setupMoneyFields() {
-    document.querySelectorAll("[data-money-field='true']").forEach((field) => {
+function setupMoneyFields(root = document) {
+    root.querySelectorAll("[data-money-field='true']").forEach((field) => {
+        if (field.dataset.moneyReady === "true") {
+            return;
+        }
+
         field.addEventListener("input", () => formatMoneyInput(field));
         field.addEventListener("blur", () => formatMoneyInput(field, { padDecimals: true }));
+        field.dataset.moneyReady = "true";
     });
 }
 
@@ -75,7 +76,7 @@ function setupItemLocacaoCalculator(row) {
 
     const recalculate = () => {
         const total = parseMoney(quantidade.value) * parseMoney(valorDiaria.value);
-        valorTotal.value = total ? formatMoney(total) : "";
+        valorTotal.value = total ? formatMoneyBR(total) : "";
     };
 
     quantidade.addEventListener("input", recalculate);
@@ -113,6 +114,7 @@ function setupItemLocacaoDynamicRows() {
         container.append(row);
         totalForms.value = String(index + 1);
         setupItemLocacaoCalculator(row);
+        setupMoneyFields(row);
     });
 }
 
@@ -155,9 +157,126 @@ function setupLocacaoEnderecoLoader() {
     });
 }
 
+function setupMaintenanceAssetDetails() {
+    const panel = document.querySelector("[data-maintenance-asset-panel]");
+
+    if (!panel) {
+        return;
+    }
+
+    const form = panel.closest("form");
+    const select = form ? form.querySelector("[name='ativo']") : null;
+    const details = panel.querySelectorAll("[data-maintenance-asset-detail]");
+
+    if (!select || !details.length) {
+        return;
+    }
+
+    const showSelected = () => {
+        details.forEach((detail) => {
+            detail.hidden = detail.dataset.maintenanceAssetDetail !== select.value;
+        });
+
+        panel.classList.toggle("is-selected", Boolean(select.value));
+    };
+
+    select.addEventListener("change", showSelected);
+    showSelected();
+}
+
+function setupTrackingMap() {
+    const canvas = document.querySelector("#tracking-map-canvas");
+    const data = document.querySelector("#tracking-map-data");
+
+    if (!canvas || !data) {
+        return;
+    }
+
+    if (!window.L) {
+        canvas.innerHTML = "<div class=\"map-empty\"><strong>Mapa indisponivel</strong><p>Nao foi possivel carregar a biblioteca de mapas.</p></div>";
+        return;
+    }
+
+    const points = JSON.parse(data.textContent || "[]");
+
+    if (!points.length) {
+        return;
+    }
+
+    const map = window.L.map(canvas, {
+        zoomControl: true,
+        scrollWheelZoom: false,
+    });
+    const bounds = [];
+
+    window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap",
+        maxZoom: 19,
+    }).addTo(map);
+
+    points.forEach((point) => {
+        const latLng = [point.lat, point.lng];
+        const marker = window.L.marker(latLng, {
+            icon: trackingMarkerIcon(point),
+        }).addTo(map);
+
+        marker.bindPopup(trackingPopup(point));
+        bounds.push(latLng);
+    });
+
+    if (bounds.length === 1) {
+        map.setView(bounds[0], 13);
+        return;
+    }
+
+    map.fitBounds(bounds, { padding: [42, 42], maxZoom: 14 });
+}
+
+function trackingMarkerIcon(point) {
+    const initials = String(point.code || point.name || "?").slice(0, 2).toUpperCase();
+    const speedText = point.status === "online" ? `${point.speed} km/h` : point.statusLabel;
+    const html = `
+        <div class="tracking-marker tracking-marker-${point.status}">
+            <span class="tracking-marker-icon">${initials}</span>
+            <div>
+                <strong>${escapeHtml(point.name)}</strong>
+                <small>${escapeHtml(speedText)}</small>
+            </div>
+        </div>
+    `;
+
+    return window.L.divIcon({
+        className: "tracking-marker-wrap",
+        html,
+        iconSize: [180, 46],
+        iconAnchor: [18, 18],
+        popupAnchor: [0, -18],
+    });
+}
+
+function trackingPopup(point) {
+    return `
+        <div class="tracking-popup">
+            <strong>${escapeHtml(point.name)}</strong>
+            <span>${escapeHtml(point.code)} | ${escapeHtml(point.statusLabel)}</span>
+            <span>${escapeHtml(point.address)}</span>
+            <span>${escapeHtml(point.client || "Sem cliente vinculado")}</span>
+            <span>Bateria ${point.battery}% | Sinal ${point.signal}%</span>
+        </div>
+    `;
+}
+
+function escapeHtml(value) {
+    const node = document.createElement("span");
+    node.textContent = String(value ?? "");
+    return node.innerHTML;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     setupItemLocacaoRows();
     setupItemLocacaoDynamicRows();
     setupLocacaoEnderecoLoader();
     setupMoneyFields();
+    setupMaintenanceAssetDetails();
+    setupTrackingMap();
 });

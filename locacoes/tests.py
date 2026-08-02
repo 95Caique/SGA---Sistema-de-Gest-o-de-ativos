@@ -267,6 +267,20 @@ class LocacaoOperacaoTests(TestCase):
         self.assertTrue(form.is_valid())
         self.assertEqual(form.cleaned_data["valor_total"], Decimal("376.50"))
 
+    def test_form_item_locacao_aceita_valor_diaria_em_formato_brasileiro(self):
+        form = ItemLocacaoForm(
+            data={
+                "ativo": self.ativo.pk,
+                "quantidade": 2,
+                "valor_diaria": "125,50",
+                "valor_total": "",
+                "observacoes": "",
+            }
+        )
+
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data["valor_total"], Decimal("251.00"))
+
     def test_nova_locacao_exibe_equipamentos_disponiveis(self):
         response = self.client.get(reverse("locacao_create"))
 
@@ -338,6 +352,58 @@ class LocacaoOperacaoTests(TestCase):
         self.assertEqual(locacao.itens.count(), 3)
         self.assertEqual(locacao.valor_equipamentos, Decimal("675.00"))
         self.assertEqual(locacao.valor_total, Decimal("715.00"))
+
+    def test_cria_locacao_com_valores_em_formato_brasileiro(self):
+        response = self.client.post(
+            reverse("locacao_create"),
+            data={
+                "codigo": "LOC-0002",
+                "cliente": self.cliente.pk,
+                "data_inicio": "2026-07-10",
+                "data_fim": "2026-07-12",
+                "status": Locacao.Status.ORCAMENTO,
+                "endereco_entrega": "",
+                "valor_equipamentos": "0,00",
+                "valor_servicos": "50,00",
+                "valor_desconto": "10,00",
+                "valor_total": "0,00",
+                "observacoes": "",
+                "itens-TOTAL_FORMS": "5",
+                "itens-INITIAL_FORMS": "0",
+                "itens-MIN_NUM_FORMS": "0",
+                "itens-MAX_NUM_FORMS": "1000",
+                "itens-0-ativo": self.ativo.pk,
+                "itens-0-quantidade": "2",
+                "itens-0-valor_diaria": "100,50",
+                "itens-0-valor_total": "",
+                "itens-0-observacoes": "",
+                "itens-1-ativo": "",
+                "itens-1-quantidade": "",
+                "itens-1-valor_diaria": "",
+                "itens-1-valor_total": "",
+                "itens-1-observacoes": "",
+                "itens-2-ativo": "",
+                "itens-2-quantidade": "",
+                "itens-2-valor_diaria": "",
+                "itens-2-valor_total": "",
+                "itens-2-observacoes": "",
+                "itens-3-ativo": "",
+                "itens-3-quantidade": "",
+                "itens-3-valor_diaria": "",
+                "itens-3-valor_total": "",
+                "itens-3-observacoes": "",
+                "itens-4-ativo": "",
+                "itens-4-quantidade": "",
+                "itens-4-valor_diaria": "",
+                "itens-4-valor_total": "",
+                "itens-4-observacoes": "",
+            },
+        )
+
+        locacao = Locacao.objects.get(codigo="LOC-0002")
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": locacao.pk}))
+        self.assertEqual(locacao.valor_equipamentos, Decimal("201.00"))
+        self.assertEqual(locacao.valor_total, Decimal("241.00"))
 
     def test_cria_locacao_com_mais_de_cinco_equipamentos(self):
         ativos = [self.ativo]

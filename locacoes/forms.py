@@ -2,6 +2,7 @@ from django import forms
 
 from ativos.models import Ativo
 from clientes.models import Cliente, EnderecoCliente
+from config.forms import MoneyBRField, setup_money_field
 
 from .models import ItemLocacao, Locacao
 
@@ -18,6 +19,10 @@ class AtivoChoiceField(forms.ModelChoiceField):
 
 class LocacaoForm(forms.ModelForm):
     endereco_entrega = EnderecoEntregaChoiceField(queryset=EnderecoCliente.objects.none(), required=False)
+    valor_equipamentos = MoneyBRField(max_digits=12, decimal_places=2)
+    valor_servicos = MoneyBRField(max_digits=12, decimal_places=2)
+    valor_desconto = MoneyBRField(max_digits=12, decimal_places=2)
+    valor_total = MoneyBRField(max_digits=12, decimal_places=2)
 
     class Meta:
         model = Locacao
@@ -61,6 +66,9 @@ class LocacaoForm(forms.ModelForm):
             field.widget.attrs.update({"class": "form-control"})
             if field_name in placeholders:
                 field.widget.attrs.update({"placeholder": placeholders[field_name]})
+
+        for field_name in ["valor_equipamentos", "valor_servicos", "valor_desconto", "valor_total"]:
+            setup_money_field(self.fields[field_name])
 
         cliente_id = self.data.get("cliente") if self.is_bound else self.instance.cliente_id
         self.fields["endereco_entrega"].queryset = EnderecoCliente.objects.none()
@@ -106,6 +114,8 @@ def _is_blank(value):
 
 class ItemLocacaoForm(forms.ModelForm):
     ativo = AtivoChoiceField(queryset=Ativo.objects.none())
+    valor_diaria = MoneyBRField(max_digits=12, decimal_places=2)
+    valor_total = MoneyBRField(max_digits=12, decimal_places=2, required=False)
 
     class Meta:
         model = ItemLocacao
@@ -150,6 +160,9 @@ class ItemLocacaoForm(forms.ModelForm):
             field.widget.attrs.update({"class": "form-control"})
             if field_name in placeholders:
                 field.widget.attrs.update({"placeholder": placeholders[field_name]})
+
+        for field_name in ["valor_diaria", "valor_total"]:
+            setup_money_field(self.fields[field_name])
 
     def clean_ativo(self):
         ativo = self.cleaned_data.get("ativo")

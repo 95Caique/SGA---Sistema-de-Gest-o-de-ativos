@@ -54,6 +54,7 @@ def rastreamento_mapa(request):
                 "status_filter": status_filter if status_filter in status_validos else "",
                 "status_options": Rastreador.Status.choices,
                 "rastreadores": rastreadores,
+                "map_points": _map_points(rastreadores),
                 "itens_sem_rastreamento": _itens_sem_rastreamento(),
                 "status_counts": status_counts,
             }
@@ -85,3 +86,31 @@ def _itens_sem_rastreamento():
         .filter(Q(ativo__permite_rastreamento=False) | Q(ativo__rastreador__isnull=True))
         .order_by("locacao__codigo", "ativo__codigo")[:6]
     )
+
+
+def _map_points(rastreadores):
+    points = []
+
+    for rastreador in rastreadores:
+        if rastreador.ultima_latitude is None or rastreador.ultima_longitude is None:
+            continue
+
+        points.append(
+            {
+                "id": rastreador.pk,
+                "name": rastreador.ativo.nome,
+                "code": rastreador.ativo.codigo,
+                "status": rastreador.status,
+                "statusLabel": rastreador.get_status_display(),
+                "lat": float(rastreador.ultima_latitude),
+                "lng": float(rastreador.ultima_longitude),
+                "speed": float(rastreador.ultima_velocidade or 0),
+                "battery": rastreador.bateria_percentual,
+                "signal": rastreador.sinal_gsm_percentual,
+                "address": rastreador.ultimo_endereco or rastreador.ativo.localizacao_atual or "Sem posicao registrada",
+                "rental": rastreador.locacao_ativa.codigo if rastreador.locacao_ativa else "",
+                "client": rastreador.locacao_ativa.cliente.nome if rastreador.locacao_ativa else "",
+            }
+        )
+
+    return points

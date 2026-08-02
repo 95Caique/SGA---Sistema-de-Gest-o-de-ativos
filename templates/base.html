@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ page_title }} | Loca360</title>
     <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260702-green-nav">
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
     <aside class="sidebar">
@@ -63,7 +64,7 @@
             {% block content %}{% endblock %}
         </section>
     </main>
-    <script src="{% static 'js/app.js' %}?v=20260730-money-fields-cents"></script>
+    <script src="{% static 'js/app.js' %}?v=20260802-tracking-map"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

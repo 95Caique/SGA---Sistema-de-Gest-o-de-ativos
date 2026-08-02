@@ -44,6 +44,9 @@ class RastreamentoViewTests(TestCase):
         self.assertContains(response, "LOC-0001")
         self.assertContains(response, "Cliente Producao")
         self.assertContains(response, "Dados simulados")
+        self.assertContains(response, "tracking-map-canvas")
+        self.assertContains(response, "tracking-map-data")
+        self.assertContains(response, "leaflet@1.9.4")
 
     def test_mapa_filtra_por_status_do_rastreador(self):
         outro_ativo = Ativo.objects.create(
