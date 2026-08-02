@@ -272,7 +272,33 @@ function escapeHtml(value) {
     return node.innerHTML;
 }
 
+function setupSidebarToggle() {
+    const toggle = document.querySelector("[data-sidebar-toggle]");
+
+    if (!toggle) {
+        return;
+    }
+
+    const storageKey = "loca360-sidebar-state";
+    const savedState = localStorage.getItem(storageKey);
+    const initialState = savedState === "collapsed" ? "collapsed" : "expanded";
+
+    const setSidebarState = (state) => {
+        document.body.dataset.sidebarState = state;
+        toggle.setAttribute("aria-expanded", String(state === "expanded"));
+        localStorage.setItem(storageKey, state);
+    };
+
+    setSidebarState(initialState);
+
+    toggle.addEventListener("click", () => {
+        const currentState = document.body.dataset.sidebarState;
+        setSidebarState(currentState === "collapsed" ? "expanded" : "collapsed");
+    });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+    setupSidebarToggle();
     setupItemLocacaoRows();
     setupItemLocacaoDynamicRows();
     setupLocacaoEnderecoLoader();

@@ -59,7 +59,31 @@ class ContratosListTests(TestCase):
 
         self.assertContains(response, "CTR-LOC-0001")
         self.assertContains(response, "Vencido")
+        self.assertContains(response, "1 dia(s) em atraso")
         self.assertNotContains(response, "CTR-LOC-0002")
+
+    def test_lista_contrato_vencendo_em_breve(self):
+        hoje = timezone.localdate()
+        self.criar_locacao(
+            "LOC-0001",
+            Locacao.Status.ATIVA,
+            data_inicio=hoje - timedelta(days=2),
+            data_fim=hoje + timedelta(days=2),
+        )
+
+        response = self.client.get(reverse("contratos"))
+
+        self.assertContains(response, "Vence em 2 dia(s)")
+
+    def test_resumo_de_contratos_ignora_cancelados_no_valor(self):
+        self.criar_locacao("LOC-0001", Locacao.Status.AGENDADA)
+        self.criar_locacao("LOC-0002", Locacao.Status.CANCELADA)
+
+        response = self.client.get(reverse("contratos"))
+
+        self.assertContains(response, "Valor contratado")
+        self.assertContains(response, "R$ 1.200,00")
+        self.assertContains(response, "Contratos ativos")
 
     def test_busca_contrato_por_cliente(self):
         self.criar_locacao("LOC-0001", Locacao.Status.AGENDADA)

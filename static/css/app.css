@@ -52,6 +52,12 @@ select {
     background: linear-gradient(180deg, #0F4D0F 0%, #0a350a 100%);
     color: #dff3df;
     padding: 22px 14px;
+    transition: width 180ms ease, padding 180ms ease;
+}
+
+body[data-sidebar-state="collapsed"] .sidebar {
+    width: 78px;
+    padding-inline: 12px;
 }
 
 .brand {
@@ -60,6 +66,11 @@ select {
     gap: 12px;
     min-height: 48px;
     padding: 0 12px 22px;
+}
+
+body[data-sidebar-state="collapsed"] .brand {
+    justify-content: center;
+    padding-inline: 0;
 }
 
 .brand strong {
@@ -76,6 +87,12 @@ select {
     font-size: 11px;
     font-weight: 700;
     line-height: 1.4;
+}
+
+body[data-sidebar-state="collapsed"] .brand span:last-child,
+body[data-sidebar-state="collapsed"] .nav-link span:last-child,
+body[data-sidebar-state="collapsed"] .sidebar-footer > div:last-child {
+    display: none;
 }
 
 .brand-mark {
@@ -101,6 +118,11 @@ select {
     color: #d0ead0;
     font-weight: 650;
     padding: 0 12px;
+}
+
+body[data-sidebar-state="collapsed"] .nav-link {
+    justify-content: center;
+    padding: 0;
 }
 
 .nav-link:hover,
@@ -131,6 +153,11 @@ select {
     padding: 18px 10px 0;
 }
 
+body[data-sidebar-state="collapsed"] .sidebar-footer {
+    justify-content: center;
+    padding-inline: 0;
+}
+
 .sidebar-footer strong {
     display: block;
     color: #ffffff;
@@ -153,6 +180,11 @@ select {
 .app-shell {
     min-height: 100vh;
     padding-left: 248px;
+    transition: padding-left 180ms ease;
+}
+
+body[data-sidebar-state="collapsed"] .app-shell {
+    padding-left: 78px;
 }
 
 .topbar {
@@ -1323,7 +1355,32 @@ td strong {
         min-height: auto;
     }
 
+    body[data-sidebar-state="collapsed"] .sidebar {
+        width: auto;
+        padding: 22px 14px;
+    }
+
+    body[data-sidebar-state="collapsed"] .brand {
+        justify-content: flex-start;
+        padding: 0 12px 22px;
+    }
+
+    body[data-sidebar-state="collapsed"] .brand span:last-child,
+    body[data-sidebar-state="collapsed"] .nav-link span:last-child,
+    body[data-sidebar-state="collapsed"] .sidebar-footer > div:last-child {
+        display: block;
+    }
+
+    body[data-sidebar-state="collapsed"] .nav-link,
+    body[data-sidebar-state="collapsed"] .sidebar-footer {
+        justify-content: flex-start;
+    }
+
     .app-shell {
+        padding-left: 0;
+    }
+
+    body[data-sidebar-state="collapsed"] .app-shell {
         padding-left: 0;
     }
 

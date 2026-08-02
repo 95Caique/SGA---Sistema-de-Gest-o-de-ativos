@@ -15,6 +15,29 @@
     </form>
 </div>
 
+<section class="metric-grid">
+    <article class="metric-card">
+        <span>Valor contratado</span>
+        <strong>{{ resumo.valor_total }}</strong>
+        <small class="text-neutral">locacoes nao canceladas</small>
+    </article>
+    <article class="metric-card">
+        <span>Contratos ativos</span>
+        <strong>{{ resumo.ativos }}</strong>
+        <small class="text-success">em vigor ou agendados</small>
+    </article>
+    <article class="metric-card">
+        <span>Vencidos</span>
+        <strong>{{ resumo.vencidos }}</strong>
+        <small class="text-danger">precisam de acao</small>
+    </article>
+    <article class="metric-card">
+        <span>Minutas</span>
+        <strong>{{ resumo.minutas }}</strong>
+        <small class="text-warning">aguardando aprovacao</small>
+    </article>
+</section>
+
 <section class="panel">
     <div class="tabs">
         <a class="{% if not status_filter %}is-active{% endif %}" href="{% url 'contratos' %}{% if query %}?q={{ query|urlencode }}{% endif %}">Todos <span>{{ status_counts.todos }}</span></a>
@@ -33,6 +56,7 @@
                         <th>Contrato</th>
                         <th>Cliente</th>
                         <th>Periodo</th>
+                        <th>Vencimento</th>
                         <th>Itens</th>
                         <th>Valor total</th>
                         <th>Status</th>
@@ -51,6 +75,7 @@
                                 <small class="table-subtext">{{ contrato.cliente.documento }}</small>
                             </td>
                             <td>{{ contrato.inicio|date:"d/m/Y" }} - {{ contrato.fim|date:"d/m/Y" }}</td>
+                            <td><span class="text-{{ contrato.vencimento_tone }}">{{ contrato.vencimento_label }}</span></td>
                             <td>{{ contrato.total_itens }} item{{ contrato.total_itens|pluralize }}</td>
                             <td>{{ contrato.valor_total }}</td>
                             <td><span class="badge badge-contract-{{ contrato.status_key }}">{{ contrato.status_label }}</span></td>

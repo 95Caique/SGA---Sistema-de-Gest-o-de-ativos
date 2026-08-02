@@ -31,6 +31,7 @@ def contratos_list(request):
         )
 
     contratos = [_contrato_from_locacao(locacao) for locacao in locacoes]
+    status_counts = _status_counts(contratos)
 
     if status_filter in CONTRATO_STATUS_FILTROS:
         contratos = [contrato for contrato in contratos if contrato["status_key"] == status_filter]
@@ -46,7 +47,8 @@ def contratos_list(request):
                 "contratos": contratos,
                 "query": query,
                 "status_filter": status_filter,
-                "status_counts": _status_counts(),
+                "status_counts": status_counts,
+                "resumo": _resumo_contratos(status_counts, contratos),
             }
         ),
     )
@@ -80,13 +82,17 @@ def contrato_pdf(request, pk):
 
 def _contrato_from_locacao(locacao):
     status_key, status_label = _status_contrato(locacao)
+    vencimento = _vencimento_contrato(locacao, status_key)
     return {
         "codigo": f"CTR-{locacao.codigo}",
         "locacao": locacao,
         "cliente": locacao.cliente,
         "inicio": locacao.data_inicio,
         "fim": locacao.data_fim,
+        "vencimento_label": vencimento["label"],
+        "vencimento_tone": vencimento["tone"],
         "total_itens": getattr(locacao, "total_itens", locacao.itens.count()),
+        "valor_decimal": locacao.valor_total,
         "valor_total": money_br(locacao.valor_total),
         "status_key": status_key,
         "status_label": status_label,
@@ -107,11 +113,25 @@ def _status_contrato(locacao):
     return "ativo", "Ativo"
 
 
-def _status_counts():
-    contratos = [
-        _contrato_from_locacao(locacao)
-        for locacao in Locacao.objects.select_related("cliente").annotate(total_itens=Count("itens"))
-    ]
+def _vencimento_contrato(locacao, status_key):
+    hoje = timezone.localdate()
+    dias = (locacao.data_fim - hoje).days
+
+    if status_key == "vencido":
+        return {"label": f"{abs(dias)} dia(s) em atraso", "tone": "danger"}
+    if status_key in ["encerrado", "cancelado"]:
+        return {"label": locacao.data_fim.strftime("%d/%m/%Y"), "tone": "neutral"}
+    if status_key == "minuta":
+        return {"label": "Aguardando aprovacao", "tone": "warning"}
+    if dias == 0:
+        return {"label": "Vence hoje", "tone": "warning"}
+    if dias <= 2:
+        return {"label": f"Vence em {dias} dia(s)", "tone": "warning"}
+
+    return {"label": f"{dias} dia(s) restantes", "tone": "success"}
+
+
+def _status_counts(contratos):
     counts = {status: 0 for status in CONTRATO_STATUS_FILTROS}
 
     for contrato in contratos:
@@ -124,4 +144,15 @@ def _status_counts():
         "vencidos": counts["vencido"],
         "encerrados": counts["encerrado"],
         "cancelados": counts["cancelado"],
+    }
+
+
+def _resumo_contratos(counts, contratos):
+    return {
+        "valor_total": money_br(
+            sum(contrato["valor_decimal"] for contrato in contratos if contrato["status_key"] != "cancelado")
+        ),
+        "ativos": counts["ativos"],
+        "vencidos": counts["vencidos"],
+        "minutas": counts["minutas"],
     }

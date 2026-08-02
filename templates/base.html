@@ -5,10 +5,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ page_title }} | Loca360</title>
-    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260702-green-nav">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260802-sidebar-toggle">
     {% block extra_head %}{% endblock %}
 </head>
-<body>
+<body data-sidebar-state="expanded">
     <aside class="sidebar">
         <a class="brand" href="{% url 'dashboard' %}" aria-label="Loca360">
             <span class="brand-mark"></span>
@@ -38,7 +38,7 @@
 
     <main class="app-shell">
         <header class="topbar">
-            <button class="icon-button" type="button" aria-label="Menu">=</button>
+            <button class="icon-button" type="button" aria-label="Alternar menu lateral" data-sidebar-toggle>=</button>
             <form class="search-form" role="search">
                 <input class="ui-input" type="search" placeholder="Buscar..." aria-label="Buscar">
                 <!-- <kbd>Ctrl K</kbd> -->
@@ -64,7 +64,7 @@
             {% block content %}{% endblock %}
         </section>
     </main>
-    <script src="{% static 'js/app.js' %}?v=20260802-tracking-map"></script>
+    <script src="{% static 'js/app.js' %}?v=20260802-sidebar-toggle"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
