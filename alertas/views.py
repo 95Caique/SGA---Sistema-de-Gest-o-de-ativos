@@ -67,7 +67,8 @@ def _alertas_rastreamento():
             "prazo_label": "Ultima atualizacao",
             "prioridade": "alta",
             "prioridade_label": "Alta",
-            "link": reverse("rastreamento"),
+            "link": reverse("equipamento_detail", kwargs={"pk": rastreador.ativo.pk}),
+            "acao_label": "Ver ativo",
         }
         for rastreador in rastreadores
     ]
@@ -120,7 +121,8 @@ def _alerta_manutencao(ordem, mensagem, prioridade, prioridade_label):
         "prazo_label": "Previsao",
         "prioridade": prioridade,
         "prioridade_label": prioridade_label,
-        "link": reverse("manutencao"),
+        "link": reverse("manutencao_detail", kwargs={"pk": ordem.pk}),
+        "acao_label": "Ver OS",
     }
 
 
@@ -136,4 +138,5 @@ def _alerta_locacao(locacao, mensagem, prioridade, prioridade_label):
         "prioridade": prioridade,
         "prioridade_label": prioridade_label,
         "link": reverse("locacao_detail", kwargs={"pk": locacao.pk}),
+        "acao_label": "Ver locacao",
     }

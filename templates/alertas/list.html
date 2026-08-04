@@ -76,7 +76,7 @@
                             </td>
                             <td><span class="badge badge-alert-{{ alerta.prioridade }}">{{ alerta.prioridade_label }}</span></td>
                             <td class="actions-cell">
-                                <a href="{{ alerta.link }}">Ver</a>
+                                <a href="{{ alerta.link }}">{{ alerta.acao_label|default:"Ver" }}</a>
                             </td>
                         </tr>
                     {% endfor %}

@@ -37,9 +37,11 @@ class AlertasListTests(TestCase):
 
         self.assertContains(response, "Rastreador sem comunicacao.")
         self.assertContains(response, "BET-001")
+        self.assertContains(response, reverse("equipamento_detail", kwargs={"pk": self.ativo.pk}))
+        self.assertContains(response, "Ver ativo")
 
     def test_exibe_alerta_de_manutencao_alta_aberta(self):
-        OrdemManutencao.objects.create(
+        ordem = OrdemManutencao.objects.create(
             codigo="MAN-0001",
             ativo=self.ativo,
             prioridade=OrdemManutencao.Prioridade.ALTA,
@@ -50,10 +52,12 @@ class AlertasListTests(TestCase):
 
         self.assertContains(response, "Manutencao de alta prioridade em aberto.")
         self.assertContains(response, "MAN-0001")
+        self.assertContains(response, reverse("manutencao_detail", kwargs={"pk": ordem.pk}))
+        self.assertContains(response, "Ver OS")
 
     def test_exibe_alerta_de_devolucao_proxima(self):
         hoje = timezone.localdate()
-        Locacao.objects.create(
+        locacao = Locacao.objects.create(
             codigo="LOC-0001",
             cliente=self.cliente,
             data_inicio=hoje,
@@ -66,6 +70,8 @@ class AlertasListTests(TestCase):
         self.assertContains(response, "Devolucao prevista")
         self.assertContains(response, "LOC-0001")
         self.assertContains(response, "Media")
+        self.assertContains(response, reverse("locacao_detail", kwargs={"pk": locacao.pk}))
+        self.assertContains(response, "Ver locacao")
 
     def test_exibe_alerta_de_devolucao_vencida(self):
         hoje = timezone.localdate()
