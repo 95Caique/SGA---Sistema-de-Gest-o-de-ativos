@@ -27,84 +27,153 @@
     </form>
 </div>
 
-<section class="metric-grid">
-    <article class="metric-card">
-        <span>Eventos</span>
-        <strong>{{ status_counts.todos }}</strong>
-        <small class="text-neutral">entregas e devolucoes</small>
-    </article>
-    <article class="metric-card">
-        <span>Atrasados</span>
-        <strong>{{ status_counts.atrasados }}</strong>
-        <small class="text-danger">precisam de acao</small>
-    </article>
-    <article class="metric-card">
-        <span>Hoje</span>
-        <strong>{{ status_counts.hoje }}</strong>
-        <small class="text-warning">agenda do dia</small>
-    </article>
-    <article class="metric-card">
-        <span>Proximos</span>
-        <strong>{{ status_counts.proximos }}</strong>
-        <small class="text-success">ate 2 dias</small>
-    </article>
-</section>
-
-<section class="panel">
-    <div class="tabs">
-        <a class="{% if not tipo_filter %}is-active{% endif %}" href="{% url 'agenda' %}{% if query or situacao_filter %}?{% if query %}q={{ query|urlencode }}{% endif %}{% if query and situacao_filter %}&{% endif %}{% if situacao_filter %}situacao={{ situacao_filter }}{% endif %}{% endif %}">Todos <span>{{ status_counts.todos }}</span></a>
-        <a class="{% if tipo_filter == 'entrega' %}is-active{% endif %}" href="{% url 'agenda' %}?tipo=entrega{% if query %}&q={{ query|urlencode }}{% endif %}{% if situacao_filter %}&situacao={{ situacao_filter }}{% endif %}">Entregas <span>{{ status_counts.entregas }}</span></a>
-        <a class="{% if tipo_filter == 'devolucao' %}is-active{% endif %}" href="{% url 'agenda' %}?tipo=devolucao{% if query %}&q={{ query|urlencode }}{% endif %}{% if situacao_filter %}&situacao={{ situacao_filter }}{% endif %}">Devolucoes <span>{{ status_counts.devolucoes }}</span></a>
-    </div>
-
-    {% if eventos %}
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Tipo</th>
-                        <th>Locacao</th>
-                        <th>Cliente</th>
-                        <th>Itens</th>
-                        <th>Situacao</th>
-                        <th>Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for evento in eventos %}
-                        <tr>
-                            <td>{{ evento.data|date:"d/m/Y" }}</td>
-                            <td>{{ evento.tipo_label }}</td>
-                            <td><a href="{% url 'locacao_detail' evento.locacao.pk %}">{{ evento.locacao.codigo }}</a></td>
-                            <td>
-                                <strong>{{ evento.locacao.cliente.nome }}</strong>
-                                <small class="table-subtext">{{ evento.locacao.cliente.documento }}</small>
-                            </td>
-                            <td>{{ evento.total_itens }} item{{ evento.total_itens|pluralize }}</td>
-                            <td><span class="badge badge-schedule-{{ evento.situacao }}">{{ evento.situacao_label }}</span></td>
-                            <td><span class="badge badge-status-{{ evento.status_key }}">{{ evento.status }}</span></td>
-                            <td class="actions-cell">
-                                <a href="{% url 'locacao_detail' evento.locacao.pk %}">Ver</a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <div class="table-footer">
-            <span>Exibindo {{ eventos|length }} evento{{ eventos|length|pluralize }}</span>
-            <div class="pagination">
-                <span class="is-current">1</span>
+<section class="agenda-layout">
+    <aside class="panel agenda-summary-panel">
+        <h2>Resumo da agenda</h2>
+        <div class="agenda-summary-list">
+            <div class="agenda-summary-item">
+                <span class="agenda-summary-icon">Cal</span>
+                <span>Eventos no periodo</span>
+                <strong>{{ status_counts.todos }}</strong>
+            </div>
+            <div class="agenda-summary-item">
+                <span class="agenda-summary-icon">Rel</span>
+                <span>Atrasados</span>
+                <strong class="text-danger">{{ status_counts.atrasados }}</strong>
+            </div>
+            <div class="agenda-summary-item">
+                <span class="agenda-summary-icon">Dia</span>
+                <span>Hoje</span>
+                <strong class="text-warning">{{ status_counts.hoje }}</strong>
+            </div>
+            <div class="agenda-summary-item">
+                <span class="agenda-summary-icon">Pra</span>
+                <span>Proximos 2 dias</span>
+                <strong class="text-success">{{ status_counts.proximos }}</strong>
             </div>
         </div>
-    {% else %}
-        <div class="empty-state">
-            <strong>Nenhum evento na agenda</strong>
-            <p>Crie locacoes para acompanhar entregas e devolucoes neste calendario operacional.</p>
-            <a class="button button-primary" href="{% url 'locacao_create' %}">+ Nova locacao</a>
+
+        <div class="agenda-summary-situations">
+            <h3>Situacoes</h3>
+            <a href="{% url 'agenda' %}?tipo=entrega{% if query %}&q={{ query|urlencode }}{% endif %}{% if situacao_filter %}&situacao={{ situacao_filter }}{% endif %}">
+                <i class="legend-dot legend-entrega"></i>
+                <span>Entregas</span>
+                <strong>{{ status_counts.entregas }}</strong>
+            </a>
+            <a href="{% url 'agenda' %}?tipo=devolucao{% if query %}&q={{ query|urlencode }}{% endif %}{% if situacao_filter %}&situacao={{ situacao_filter }}{% endif %}">
+                <i class="legend-dot legend-devolucao"></i>
+                <span>Devolucoes</span>
+                <strong>{{ status_counts.devolucoes }}</strong>
+            </a>
+            <a href="{% url 'agenda' %}?situacao=atrasado{% if query %}&q={{ query|urlencode }}{% endif %}{% if tipo_filter %}&tipo={{ tipo_filter }}{% endif %}">
+                <i class="legend-dot legend-atrasado"></i>
+                <span>Atrasados</span>
+                <strong class="text-danger">{{ status_counts.atrasados }}</strong>
+            </a>
+            <a href="{% url 'agenda' %}?situacao=hoje{% if query %}&q={{ query|urlencode }}{% endif %}{% if tipo_filter %}&tipo={{ tipo_filter }}{% endif %}">
+                <i class="legend-dot legend-hoje"></i>
+                <span>Hoje</span>
+                <strong class="text-warning">{{ status_counts.hoje }}</strong>
+            </a>
+            <a href="{% url 'agenda' %}?situacao=proximo{% if query %}&q={{ query|urlencode }}{% endif %}{% if tipo_filter %}&tipo={{ tipo_filter }}{% endif %}">
+                <i class="legend-dot legend-proximo"></i>
+                <span>Proximos 2 dias</span>
+                <strong class="text-success">{{ status_counts.proximos }}</strong>
+            </a>
         </div>
-    {% endif %}
+
+        <a class="button button-muted agenda-report-button" href="{% url 'relatorios' %}">Ver relatorio completo</a>
+    </aside>
+
+    <section class="panel agenda-calendar-panel">
+        <div class="calendar-toolbar">
+            <div class="calendar-nav">
+                <a class="icon-button" href="{{ calendario.anterior_url }}" aria-label="Semana anterior">&lt;</a>
+                <a class="icon-button" href="{{ calendario.proxima_url }}" aria-label="Proxima semana">&gt;</a>
+                <a class="button button-muted" href="{{ calendario.hoje_url }}">Hoje</a>
+            </div>
+            <strong><span class="calendar-title-icon">Cal</span>{{ calendario.titulo }}</strong>
+            <div class="calendar-view-switch" aria-label="Visualizacoes da agenda">
+                <span class="is-disabled" aria-disabled="true">Dia</span>
+                <a class="{% if view_mode == 'semana' %}is-active{% endif %}" href="{{ calendario.semana_url }}">Semana</a>
+                <span class="is-disabled" aria-disabled="true">Mes</span>
+                <a class="{% if view_mode == 'lista' %}is-active{% endif %}" href="{{ calendario.lista_url }}">Lista</a>
+            </div>
+        </div>
+
+        {% if view_mode == 'semana' %}
+            <div class="calendar-week">
+                <div class="calendar-time-head">Hora</div>
+                {% for dia in calendario.dias %}
+                    <div class="calendar-day-head">{{ dia.label }}</div>
+                {% endfor %}
+
+                {% for hora in calendario.horarios %}
+                    <div class="calendar-hour">{{ hora|stringformat:"02d" }}:00</div>
+                    {% for dia in calendario.dias %}
+                        <div class="calendar-cell">
+                            {% for evento in dia.eventos %}
+                                {% if evento.hora == hora %}
+                                    <a class="calendar-event calendar-event-{{ evento.tipo }}" href="{% url 'locacao_detail' evento.locacao.pk %}">
+                                        <strong>{{ evento.tipo_label }}</strong>
+                                        <span>{{ evento.locacao.cliente.nome }}</span>
+                                        <small>{{ evento.hora_label }} - {{ evento.locacao.codigo }}</small>
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        {% elif eventos %}
+            <div class="table-wrap agenda-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Tipo</th>
+                            <th>Locacao</th>
+                            <th>Cliente</th>
+                            <th>Itens</th>
+                            <th>Situacao</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for evento in eventos %}
+                            <tr>
+                                <td>{{ evento.data|date:"d/m/Y" }}</td>
+                                <td>{{ evento.tipo_label }}</td>
+                                <td><a href="{% url 'locacao_detail' evento.locacao.pk %}">{{ evento.locacao.codigo }}</a></td>
+                                <td>
+                                    <strong>{{ evento.locacao.cliente.nome }}</strong>
+                                    <small class="table-subtext">{{ evento.locacao.cliente.documento }}</small>
+                                </td>
+                                <td>{{ evento.total_itens }} item{{ evento.total_itens|pluralize }}</td>
+                                <td><span class="badge badge-schedule-{{ evento.situacao }}">{{ evento.situacao_label }}</span></td>
+                                <td><span class="badge badge-status-{{ evento.status_key }}">{{ evento.status }}</span></td>
+                                <td class="actions-cell">
+                                    <a href="{% url 'locacao_detail' evento.locacao.pk %}">Ver</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-footer">
+                <span>Exibindo {{ eventos|length }} evento{{ eventos|length|pluralize }}</span>
+                <div class="pagination">
+                    <span class="is-current">1</span>
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <strong>Nenhum evento na agenda</strong>
+                <p>Crie locacoes para acompanhar entregas e devolucoes neste calendario operacional.</p>
+                <a class="button button-primary" href="{% url 'locacao_create' %}">+ Nova locacao</a>
+            </div>
+        {% endif %}
+    </section>
 </section>
 {% endblock %}

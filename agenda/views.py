@@ -1,7 +1,10 @@
 from datetime import timedelta
+from urllib.parse import urlencode
 
 from django.db.models import Count, Q
 from django.shortcuts import render
+from django.urls import reverse
+from django.utils.dateparse import parse_date
 from django.utils import timezone
 
 from config.views import with_layout
@@ -16,6 +19,8 @@ def _evento_agenda(locacao, tipo, hoje):
         "data": data,
         "tipo": tipo,
         "tipo_label": "Entrega" if tipo == "entrega" else "Devolucao",
+        "hora": 9 if tipo == "entrega" else 15,
+        "hora_label": "09:00" if tipo == "entrega" else "15:00",
         "situacao": situacao["key"],
         "situacao_label": situacao["label"],
         "locacao": locacao,
@@ -29,8 +34,11 @@ def agenda_list(request):
     query = request.GET.get("q", "").strip()
     tipo_filter = request.GET.get("tipo", "").strip()
     situacao_filter = request.GET.get("situacao", "").strip()
+    view_mode = request.GET.get("view", "semana").strip()
+    data_referencia = parse_date(request.GET.get("data", "")) or timezone.localdate()
     tipos_validos = ["entrega", "devolucao"]
     situacoes_validas = ["atrasado", "hoje", "proximo", "futuro"]
+    view_modes_validos = ["semana", "lista"]
     locacoes = (
         Locacao.objects.select_related("cliente")
         .annotate(total_itens=Count("itens"))
@@ -60,7 +68,11 @@ def agenda_list(request):
     else:
         situacao_filter = ""
 
+    if view_mode not in view_modes_validos:
+        view_mode = "semana"
+
     eventos.sort(key=lambda evento: (evento["data"], evento["locacao"].codigo, evento["tipo"]))
+    calendario = _calendario_semana(eventos, data_referencia, query, tipo_filter, situacao_filter, view_mode)
 
     return render(
         request,
@@ -72,6 +84,8 @@ def agenda_list(request):
                 "query": query,
                 "tipo_filter": tipo_filter,
                 "situacao_filter": situacao_filter,
+                "view_mode": view_mode,
+                "calendario": calendario,
                 "situacao_options": [
                     ("atrasado", "Atrasados"),
                     ("hoje", "Hoje"),
@@ -116,3 +130,50 @@ def _status_counts(eventos):
         "hoje": sum(1 for evento in eventos if evento["situacao"] == "hoje"),
         "proximos": sum(1 for evento in eventos if evento["situacao"] == "proximo"),
     }
+
+
+def _calendario_semana(eventos, data_referencia, query, tipo_filter, situacao_filter, view_mode):
+    inicio = data_referencia - timedelta(days=data_referencia.weekday())
+    fim = inicio + timedelta(days=6)
+    dias = []
+
+    for offset in range(7):
+        dia = inicio + timedelta(days=offset)
+        dias.append(
+            {
+                "data": dia,
+                "label": f"{_dia_semana_label(dia)} {dia.day}/{dia:%m}",
+                "eventos": [evento for evento in eventos if evento["data"] == dia],
+            }
+        )
+
+    return {
+        "inicio": inicio,
+        "fim": fim,
+        "titulo": f"{inicio:%d/%m/%Y} - {fim:%d/%m/%Y}",
+        "dias": dias,
+        "horarios": range(8, 19),
+        "anterior_url": _agenda_url(inicio - timedelta(days=7), query, tipo_filter, situacao_filter, view_mode),
+        "proxima_url": _agenda_url(inicio + timedelta(days=7), query, tipo_filter, situacao_filter, view_mode),
+        "hoje_url": _agenda_url(timezone.localdate(), query, tipo_filter, situacao_filter, view_mode),
+        "semana_url": _agenda_url(data_referencia, query, tipo_filter, situacao_filter, "semana"),
+        "lista_url": _agenda_url(data_referencia, query, tipo_filter, situacao_filter, "lista"),
+    }
+
+
+def _agenda_url(data, query, tipo_filter, situacao_filter, view_mode="semana"):
+    params = {"data": data.isoformat(), "view": view_mode}
+
+    if query:
+        params["q"] = query
+    if tipo_filter:
+        params["tipo"] = tipo_filter
+    if situacao_filter:
+        params["situacao"] = situacao_filter
+
+    return f"{reverse('agenda')}?{urlencode(params)}"
+
+
+def _dia_semana_label(data):
+    labels = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"]
+    return labels[data.weekday()]
