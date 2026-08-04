@@ -107,21 +107,32 @@ def locacao_create(request):
         item_formset = ItemLocacaoFormSet(request.POST, prefix="itens", form_kwargs={"require_item": False})
 
         if form.is_valid() and item_formset.is_valid():
-            with transaction.atomic():
-                locacao = form.save()
+            conflitos = []
+            if form.cleaned_data["status"] == Locacao.Status.AGENDADA:
+                conflitos = _conflitos_reserva_ativos(
+                    _ativos_do_formset(item_formset),
+                    form.cleaned_data["data_inicio"],
+                    form.cleaned_data["data_fim"],
+                )
 
-                for item_form in item_formset:
-                    if not item_form.cleaned_data:
-                        continue
+            if conflitos:
+                form.add_error(None, _mensagem_conflitos_reserva(conflitos))
+            else:
+                with transaction.atomic():
+                    locacao = form.save()
 
-                    item = item_form.save(commit=False)
-                    item.locacao = locacao
-                    item.save()
+                    for item_form in item_formset:
+                        if not item_form.cleaned_data:
+                            continue
 
-                locacao.recalcular_totais()
+                        item = item_form.save(commit=False)
+                        item.locacao = locacao
+                        item.save()
 
-            messages.success(request, f"Locacao {locacao.codigo} cadastrada com sucesso.")
-            return redirect("locacao_detail", pk=locacao.pk)
+                    locacao.recalcular_totais()
+
+                messages.success(request, f"Locacao {locacao.codigo} cadastrada com sucesso.")
+                return redirect("locacao_detail", pk=locacao.pk)
     else:
         form = LocacaoForm()
         item_formset = ItemLocacaoFormSet(prefix="itens", form_kwargs={"require_item": False})
@@ -152,9 +163,21 @@ def locacao_update(request, pk):
     if request.method == "POST":
         form = LocacaoForm(request.POST, instance=locacao)
         if form.is_valid():
-            locacao = form.save()
-            messages.success(request, f"Locacao {locacao.codigo} atualizada com sucesso.")
-            return redirect("locacao_detail", pk=locacao.pk)
+            conflitos = []
+            if form.cleaned_data["status"] == Locacao.Status.AGENDADA:
+                conflitos = _conflitos_reserva_ativos(
+                    locacao.itens.values_list("ativo_id", flat=True),
+                    form.cleaned_data["data_inicio"],
+                    form.cleaned_data["data_fim"],
+                    exclude_locacao_id=locacao.pk,
+                )
+
+            if conflitos:
+                form.add_error(None, _mensagem_conflitos_reserva(conflitos))
+            else:
+                locacao = form.save()
+                messages.success(request, f"Locacao {locacao.codigo} atualizada com sucesso.")
+                return redirect("locacao_detail", pk=locacao.pk)
     else:
         form = LocacaoForm(instance=locacao)
 
@@ -188,22 +211,34 @@ def locacao_detail(request, pk):
 
         form = ItemLocacaoForm(request.POST, locacao=locacao)
         if form.is_valid():
-            with transaction.atomic():
-                ativo = Ativo.objects.select_for_update().get(pk=form.cleaned_data["ativo"].pk)
+            conflitos = []
+            if locacao.status == Locacao.Status.AGENDADA:
+                conflitos = _conflitos_reserva_ativos(
+                    [form.cleaned_data["ativo"]],
+                    locacao.data_inicio,
+                    locacao.data_fim,
+                    exclude_locacao_id=locacao.pk,
+                )
 
-                if ativo.status != Ativo.Status.DISPONIVEL:
-                    messages.error(request, "Este ativo nao esta disponivel para locacao.")
-                    return redirect("locacao_detail", pk=locacao.pk)
+            if conflitos:
+                form.add_error("ativo", _mensagem_conflitos_reserva(conflitos))
+            else:
+                with transaction.atomic():
+                    ativo = Ativo.objects.select_for_update().get(pk=form.cleaned_data["ativo"].pk)
 
-                item = form.save(commit=False)
-                item.locacao = locacao
-                item.ativo = ativo
-                item.save()
-                locacao.recalcular_totais()
-                locacao.sincronizar_status_ativos()
+                    if ativo.status != Ativo.Status.DISPONIVEL:
+                        messages.error(request, "Este ativo nao esta disponivel para locacao.")
+                        return redirect("locacao_detail", pk=locacao.pk)
 
-            messages.success(request, f"Ativo {item.ativo.codigo} adicionado a locacao.")
-            return redirect("locacao_detail", pk=locacao.pk)
+                    item = form.save(commit=False)
+                    item.locacao = locacao
+                    item.ativo = ativo
+                    item.save()
+                    locacao.recalcular_totais()
+                    locacao.sincronizar_status_ativos()
+
+                messages.success(request, f"Ativo {item.ativo.codigo} adicionado a locacao.")
+                return redirect("locacao_detail", pk=locacao.pk)
     else:
         form = ItemLocacaoForm(locacao=locacao)
 
@@ -253,6 +288,11 @@ def orcamento_aprovar(request, pk):
 
     if not locacao.itens.exists():
         messages.error(request, "Adicione pelo menos um equipamento antes de aprovar o orcamento.")
+        return redirect("locacao_detail", pk=locacao.pk)
+
+    conflitos = _conflitos_reserva_locacao(locacao)
+    if conflitos:
+        messages.error(request, _mensagem_conflitos_reserva(conflitos))
         return redirect("locacao_detail", pk=locacao.pk)
 
     locacao.status = Locacao.Status.AGENDADA
@@ -330,6 +370,11 @@ def locacao_ativar(request, pk):
             messages.error(request, f"Nao foi possivel ativar. Equipamentos indisponiveis: {codigos}.")
             return redirect("locacao_detail", pk=locacao.pk)
 
+        conflitos = _conflitos_reserva_locacao(locacao)
+        if conflitos:
+            messages.error(request, _mensagem_conflitos_reserva(conflitos))
+            return redirect("locacao_detail", pk=locacao.pk)
+
         locacao.status = Locacao.Status.ATIVA
         locacao.save(update_fields=["status", "atualizado_em"])
         locacao.recalcular_totais()
@@ -400,6 +445,55 @@ def _rastreamento_status(itens):
         "total": len(rastreaveis),
         "online": sum(1 for item in rastreaveis if getattr(item.ativo, "rastreador", None)),
     }
+
+
+def _ativos_do_formset(item_formset):
+    return [form.cleaned_data["ativo"] for form in item_formset if form.cleaned_data and form.cleaned_data.get("ativo")]
+
+
+def _conflitos_reserva_locacao(locacao):
+    return _conflitos_reserva_ativos(
+        locacao.itens.values_list("ativo_id", flat=True),
+        locacao.data_inicio,
+        locacao.data_fim,
+        exclude_locacao_id=locacao.pk,
+    )
+
+
+def _conflitos_reserva_ativos(ativos, data_inicio, data_fim, exclude_locacao_id=None):
+    ativo_ids = [getattr(ativo, "pk", ativo) for ativo in ativos if ativo]
+
+    if not ativo_ids or not data_inicio or not data_fim:
+        return []
+
+    conflitos = ItemLocacao.objects.select_related("ativo", "locacao", "locacao__cliente").filter(
+        ativo_id__in=ativo_ids,
+        locacao__status__in=[Locacao.Status.AGENDADA, Locacao.Status.ATIVA],
+        locacao__data_inicio__lte=data_fim,
+        locacao__data_fim__gte=data_inicio,
+    )
+
+    if exclude_locacao_id:
+        conflitos = conflitos.exclude(locacao_id=exclude_locacao_id)
+
+    return list(conflitos.order_by("ativo__codigo", "locacao__data_inicio", "locacao__codigo"))
+
+
+def _mensagem_conflitos_reserva(conflitos):
+    detalhes = []
+
+    for conflito in conflitos[:4]:
+        detalhes.append(
+            (
+                f"{conflito.ativo.codigo} reservado em {conflito.locacao.codigo} "
+                f"({conflito.locacao.data_inicio:%d/%m/%Y} - {conflito.locacao.data_fim:%d/%m/%Y})"
+            )
+        )
+
+    if len(conflitos) > 4:
+        detalhes.append(f"mais {len(conflitos) - 4} conflito(s)")
+
+    return f"Equipamento indisponivel no periodo: {'; '.join(detalhes)}."
 
 
 def locacao_finalizar(request, pk):

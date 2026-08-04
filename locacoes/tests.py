@@ -449,6 +449,73 @@ class LocacaoOperacaoTests(TestCase):
         self.assertEqual(locacao.itens.count(), 6)
         self.assertEqual(locacao.valor_equipamentos, Decimal("1800.00"))
 
+    def test_cria_locacao_agendada_bloqueia_equipamento_reservado_no_periodo(self):
+        reserva = Locacao.objects.create(
+            codigo="LOC-0009",
+            cliente=self.cliente,
+            data_inicio=date(2026, 7, 11),
+            data_fim=date(2026, 7, 13),
+            status=Locacao.Status.AGENDADA,
+        )
+        ItemLocacao.objects.create(
+            locacao=reserva,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("300.00"),
+        )
+
+        response = self.client.post(
+            reverse("locacao_create"),
+            data={
+                "codigo": "LOC-0002",
+                "cliente": self.cliente.pk,
+                "data_inicio": "2026-07-10",
+                "data_fim": "2026-07-12",
+                "status": Locacao.Status.AGENDADA,
+                "endereco_entrega": "",
+                "valor_equipamentos": "0.00",
+                "valor_servicos": "0.00",
+                "valor_desconto": "0.00",
+                "valor_total": "0.00",
+                "observacoes": "",
+                "itens-TOTAL_FORMS": "5",
+                "itens-INITIAL_FORMS": "0",
+                "itens-MIN_NUM_FORMS": "0",
+                "itens-MAX_NUM_FORMS": "1000",
+                "itens-0-ativo": self.ativo.pk,
+                "itens-0-quantidade": "1",
+                "itens-0-valor_diaria": "100.00",
+                "itens-0-valor_total": "300.00",
+                "itens-0-observacoes": "",
+                "itens-1-ativo": "",
+                "itens-1-quantidade": "",
+                "itens-1-valor_diaria": "",
+                "itens-1-valor_total": "",
+                "itens-1-observacoes": "",
+                "itens-2-ativo": "",
+                "itens-2-quantidade": "",
+                "itens-2-valor_diaria": "",
+                "itens-2-valor_total": "",
+                "itens-2-observacoes": "",
+                "itens-3-ativo": "",
+                "itens-3-quantidade": "",
+                "itens-3-valor_diaria": "",
+                "itens-3-valor_total": "",
+                "itens-3-observacoes": "",
+                "itens-4-ativo": "",
+                "itens-4-quantidade": "",
+                "itens-4-valor_diaria": "",
+                "itens-4-valor_total": "",
+                "itens-4-observacoes": "",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Locacao.objects.filter(codigo="LOC-0002").exists())
+        self.assertContains(response, "Equipamento indisponivel no periodo")
+        self.assertContains(response, "BET-001 reservado em LOC-0009")
+
     def test_detalhe_locacao_bloqueia_item_duplicado_sem_erro_de_banco(self):
         ItemLocacao.objects.create(
             locacao=self.locacao,
@@ -667,6 +734,35 @@ class LocacaoOperacaoTests(TestCase):
         self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
         self.assertEqual(self.locacao.status, Locacao.Status.AGENDADA)
 
+    def test_aprovar_orcamento_bloqueia_equipamento_reservado_no_periodo(self):
+        reserva = Locacao.objects.create(
+            codigo="LOC-0009",
+            cliente=self.cliente,
+            data_inicio=date(2026, 7, 3),
+            data_fim=date(2026, 7, 4),
+            status=Locacao.Status.AGENDADA,
+        )
+        ItemLocacao.objects.create(
+            locacao=reserva,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("200.00"),
+        )
+        ItemLocacao.objects.create(
+            locacao=self.locacao,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("400.00"),
+        )
+
+        response = self.client.post(reverse("orcamento_aprovar", kwargs={"pk": self.locacao.pk}))
+
+        self.locacao.refresh_from_db()
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
+        self.assertEqual(self.locacao.status, Locacao.Status.ORCAMENTO)
+
     def test_aprovar_orcamento_bloqueia_sem_item(self):
         response = self.client.post(reverse("orcamento_aprovar", kwargs={"pk": self.locacao.pk}))
 
@@ -719,6 +815,68 @@ class LocacaoOperacaoTests(TestCase):
         self.locacao.refresh_from_db()
         self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
         self.assertEqual(self.locacao.status, Locacao.Status.ATIVA)
+
+    def test_detalhe_agendada_bloqueia_adicionar_item_reservado_no_periodo(self):
+        reserva = Locacao.objects.create(
+            codigo="LOC-0009",
+            cliente=self.cliente,
+            data_inicio=date(2026, 7, 3),
+            data_fim=date(2026, 7, 4),
+            status=Locacao.Status.AGENDADA,
+        )
+        ItemLocacao.objects.create(
+            locacao=reserva,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("200.00"),
+        )
+        self.locacao.status = Locacao.Status.AGENDADA
+        self.locacao.save()
+
+        response = self.client.post(
+            reverse("locacao_detail", kwargs={"pk": self.locacao.pk}),
+            data={
+                "ativo": self.ativo.pk,
+                "quantidade": 1,
+                "valor_diaria": "100.00",
+                "valor_total": "100.00",
+                "observacoes": "",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Equipamento indisponivel no periodo")
+        self.assertEqual(self.locacao.itens.count(), 0)
+
+    def test_ativacao_bloqueia_equipamento_reservado_no_periodo(self):
+        reserva = Locacao.objects.create(
+            codigo="LOC-0009",
+            cliente=self.cliente,
+            data_inicio=date(2026, 7, 3),
+            data_fim=date(2026, 7, 4),
+            status=Locacao.Status.AGENDADA,
+        )
+        ItemLocacao.objects.create(
+            locacao=reserva,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("200.00"),
+        )
+        ItemLocacao.objects.create(
+            locacao=self.locacao,
+            ativo=self.ativo,
+            quantidade=1,
+            valor_diaria=Decimal("100.00"),
+            valor_total=Decimal("400.00"),
+        )
+
+        response = self.client.post(reverse("locacao_ativar", kwargs={"pk": self.locacao.pk}))
+
+        self.locacao.refresh_from_db()
+        self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
+        self.assertEqual(self.locacao.status, Locacao.Status.ORCAMENTO)
 
     def test_tela_finalizacao_exibe_conferencia_dos_itens(self):
         ItemLocacao.objects.create(
