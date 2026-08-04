@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>{{ ordem.codigo }}</h1>
+        <p>{{ ordem.ativo.codigo }} | {{ ordem.ativo.nome }}</p>
+    </div>
+    <div class="toolbar">
+        <a class="button button-muted" href="{% url 'manutencao' %}">Voltar</a>
+        <a class="button button-muted" href="{% url 'equipamento_detail' ordem.ativo.pk %}">Equipamento</a>
+        {% if can_start %}
+            <form class="inline-form" method="post" action="{% url 'manutencao_iniciar' ordem.pk %}">
+                {% csrf_token %}
+                <button class="button button-muted" type="submit">Iniciar</button>
+            </form>
+        {% endif %}
+        {% if can_close %}
+            <a class="button button-primary" href="{% url 'manutencao_finalizar' ordem.pk %}">Finalizar</a>
+            <form class="inline-form" method="post" action="{% url 'manutencao_cancelar' ordem.pk %}">
+                {% csrf_token %}
+                <button class="button button-danger" type="submit">Cancelar</button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+
+<section class="metric-grid">
+    <article class="metric-card">
+        <span>Status</span>
+        <strong>{{ ordem.get_status_display }}</strong>
+        <small class="text-neutral">Situacao atual</small>
+    </article>
+    <article class="metric-card">
+        <span>Prioridade</span>
+        <strong>{{ ordem.get_prioridade_display }}</strong>
+        <small class="text-neutral">{{ ordem.get_tipo_display }}</small>
+    </article>
+    <article class="metric-card">
+        <span>Custo estimado</span>
+        <strong>{{ custo_estimado_display }}</strong>
+        <small class="text-neutral">Planejado</small>
+    </article>
+    <article class="metric-card">
+        <span>Custo real</span>
+        <strong>{{ custo_real_display }}</strong>
+        <small class="text-neutral">Executado</small>
+    </article>
+</section>
+
+<section class="dashboard-grid">
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Dados da ordem</h2>
+        </div>
+        <dl class="asset-detail asset-detail-wide">
+            <div>
+                <dt>Abertura</dt>
+                <dd>{{ ordem.data_abertura|date:"d/m/Y" }}</dd>
+            </div>
+            <div>
+                <dt>Prevista</dt>
+                <dd>{{ ordem.data_prevista|date:"d/m/Y"|default:"-" }}</dd>
+            </div>
+            <div>
+                <dt>Conclusao</dt>
+                <dd>{{ ordem.data_conclusao|date:"d/m/Y"|default:"-" }}</dd>
+            </div>
+            <div>
+                <dt>Responsavel</dt>
+                <dd>{{ ordem.responsavel|default:"-" }}</dd>
+            </div>
+            <div class="span-2">
+                <dt>Descricao</dt>
+                <dd>{{ ordem.descricao }}</dd>
+            </div>
+            <div class="span-2">
+                <dt>Solucao</dt>
+                <dd>{{ ordem.solucao|default:"Ainda nao registrada." }}</dd>
+            </div>
+        </dl>
+    </article>
+
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Equipamento</h2>
+            <a href="{% url 'equipamento_detail' ordem.ativo.pk %}">Ver ativo</a>
+        </div>
+        <dl class="asset-detail asset-detail-wide">
+            <div>
+                <dt>Codigo</dt>
+                <dd>{{ ordem.ativo.codigo }}</dd>
+            </div>
+            <div>
+                <dt>Categoria</dt>
+                <dd>{{ ordem.ativo.categoria.nome }}</dd>
+            </div>
+            <div>
+                <dt>Status</dt>
+                <dd>{{ ordem.ativo.get_status_display }}</dd>
+            </div>
+            <div>
+                <dt>Localizacao</dt>
+                <dd>{{ ordem.ativo.localizacao_atual|default:"Deposito" }}</dd>
+            </div>
+            <div>
+                <dt>Horimetro</dt>
+                <dd>{{ ordem.ativo.horimetro_atual }}</dd>
+            </div>
+            <div>
+                <dt>Rastreio</dt>
+                <dd>{% if ordem.ativo.permite_rastreamento %}Sim{% else %}Nao{% endif %}</dd>
+            </div>
+        </dl>
+    </article>
+</section>
+{% endblock %}

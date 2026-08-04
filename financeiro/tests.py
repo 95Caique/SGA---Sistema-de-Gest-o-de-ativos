@@ -4,8 +4,9 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from ativos.models import Ativo, CategoriaAtivo
 from clientes.models import Cliente
-from locacoes.models import Locacao
+from locacoes.models import ItemLocacao, Locacao
 
 
 class FinanceiroListTests(TestCase):
@@ -105,6 +106,15 @@ class FinanceiroListTests(TestCase):
         self.assertEqual(locacao.status_pagamento, Locacao.StatusPagamento.RECEBIDO)
         self.assertIsNotNone(locacao.data_pagamento)
 
+    def test_marca_pagamento_no_detalhe_e_retorna_para_detalhe(self):
+        locacao = self.criar_locacao("LOC-0001", Locacao.Status.ATIVA, "1200.00")
+
+        response = self.client.post(reverse("financeiro_receber", kwargs={"pk": locacao.pk}), data={"next": "detail"})
+
+        locacao.refresh_from_db()
+        self.assertRedirects(response, reverse("financeiro_detail", kwargs={"pk": locacao.pk}))
+        self.assertEqual(locacao.status_pagamento, Locacao.StatusPagamento.RECEBIDO)
+
     def test_reabre_pagamento_recebido(self):
         locacao = self.criar_locacao("LOC-0001", Locacao.Status.ATIVA, "1200.00", Locacao.StatusPagamento.RECEBIDO)
         locacao.data_pagamento = "2026-07-25"
@@ -117,6 +127,17 @@ class FinanceiroListTests(TestCase):
         self.assertEqual(locacao.status_pagamento, Locacao.StatusPagamento.ABERTO)
         self.assertIsNone(locacao.data_pagamento)
 
+    def test_reabre_pagamento_no_detalhe_e_retorna_para_detalhe(self):
+        locacao = self.criar_locacao("LOC-0001", Locacao.Status.ATIVA, "1200.00", Locacao.StatusPagamento.RECEBIDO)
+        locacao.data_pagamento = timezone.localdate()
+        locacao.save()
+
+        response = self.client.post(reverse("financeiro_reabrir", kwargs={"pk": locacao.pk}), data={"next": "detail"})
+
+        locacao.refresh_from_db()
+        self.assertRedirects(response, reverse("financeiro_detail", kwargs={"pk": locacao.pk}))
+        self.assertEqual(locacao.status_pagamento, Locacao.StatusPagamento.ABERTO)
+
     def test_nao_recebe_locacao_cancelada(self):
         locacao = self.criar_locacao("LOC-0001", Locacao.Status.CANCELADA, "1200.00", Locacao.StatusPagamento.CANCELADO)
 
@@ -125,3 +146,36 @@ class FinanceiroListTests(TestCase):
         locacao.refresh_from_db()
         self.assertRedirects(response, reverse("financeiro"))
         self.assertEqual(locacao.status_pagamento, Locacao.StatusPagamento.CANCELADO)
+
+    def test_lista_linka_para_detalhe_financeiro(self):
+        locacao = self.criar_locacao("LOC-0001", Locacao.Status.AGENDADA, "1200.00")
+
+        response = self.client.get(reverse("financeiro"))
+
+        self.assertContains(response, reverse("financeiro_detail", kwargs={"pk": locacao.pk}))
+
+    def test_detalhe_financeiro_exibe_valores_cliente_e_itens(self):
+        categoria = CategoriaAtivo.objects.create(nome="Audiovisual")
+        ativo = Ativo.objects.create(codigo="CAM-001", nome="Camera X", categoria=categoria)
+        locacao = self.criar_locacao("LOC-0001", Locacao.Status.ATIVA, "1200.00")
+        locacao.valor_equipamentos = "1000.00"
+        locacao.valor_servicos = "250.00"
+        locacao.valor_desconto = "50.00"
+        locacao.save()
+        ItemLocacao.objects.create(
+            locacao=locacao,
+            ativo=ativo,
+            quantidade=1,
+            valor_diaria="1000.00",
+            valor_total="1000.00",
+        )
+
+        response = self.client.get(reverse("financeiro_detail", kwargs={"pk": locacao.pk}))
+
+        self.assertContains(response, "Financeiro LOC-0001")
+        self.assertContains(response, "Construtora Forte")
+        self.assertContains(response, "R$ 1.200,00")
+        self.assertContains(response, "R$ 1.000,00")
+        self.assertContains(response, "Camera X")
+        self.assertContains(response, reverse("locacao_detail", kwargs={"pk": locacao.pk}))
+        self.assertContains(response, reverse("cliente_detail", kwargs={"pk": self.cliente.pk}))

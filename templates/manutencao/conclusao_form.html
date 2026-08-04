@@ -7,7 +7,7 @@
         <p>{{ ordem.ativo.codigo }} | {{ ordem.ativo.nome }}</p>
     </div>
     <div class="toolbar">
-        <a class="button button-muted" href="{% url 'manutencao' %}">Voltar</a>
+        <a class="button button-muted" href="{% url 'manutencao_detail' ordem.pk %}">Voltar</a>
     </div>
 </div>
 
@@ -65,7 +65,7 @@
     </div>
 
     <div class="form-actions">
-        <a class="button button-muted" href="{% url 'manutencao' %}">Cancelar</a>
+        <a class="button button-muted" href="{% url 'manutencao_detail' ordem.pk %}">Cancelar</a>
         <button class="button button-primary" type="submit">Finalizar manutencao</button>
     </div>
 </form>

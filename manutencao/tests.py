@@ -34,7 +34,7 @@ class ManutencaoOperacaoTests(TestCase):
 
         self.ativo.refresh_from_db()
         ordem = OrdemManutencao.objects.get(codigo="MAN-0001")
-        self.assertRedirects(response, reverse("manutencao"))
+        self.assertRedirects(response, reverse("manutencao_detail", kwargs={"pk": ordem.pk}))
         self.assertEqual(ordem.ativo, self.ativo)
         self.assertEqual(self.ativo.status, Ativo.Status.MANUTENCAO)
 
@@ -54,7 +54,7 @@ class ManutencaoOperacaoTests(TestCase):
         )
 
         ordem = OrdemManutencao.objects.get(codigo="MAN-0001")
-        self.assertRedirects(response, reverse("manutencao"))
+        self.assertRedirects(response, reverse("manutencao_detail", kwargs={"pk": ordem.pk}))
         self.assertEqual(str(ordem.custo_estimado), "400.00")
 
     def test_cria_ordem_com_custo_estimado_sem_centavos(self):
@@ -73,7 +73,7 @@ class ManutencaoOperacaoTests(TestCase):
         )
 
         ordem = OrdemManutencao.objects.get(codigo="MAN-0001")
-        self.assertRedirects(response, reverse("manutencao"))
+        self.assertRedirects(response, reverse("manutencao_detail", kwargs={"pk": ordem.pk}))
         self.assertEqual(str(ordem.custo_estimado), "400.00")
 
     def test_finaliza_ordem_e_libera_ativo(self):
@@ -96,7 +96,7 @@ class ManutencaoOperacaoTests(TestCase):
 
         self.ativo.refresh_from_db()
         ordem.refresh_from_db()
-        self.assertRedirects(response, reverse("manutencao"))
+        self.assertRedirects(response, reverse("manutencao_detail", kwargs={"pk": ordem.pk}))
         self.assertEqual(ordem.status, OrdemManutencao.Status.FINALIZADA)
         self.assertEqual(self.ativo.status, Ativo.Status.DISPONIVEL)
         self.assertIsNotNone(ordem.data_conclusao)
@@ -116,6 +116,7 @@ class ManutencaoOperacaoTests(TestCase):
         response = self.client.get(reverse("manutencao_finalizar", kwargs={"pk": ordem.pk}))
 
         self.assertContains(response, "Finalizar manutencao MAN-0001")
+        self.assertContains(response, reverse("manutencao_detail", kwargs={"pk": ordem.pk}))
         self.assertContains(response, "Solucao aplicada")
         self.assertContains(response, "Custo real")
 
@@ -167,7 +168,7 @@ class ManutencaoOperacaoTests(TestCase):
 
         self.ativo.refresh_from_db()
         ordem.refresh_from_db()
-        self.assertRedirects(response, reverse("manutencao"))
+        self.assertRedirects(response, reverse("manutencao_detail", kwargs={"pk": ordem.pk}))
         self.assertEqual(ordem.status, OrdemManutencao.Status.CANCELADA)
         self.assertEqual(self.ativo.status, Ativo.Status.DISPONIVEL)
         self.assertIsNotNone(ordem.data_conclusao)
@@ -185,7 +186,7 @@ class ManutencaoOperacaoTests(TestCase):
 
         self.ativo.refresh_from_db()
         ordem.refresh_from_db()
-        self.assertRedirects(response, reverse("manutencao"))
+        self.assertRedirects(response, reverse("manutencao_detail", kwargs={"pk": ordem.pk}))
         self.assertEqual(ordem.status, OrdemManutencao.Status.EM_ANDAMENTO)
         self.assertEqual(self.ativo.status, Ativo.Status.MANUTENCAO)
 
@@ -202,7 +203,7 @@ class ManutencaoOperacaoTests(TestCase):
         response = self.client.post(reverse("manutencao_iniciar", kwargs={"pk": ordem.pk}))
 
         ordem.refresh_from_db()
-        self.assertRedirects(response, reverse("manutencao"))
+        self.assertRedirects(response, reverse("manutencao_detail", kwargs={"pk": ordem.pk}))
         self.assertEqual(ordem.status, OrdemManutencao.Status.FINALIZADA)
 
     def test_cancelar_bloqueia_ordem_finalizada(self):
@@ -218,7 +219,7 @@ class ManutencaoOperacaoTests(TestCase):
         response = self.client.post(reverse("manutencao_cancelar", kwargs={"pk": ordem.pk}))
 
         ordem.refresh_from_db()
-        self.assertRedirects(response, reverse("manutencao"))
+        self.assertRedirects(response, reverse("manutencao_detail", kwargs={"pk": ordem.pk}))
         self.assertEqual(ordem.status, OrdemManutencao.Status.FINALIZADA)
 
     def test_form_lista_apenas_ativos_disponiveis(self):
@@ -233,3 +234,38 @@ class ManutencaoOperacaoTests(TestCase):
 
         self.assertIn(self.ativo, form.fields["ativo"].queryset)
         self.assertNotIn(ativo_locado, form.fields["ativo"].queryset)
+
+    def test_lista_linka_para_detalhe_da_ordem(self):
+        ordem = OrdemManutencao.objects.create(
+            codigo="MAN-0001",
+            ativo=self.ativo,
+            tipo=OrdemManutencao.Tipo.CORRETIVA,
+            prioridade=OrdemManutencao.Prioridade.MEDIA,
+            descricao="Reparo",
+        )
+
+        response = self.client.get(reverse("manutencao"))
+
+        self.assertContains(response, reverse("manutencao_detail", kwargs={"pk": ordem.pk}))
+
+    def test_detalhe_ordem_exibe_operacao_e_acoes(self):
+        ordem = OrdemManutencao.objects.create(
+            codigo="MAN-0001",
+            ativo=self.ativo,
+            tipo=OrdemManutencao.Tipo.CORRETIVA,
+            prioridade=OrdemManutencao.Prioridade.ALTA,
+            data_prevista="2026-07-15",
+            responsavel="Tecnico",
+            descricao="Troca de rolamento",
+            custo_estimado="250.00",
+        )
+        ordem.colocar_ativo_em_manutencao()
+
+        response = self.client.get(reverse("manutencao_detail", kwargs={"pk": ordem.pk}))
+
+        self.assertContains(response, "MAN-0001")
+        self.assertContains(response, "Troca de rolamento")
+        self.assertContains(response, "R$ 250,00")
+        self.assertContains(response, reverse("equipamento_detail", kwargs={"pk": self.ativo.pk}))
+        self.assertContains(response, reverse("manutencao_iniciar", kwargs={"pk": ordem.pk}))
+        self.assertContains(response, reverse("manutencao_finalizar", kwargs={"pk": ordem.pk}))

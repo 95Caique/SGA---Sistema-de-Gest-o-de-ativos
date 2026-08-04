@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+    <div>
+        <h1>Financeiro {{ locacao.codigo }}</h1>
+        <p>{{ locacao.cliente.nome }} | vencimento {{ locacao.data_fim|date:"d/m/Y" }}</p>
+    </div>
+    <div class="toolbar">
+        <a class="button button-muted" href="{% url 'financeiro' %}">Voltar</a>
+        <a class="button button-muted" href="{% url 'locacao_detail' locacao.pk %}">Locacao</a>
+        {% if can_receive %}
+            <form method="post" action="{% url 'financeiro_receber' locacao.pk %}" class="inline-form">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="detail">
+                <button class="button button-primary" type="submit">Receber</button>
+            </form>
+        {% elif can_reopen %}
+            <form method="post" action="{% url 'financeiro_reabrir' locacao.pk %}" class="inline-form">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="detail">
+                <button class="button button-muted" type="submit">Reabrir</button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+
+<section class="metric-grid">
+    <article class="metric-card">
+        <span>Valor total</span>
+        <strong>{{ locacao.valor_total_display }}</strong>
+        <small class="text-success">Lancamento</small>
+    </article>
+    <article class="metric-card">
+        <span>Situacao</span>
+        <strong>{{ locacao.situacao_financeira_label }}</strong>
+        <small class="text-neutral">Vencimento</small>
+    </article>
+    <article class="metric-card">
+        <span>Pagamento</span>
+        <strong>{{ locacao.get_status_pagamento_display }}</strong>
+        <small class="text-neutral">{% if locacao.data_pagamento %}{{ locacao.data_pagamento|date:"d/m/Y" }}{% else %}Sem baixa{% endif %}</small>
+    </article>
+    <article class="metric-card">
+        <span>Operacao</span>
+        <strong>{{ locacao.get_status_display }}</strong>
+        <small class="text-neutral">Status da locacao</small>
+    </article>
+</section>
+
+<section class="dashboard-grid">
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Composicao do valor</h2>
+        </div>
+        <dl class="asset-detail asset-detail-wide">
+            <div>
+                <dt>Equipamentos</dt>
+                <dd>{{ valor_equipamentos_display }}</dd>
+            </div>
+            <div>
+                <dt>Servicos</dt>
+                <dd>{{ valor_servicos_display }}</dd>
+            </div>
+            <div>
+                <dt>Desconto</dt>
+                <dd>{{ valor_desconto_display }}</dd>
+            </div>
+            <div>
+                <dt>Total</dt>
+                <dd>{{ locacao.valor_total_display }}</dd>
+            </div>
+        </dl>
+    </article>
+
+    <article class="panel">
+        <div class="panel-title">
+            <h2>Cliente e entrega</h2>
+            <a href="{% url 'cliente_detail' locacao.cliente.pk %}">Ver cliente</a>
+        </div>
+        <dl class="asset-detail asset-detail-wide">
+            <div>
+                <dt>Cliente</dt>
+                <dd>{{ locacao.cliente.nome }}</dd>
+            </div>
+            <div>
+                <dt>Documento</dt>
+                <dd>{{ locacao.cliente.documento }}</dd>
+            </div>
+            <div>
+                <dt>Periodo</dt>
+                <dd>{{ locacao.data_inicio|date:"d/m/Y" }} - {{ locacao.data_fim|date:"d/m/Y" }}</dd>
+            </div>
+            <div>
+                <dt>Entrega</dt>
+                <dd>{{ locacao.endereco_entrega|default:"Endereco nao informado" }}</dd>
+            </div>
+        </dl>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-title">
+        <h2>Itens da locacao</h2>
+    </div>
+    {% if itens %}
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Codigo</th>
+                        <th>Equipamento</th>
+                        <th>Categoria</th>
+                        <th>Qtd</th>
+                        <th>Diaria</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in itens %}
+                        <tr>
+                            <td><a href="{% url 'equipamento_detail' item.ativo.pk %}">{{ item.ativo.codigo }}</a></td>
+                            <td>{{ item.ativo.nome }}</td>
+                            <td>{{ item.ativo.categoria.nome }}</td>
+                            <td>{{ item.quantidade }}</td>
+                            <td>R$ {{ item.valor_diaria }}</td>
+                            <td>R$ {{ item.valor_total }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state compact">
+            <strong>Nenhum item vinculado</strong>
+            <p>Os itens aparecem aqui quando a locacao possuir equipamentos cadastrados.</p>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

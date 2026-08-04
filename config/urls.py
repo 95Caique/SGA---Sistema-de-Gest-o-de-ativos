@@ -33,7 +33,7 @@ from clientes.views import (
 )
 from contratos.views import contrato_pdf, contratos_list
 from configuracoes.views import configuracoes_empresa
-from financeiro.views import financeiro_list, financeiro_reabrir, financeiro_receber
+from financeiro.views import financeiro_detail, financeiro_list, financeiro_reabrir, financeiro_receber
 from locacoes.views import (
     locacao_ativar,
     locacao_cancelar,
@@ -52,6 +52,7 @@ from locacoes.views import (
 from manutencao.views import (
     manutencao_cancelar,
     manutencao_create,
+    manutencao_detail,
     manutencao_finalizar,
     manutencao_iniciar,
     manutencoes_list,
@@ -102,6 +103,7 @@ urlpatterns = [
     path('contratos/', contratos_list, name='contratos'),
     path('contratos/<int:pk>/pdf/', contrato_pdf, name='contrato_pdf'),
     path('financeiro/', financeiro_list, name='financeiro'),
+    path('financeiro/<int:pk>/', financeiro_detail, name='financeiro_detail'),
     path('financeiro/<int:pk>/receber/', financeiro_receber, name='financeiro_receber'),
     path('financeiro/<int:pk>/reabrir/', financeiro_reabrir, name='financeiro_reabrir'),
     path('manutencao/', manutencoes_list, name='manutencao'),
@@ -109,6 +111,7 @@ urlpatterns = [
     path('manutencao/<int:pk>/iniciar/', manutencao_iniciar, name='manutencao_iniciar'),
     path('manutencao/<int:pk>/finalizar/', manutencao_finalizar, name='manutencao_finalizar'),
     path('manutencao/<int:pk>/cancelar/', manutencao_cancelar, name='manutencao_cancelar'),
+    path('manutencao/<int:pk>/', manutencao_detail, name='manutencao_detail'),
     path('rastreamento/', rastreamento_mapa, name='rastreamento'),
     path('alertas/', alertas_list, name='alertas'),
     path('relatorios/', relatorios_list, name='relatorios'),

@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 
 from config.views import money_br, with_layout
@@ -65,33 +66,62 @@ def financeiro_list(request):
     )
 
 
+def financeiro_detail(request, pk):
+    locacao = get_object_or_404(Locacao.objects.select_related("cliente", "endereco_entrega"), pk=pk)
+    _preparar_lancamentos([locacao])
+
+    return render(
+        request,
+        "financeiro/detail.html",
+        with_layout(
+            {
+                "page_title": f"Financeiro {locacao.codigo}",
+                "locacao": locacao,
+                "itens": locacao.itens.select_related("ativo", "ativo__categoria").order_by("ativo__codigo"),
+                "valor_equipamentos_display": money_br(locacao.valor_equipamentos),
+                "valor_servicos_display": money_br(locacao.valor_servicos),
+                "valor_desconto_display": money_br(locacao.valor_desconto),
+                "can_receive": locacao.status_pagamento == Locacao.StatusPagamento.ABERTO,
+                "can_reopen": locacao.status_pagamento == Locacao.StatusPagamento.RECEBIDO,
+            }
+        ),
+    )
+
+
 def financeiro_receber(request, pk):
     locacao = get_object_or_404(Locacao, pk=pk)
 
     if request.method != "POST":
-        return redirect("financeiro")
+        return _financeiro_redirect(request, locacao)
 
     if locacao.status_pagamento == Locacao.StatusPagamento.CANCELADO:
         messages.error(request, "Nao e possivel receber uma locacao cancelada.")
-        return redirect("financeiro")
+        return _financeiro_redirect(request, locacao)
 
     locacao.marcar_recebida(timezone.localdate())
     messages.success(request, f"Pagamento da locacao {locacao.codigo} marcado como recebido.")
-    return redirect("financeiro")
+    return _financeiro_redirect(request, locacao)
 
 
 def financeiro_reabrir(request, pk):
     locacao = get_object_or_404(Locacao, pk=pk)
 
     if request.method != "POST":
-        return redirect("financeiro")
+        return _financeiro_redirect(request, locacao)
 
     if locacao.status_pagamento != Locacao.StatusPagamento.RECEBIDO:
         messages.error(request, "Somente pagamentos recebidos podem ser reabertos.")
-        return redirect("financeiro")
+        return _financeiro_redirect(request, locacao)
 
     locacao.reabrir_pagamento()
     messages.success(request, f"Pagamento da locacao {locacao.codigo} reaberto.")
+    return _financeiro_redirect(request, locacao)
+
+
+def _financeiro_redirect(request, locacao):
+    if request.POST.get("next") == "detail":
+        return redirect("financeiro_detail", pk=locacao.pk)
+
     return redirect("financeiro")
 
 

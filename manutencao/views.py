@@ -60,7 +60,7 @@ def manutencao_create(request):
             ordem = form.save()
             ordem.colocar_ativo_em_manutencao()
             messages.success(request, f"Ordem {ordem.codigo} aberta com sucesso.")
-            return redirect("manutencao")
+            return redirect("manutencao_detail", pk=ordem.pk)
     else:
         form = OrdemManutencaoForm()
 
@@ -77,19 +77,40 @@ def manutencao_create(request):
     )
 
 
+def manutencao_detail(request, pk):
+    ordem = get_object_or_404(OrdemManutencao.objects.select_related("ativo", "ativo__categoria"), pk=pk)
+    can_start = ordem.status == OrdemManutencao.Status.ABERTA
+    can_close = ordem.status not in [OrdemManutencao.Status.FINALIZADA, OrdemManutencao.Status.CANCELADA]
+
+    return render(
+        request,
+        "manutencao/detail.html",
+        with_layout(
+            {
+                "page_title": ordem.codigo,
+                "ordem": ordem,
+                "can_start": can_start,
+                "can_close": can_close,
+                "custo_estimado_display": money_br(ordem.custo_estimado),
+                "custo_real_display": money_br(ordem.custo_real),
+            }
+        ),
+    )
+
+
 def manutencao_iniciar(request, pk):
     ordem = get_object_or_404(OrdemManutencao, pk=pk)
 
     if request.method != "POST":
-        return redirect("manutencao")
+        return redirect("manutencao_detail", pk=ordem.pk)
 
     if ordem.status != OrdemManutencao.Status.ABERTA:
         messages.error(request, "Somente ordens abertas podem ser iniciadas.")
-        return redirect("manutencao")
+        return redirect("manutencao_detail", pk=ordem.pk)
 
     ordem.iniciar()
     messages.success(request, f"Ordem {ordem.codigo} iniciada com sucesso.")
-    return redirect("manutencao")
+    return redirect("manutencao_detail", pk=ordem.pk)
 
 
 def manutencao_finalizar(request, pk):
@@ -97,7 +118,7 @@ def manutencao_finalizar(request, pk):
 
     if ordem.status in [OrdemManutencao.Status.FINALIZADA, OrdemManutencao.Status.CANCELADA]:
         messages.error(request, "Esta ordem nao pode ser finalizada.")
-        return redirect("manutencao")
+        return redirect("manutencao_detail", pk=ordem.pk)
 
     if request.method == "POST":
         form = ConclusaoManutencaoForm(request.POST, instance=ordem)
@@ -107,7 +128,7 @@ def manutencao_finalizar(request, pk):
                 custo_real=form.cleaned_data["custo_real"],
             )
             messages.success(request, f"Ordem {ordem.codigo} finalizada com sucesso.")
-            return redirect("manutencao")
+            return redirect("manutencao_detail", pk=ordem.pk)
     else:
         form = ConclusaoManutencaoForm(instance=ordem)
 
@@ -128,15 +149,15 @@ def manutencao_cancelar(request, pk):
     ordem = get_object_or_404(OrdemManutencao, pk=pk)
 
     if request.method != "POST":
-        return redirect("manutencao")
+        return redirect("manutencao_detail", pk=ordem.pk)
 
     if ordem.status in [OrdemManutencao.Status.FINALIZADA, OrdemManutencao.Status.CANCELADA]:
         messages.error(request, "Esta ordem nao pode ser cancelada.")
-        return redirect("manutencao")
+        return redirect("manutencao_detail", pk=ordem.pk)
 
     ordem.cancelar()
     messages.success(request, f"Ordem {ordem.codigo} cancelada com sucesso.")
-    return redirect("manutencao")
+    return redirect("manutencao_detail", pk=ordem.pk)
 
 
 def _ativos_detalhes(ativos):

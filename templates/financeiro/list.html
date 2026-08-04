@@ -77,7 +77,7 @@
                     {% for locacao in locacoes %}
                         <tr>
                             <td>{{ locacao.data_fim|date:"d/m/Y" }}</td>
-                            <td><a href="{% url 'locacao_detail' locacao.pk %}">Locacao {{ locacao.codigo }}</a></td>
+                            <td><a href="{% url 'financeiro_detail' locacao.pk %}">Locacao {{ locacao.codigo }}</a></td>
                             <td>
                                 <strong>{{ locacao.cliente.nome }}</strong>
                                 <small class="table-subtext">{{ locacao.cliente.documento }}</small>
@@ -105,7 +105,8 @@
                                         <button class="link-button" type="submit">Reabrir</button>
                                     </form>
                                 {% endif %}
-                                <a href="{% url 'locacao_detail' locacao.pk %}">Ver</a>
+                                <a href="{% url 'financeiro_detail' locacao.pk %}">Ver</a>
+                                <a href="{% url 'locacao_detail' locacao.pk %}">Locacao</a>
                             </td>
                         </tr>
                     {% endfor %}
