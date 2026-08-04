@@ -705,6 +705,25 @@ class LocacaoOperacaoTests(TestCase):
         self.assertContains(response, "LOC-0002")
         self.assertNotContains(response, "LOC-0001")
 
+    def test_lista_locacoes_ordena_por_maior_valor(self):
+        self.locacao.valor_total = Decimal("100.00")
+        self.locacao.save()
+        Locacao.objects.create(
+            codigo="LOC-0002",
+            cliente=self.cliente,
+            data_inicio=date(2026, 7, 10),
+            data_fim=date(2026, 7, 12),
+            status=Locacao.Status.AGENDADA,
+            valor_total=Decimal("900.00"),
+        )
+
+        response = self.client.get(reverse("locacoes"), {"ordem": "valor"})
+        content = response.content.decode()
+
+        self.assertContains(response, "Ordenar: Maior valor")
+        self.assertContains(response, "R$ 900,00")
+        self.assertLess(content.index("LOC-0002"), content.index("LOC-0001"))
+
     def test_lista_orcamentos_exibe_apenas_locacoes_em_orcamento(self):
         Locacao.objects.create(
             codigo="LOC-0002",

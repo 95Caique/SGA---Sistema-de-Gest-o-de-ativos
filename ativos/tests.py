@@ -65,6 +65,19 @@ class EquipamentoViewTests(TestCase):
 
         self.assertContains(response, reverse("equipamento_detail", kwargs={"pk": self.ativo.pk}))
 
+    def test_lista_equipamentos_ordena_por_nome(self):
+        Ativo.objects.create(
+            codigo="AND-001",
+            nome="Andaime tubular",
+            categoria=self.categoria,
+        )
+
+        response = self.client.get(reverse("equipamentos"), {"ordem": "nome"})
+        content = response.content.decode()
+
+        self.assertContains(response, "Ordenar: Nome")
+        self.assertLess(content.index("Andaime tubular"), content.index("Betoneira 400L"))
+
     def test_lista_equipamentos_exibe_locacao_ativa_do_ativo_locado(self):
         cliente = Cliente.objects.create(nome="Cliente Obra", documento="12345678000190")
         locacao = Locacao.objects.create(

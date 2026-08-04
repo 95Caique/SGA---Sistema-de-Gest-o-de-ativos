@@ -13,7 +13,22 @@ from .models import Ativo
 def equipamentos_list(request):
     query = request.GET.get("q", "").strip()
     status_filter = request.GET.get("status", "").strip()
+    ordem_filter = request.GET.get("ordem", "codigo").strip()
     status_validos = [status for status, _label in Ativo.Status.choices]
+    ordem_options = [
+        ("codigo", "Codigo"),
+        ("nome", "Nome"),
+        ("categoria", "Categoria"),
+        ("status", "Status"),
+        ("localizacao", "Localizacao"),
+    ]
+    ordem_map = {
+        "codigo": "codigo",
+        "nome": "nome",
+        "categoria": "categoria__nome",
+        "status": "status",
+        "localizacao": "localizacao_atual",
+    }
     itens_ativos = ItemLocacao.objects.select_related("locacao", "locacao__cliente").filter(
         locacao__status=Locacao.Status.ATIVA
     )
@@ -35,6 +50,11 @@ def equipamentos_list(request):
     if status_filter in status_validos:
         ativos = ativos.filter(status=status_filter)
 
+    if ordem_filter not in ordem_map:
+        ordem_filter = "codigo"
+
+    ativos = ativos.order_by(ordem_map[ordem_filter], "codigo")
+
     status_counts = {
         "todos": Ativo.objects.count(),
         "disponiveis": Ativo.objects.filter(status=Ativo.Status.DISPONIVEL).count(),
@@ -53,6 +73,8 @@ def equipamentos_list(request):
                 "query": query,
                 "status_filter": status_filter if status_filter in status_validos else "",
                 "status_counts": status_counts,
+                "ordem_filter": ordem_filter,
+                "ordem_options": ordem_options,
             }
         ),
     )

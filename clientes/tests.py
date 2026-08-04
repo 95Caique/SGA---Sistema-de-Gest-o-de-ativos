@@ -48,6 +48,26 @@ class ClienteViewTests(TestCase):
         self.assertContains(response, "Cliente Bloqueado")
         self.assertNotContains(response, "Construtora Forte")
 
+    def test_lista_clientes_ordena_por_total_de_locacoes(self):
+        cliente_sem_locacao = Cliente.objects.create(
+            nome="Alpha Eventos",
+            documento="98765432000199",
+        )
+        Locacao.objects.create(
+            codigo="LOC-0001",
+            cliente=self.cliente,
+            data_inicio="2026-07-01",
+            data_fim="2026-07-05",
+            status=Locacao.Status.ATIVA,
+        )
+
+        response = self.client.get(reverse("clientes"), {"ordem": "locacoes"})
+        content = response.content.decode()
+
+        self.assertContains(response, "Ordenar: Mais locacoes")
+        self.assertContains(response, cliente_sem_locacao.nome)
+        self.assertLess(content.index("Construtora Forte"), content.index("Alpha Eventos"))
+
     def test_cria_endereco_do_cliente(self):
         response = self.client.post(
             reverse("cliente_endereco_create", kwargs={"pk": self.cliente.pk}),

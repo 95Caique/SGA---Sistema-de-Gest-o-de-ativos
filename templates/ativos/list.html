@@ -10,6 +10,14 @@
         <div class="module-search">
             <input class="ui-input" type="search" name="q" value="{{ query }}" placeholder="Buscar equipamentos..." aria-label="Buscar equipamentos">
         </div>
+        {% if status_filter %}
+            <input type="hidden" name="status" value="{{ status_filter }}">
+        {% endif %}
+        <select class="ui-select" name="ordem" aria-label="Ordenar equipamentos">
+            {% for value, label in ordem_options %}
+                <option value="{{ value }}" {% if ordem_filter == value %}selected{% endif %}>Ordenar: {{ label }}</option>
+            {% endfor %}
+        </select>
         <button class="button button-muted" type="submit">Filtros</button>
         <a class="button button-primary" href="{% url 'equipamento_create' %}">+ Novo equipamento</a>
     </form>
@@ -17,11 +25,11 @@
 
 <section class="panel">
     <div class="tabs">
-        <a class="{% if not status_filter %}is-active{% endif %}" href="{% url 'equipamentos' %}{% if query %}?q={{ query|urlencode }}{% endif %}">Todos <span>{{ status_counts.todos }}</span></a>
-        <a class="{% if status_filter == 'disponivel' %}is-active{% endif %}" href="{% url 'equipamentos' %}?status=disponivel{% if query %}&q={{ query|urlencode }}{% endif %}">Disponiveis <span>{{ status_counts.disponiveis }}</span></a>
-        <a class="{% if status_filter == 'locado' %}is-active{% endif %}" href="{% url 'equipamentos' %}?status=locado{% if query %}&q={{ query|urlencode }}{% endif %}">Locados <span>{{ status_counts.locados }}</span></a>
-        <a class="{% if status_filter == 'manutencao' %}is-active{% endif %}" href="{% url 'equipamentos' %}?status=manutencao{% if query %}&q={{ query|urlencode }}{% endif %}">Manutencao <span>{{ status_counts.manutencao }}</span></a>
-        <a class="{% if status_filter == 'inativo' %}is-active{% endif %}" href="{% url 'equipamentos' %}?status=inativo{% if query %}&q={{ query|urlencode }}{% endif %}">Inativos <span>{{ status_counts.inativos }}</span></a>
+        <a class="{% if not status_filter %}is-active{% endif %}" href="{% url 'equipamentos' %}?ordem={{ ordem_filter }}{% if query %}&q={{ query|urlencode }}{% endif %}">Todos <span>{{ status_counts.todos }}</span></a>
+        <a class="{% if status_filter == 'disponivel' %}is-active{% endif %}" href="{% url 'equipamentos' %}?status=disponivel&ordem={{ ordem_filter }}{% if query %}&q={{ query|urlencode }}{% endif %}">Disponiveis <span>{{ status_counts.disponiveis }}</span></a>
+        <a class="{% if status_filter == 'locado' %}is-active{% endif %}" href="{% url 'equipamentos' %}?status=locado&ordem={{ ordem_filter }}{% if query %}&q={{ query|urlencode }}{% endif %}">Locados <span>{{ status_counts.locados }}</span></a>
+        <a class="{% if status_filter == 'manutencao' %}is-active{% endif %}" href="{% url 'equipamentos' %}?status=manutencao&ordem={{ ordem_filter }}{% if query %}&q={{ query|urlencode }}{% endif %}">Manutencao <span>{{ status_counts.manutencao }}</span></a>
+        <a class="{% if status_filter == 'inativo' %}is-active{% endif %}" href="{% url 'equipamentos' %}?status=inativo&ordem={{ ordem_filter }}{% if query %}&q={{ query|urlencode }}{% endif %}">Inativos <span>{{ status_counts.inativos }}</span></a>
     </div>
 
     {% if ativos %}

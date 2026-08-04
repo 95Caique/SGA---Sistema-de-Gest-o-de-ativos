@@ -10,7 +10,7 @@ from wkhtmltopdf.views import PDFTemplateResponse
 
 from ativos.models import Ativo
 from configuracoes.services import empresa_atual
-from config.views import with_layout
+from config.views import money_br, with_layout
 
 from .forms import DevolucaoLocacaoForm, ItemLocacaoForm, ItemLocacaoFormSet, LocacaoForm
 from .models import ItemLocacao, Locacao
@@ -26,8 +26,25 @@ PDF_OPTIONS = {
 def locacoes_list(request):
     query = request.GET.get("q", "").strip()
     status_filter = request.GET.get("status", "").strip()
+    ordem_filter = request.GET.get("ordem", "recentes").strip()
     status_validos = [status for status, _label in Locacao.Status.choices]
-    locacoes = Locacao.objects.select_related("cliente").annotate(total_itens=Count("itens")).order_by("-data_inicio")
+    ordem_options = [
+        ("recentes", "Mais recentes"),
+        ("antigas", "Mais antigas"),
+        ("codigo", "Codigo"),
+        ("cliente", "Cliente"),
+        ("valor", "Maior valor"),
+        ("status", "Status"),
+    ]
+    ordem_map = {
+        "recentes": ("-data_inicio", "codigo"),
+        "antigas": ("data_inicio", "codigo"),
+        "codigo": ("codigo",),
+        "cliente": ("cliente__nome", "codigo"),
+        "valor": ("-valor_total", "codigo"),
+        "status": ("status", "-data_inicio", "codigo"),
+    }
+    locacoes = Locacao.objects.select_related("cliente").annotate(total_itens=Count("itens"))
 
     if query:
         locacoes = locacoes.filter(
@@ -39,6 +56,13 @@ def locacoes_list(request):
 
     if status_filter in status_validos:
         locacoes = locacoes.filter(status=status_filter)
+
+    if ordem_filter not in ordem_map:
+        ordem_filter = "recentes"
+
+    locacoes = list(locacoes.order_by(*ordem_map[ordem_filter]))
+    for locacao in locacoes:
+        locacao.valor_total_formatado = money_br(locacao.valor_total)
 
     status_counts = {
         "todos": Locacao.objects.count(),
@@ -59,6 +83,8 @@ def locacoes_list(request):
                 "query": query,
                 "status_filter": status_filter if status_filter in status_validos else "",
                 "status_counts": status_counts,
+                "ordem_filter": ordem_filter,
+                "ordem_options": ordem_options,
             }
         ),
     )

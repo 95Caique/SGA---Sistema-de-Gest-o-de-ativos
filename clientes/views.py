@@ -14,11 +14,24 @@ from .models import Cliente, ContatoCliente, EnderecoCliente
 def clientes_list(request):
     query = request.GET.get("q", "").strip()
     status_filter = request.GET.get("status", "").strip()
+    ordem_filter = request.GET.get("ordem", "nome").strip()
     status_validos = [status for status, _label in Cliente.Status.choices]
+    ordem_options = [
+        ("nome", "Nome"),
+        ("documento", "Documento"),
+        ("locacoes", "Mais locacoes"),
+        ("status", "Status"),
+    ]
+    ordem_map = {
+        "nome": ("nome",),
+        "documento": ("documento", "nome"),
+        "locacoes": ("-total_locacoes", "nome"),
+        "status": ("status", "nome"),
+    }
     clientes = Cliente.objects.annotate(
         total_locacoes=Count("locacoes", distinct=True),
         total_contatos=Count("contatos", distinct=True),
-    ).order_by("nome")
+    )
 
     if query:
         clientes = clientes.filter(
@@ -31,6 +44,11 @@ def clientes_list(request):
 
     if status_filter in status_validos:
         clientes = clientes.filter(status=status_filter)
+
+    if ordem_filter not in ordem_map:
+        ordem_filter = "nome"
+
+    clientes = clientes.order_by(*ordem_map[ordem_filter])
 
     status_counts = {
         "todos": Cliente.objects.count(),
@@ -49,6 +67,8 @@ def clientes_list(request):
                 "query": query,
                 "status_filter": status_filter if status_filter in status_validos else "",
                 "status_counts": status_counts,
+                "ordem_filter": ordem_filter,
+                "ordem_options": ordem_options,
             }
         ),
     )

@@ -10,6 +10,14 @@
         <div class="module-search">
             <input class="ui-input" type="search" name="q" value="{{ query }}" placeholder="Buscar clientes..." aria-label="Buscar clientes">
         </div>
+        {% if status_filter %}
+            <input type="hidden" name="status" value="{{ status_filter }}">
+        {% endif %}
+        <select class="ui-select" name="ordem" aria-label="Ordenar clientes">
+            {% for value, label in ordem_options %}
+                <option value="{{ value }}" {% if ordem_filter == value %}selected{% endif %}>Ordenar: {{ label }}</option>
+            {% endfor %}
+        </select>
         <button class="button button-muted" type="submit">Filtros</button>
         <a class="button button-primary" href="{% url 'cliente_create' %}">+ Novo cliente</a>
     </form>
@@ -17,10 +25,10 @@
 
 <section class="panel">
     <div class="tabs">
-        <a class="{% if not status_filter %}is-active{% endif %}" href="{% url 'clientes' %}{% if query %}?q={{ query|urlencode }}{% endif %}">Todos <span>{{ status_counts.todos }}</span></a>
-        <a class="{% if status_filter == 'ativo' %}is-active{% endif %}" href="{% url 'clientes' %}?status=ativo{% if query %}&q={{ query|urlencode }}{% endif %}">Ativos <span>{{ status_counts.ativos }}</span></a>
-        <a class="{% if status_filter == 'inativo' %}is-active{% endif %}" href="{% url 'clientes' %}?status=inativo{% if query %}&q={{ query|urlencode }}{% endif %}">Inativos <span>{{ status_counts.inativos }}</span></a>
-        <a class="{% if status_filter == 'bloqueado' %}is-active{% endif %}" href="{% url 'clientes' %}?status=bloqueado{% if query %}&q={{ query|urlencode }}{% endif %}">Bloqueados <span>{{ status_counts.bloqueados }}</span></a>
+        <a class="{% if not status_filter %}is-active{% endif %}" href="{% url 'clientes' %}?ordem={{ ordem_filter }}{% if query %}&q={{ query|urlencode }}{% endif %}">Todos <span>{{ status_counts.todos }}</span></a>
+        <a class="{% if status_filter == 'ativo' %}is-active{% endif %}" href="{% url 'clientes' %}?status=ativo&ordem={{ ordem_filter }}{% if query %}&q={{ query|urlencode }}{% endif %}">Ativos <span>{{ status_counts.ativos }}</span></a>
+        <a class="{% if status_filter == 'inativo' %}is-active{% endif %}" href="{% url 'clientes' %}?status=inativo&ordem={{ ordem_filter }}{% if query %}&q={{ query|urlencode }}{% endif %}">Inativos <span>{{ status_counts.inativos }}</span></a>
+        <a class="{% if status_filter == 'bloqueado' %}is-active{% endif %}" href="{% url 'clientes' %}?status=bloqueado&ordem={{ ordem_filter }}{% if query %}&q={{ query|urlencode }}{% endif %}">Bloqueados <span>{{ status_counts.bloqueados }}</span></a>
     </div>
 
     {% if clientes %}

@@ -10,6 +10,14 @@
         <div class="module-search">
             <input class="ui-input" type="search" name="q" value="{{ query }}" placeholder="Buscar locacoes..." aria-label="Buscar locacoes">
         </div>
+        {% if status_filter %}
+            <input type="hidden" name="status" value="{{ status_filter }}">
+        {% endif %}
+        <select class="ui-select" name="ordem" aria-label="Ordenar locacoes">
+            {% for value, label in ordem_options %}
+                <option value="{{ value }}" {% if ordem_filter == value %}selected{% endif %}>Ordenar: {{ label }}</option>
+            {% endfor %}
+        </select>
         <button class="button button-muted" type="submit">Filtros</button>
         <a class="button button-primary" href="{% url 'locacao_create' %}">+ Nova locacao</a>
     </form>
@@ -17,12 +25,12 @@
 
 <section class="panel">
     <div class="tabs">
-        <a class="{% if not status_filter %}is-active{% endif %}" href="{% url 'locacoes' %}{% if query %}?q={{ query|urlencode }}{% endif %}">Todas <span>{{ status_counts.todos }}</span></a>
-        <a class="{% if status_filter == 'orcamento' %}is-active{% endif %}" href="{% url 'locacoes' %}?status=orcamento{% if query %}&q={{ query|urlencode }}{% endif %}">Orcamentos <span>{{ status_counts.orcamentos }}</span></a>
-        <a class="{% if status_filter == 'ativa' %}is-active{% endif %}" href="{% url 'locacoes' %}?status=ativa{% if query %}&q={{ query|urlencode }}{% endif %}">Ativas <span>{{ status_counts.ativas }}</span></a>
-        <a class="{% if status_filter == 'agendada' %}is-active{% endif %}" href="{% url 'locacoes' %}?status=agendada{% if query %}&q={{ query|urlencode }}{% endif %}">Agendadas <span>{{ status_counts.agendadas }}</span></a>
-        <a class="{% if status_filter == 'finalizada' %}is-active{% endif %}" href="{% url 'locacoes' %}?status=finalizada{% if query %}&q={{ query|urlencode }}{% endif %}">Finalizadas <span>{{ status_counts.finalizadas }}</span></a>
-        <a class="{% if status_filter == 'cancelada' %}is-active{% endif %}" href="{% url 'locacoes' %}?status=cancelada{% if query %}&q={{ query|urlencode }}{% endif %}">Canceladas <span>{{ status_counts.canceladas }}</span></a>
+        <a class="{% if not status_filter %}is-active{% endif %}" href="{% url 'locacoes' %}?ordem={{ ordem_filter }}{% if query %}&q={{ query|urlencode }}{% endif %}">Todas <span>{{ status_counts.todos }}</span></a>
+        <a class="{% if status_filter == 'orcamento' %}is-active{% endif %}" href="{% url 'locacoes' %}?status=orcamento&ordem={{ ordem_filter }}{% if query %}&q={{ query|urlencode }}{% endif %}">Orcamentos <span>{{ status_counts.orcamentos }}</span></a>
+        <a class="{% if status_filter == 'ativa' %}is-active{% endif %}" href="{% url 'locacoes' %}?status=ativa&ordem={{ ordem_filter }}{% if query %}&q={{ query|urlencode }}{% endif %}">Ativas <span>{{ status_counts.ativas }}</span></a>
+        <a class="{% if status_filter == 'agendada' %}is-active{% endif %}" href="{% url 'locacoes' %}?status=agendada&ordem={{ ordem_filter }}{% if query %}&q={{ query|urlencode }}{% endif %}">Agendadas <span>{{ status_counts.agendadas }}</span></a>
+        <a class="{% if status_filter == 'finalizada' %}is-active{% endif %}" href="{% url 'locacoes' %}?status=finalizada&ordem={{ ordem_filter }}{% if query %}&q={{ query|urlencode }}{% endif %}">Finalizadas <span>{{ status_counts.finalizadas }}</span></a>
+        <a class="{% if status_filter == 'cancelada' %}is-active{% endif %}" href="{% url 'locacoes' %}?status=cancelada&ordem={{ ordem_filter }}{% if query %}&q={{ query|urlencode }}{% endif %}">Canceladas <span>{{ status_counts.canceladas }}</span></a>
     </div>
 
     {% if locacoes %}
@@ -49,7 +57,7 @@
                             </td>
                             <td>{{ locacao.data_inicio|date:"d/m/Y" }} - {{ locacao.data_fim|date:"d/m/Y" }}</td>
                             <td>{{ locacao.total_itens }} item{{ locacao.total_itens|pluralize }}</td>
-                            <td>R$ {{ locacao.valor_total }}</td>
+                            <td>{{ locacao.valor_total_formatado }}</td>
                             <td><span class="badge badge-status-{{ locacao.status }}">{{ locacao.get_status_display }}</span></td>
                             <td class="actions-cell">
                                 {% if locacao.status == 'orcamento' or locacao.status == 'agendada' %}
