@@ -6,7 +6,11 @@ docs/
 PROJECT_CONTEXT.md
 .venv/
 venv/
+.env
 __pycache__/
 *.py[cod]
 db.sqlite3
+staticfiles/
+media/
 features.md
+.env.example

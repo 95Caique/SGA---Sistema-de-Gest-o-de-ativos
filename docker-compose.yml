@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sga_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sga}
+      POSTGRES_USER: ${POSTGRES_USER:-sga}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sga}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sga} -d ${POSTGRES_DB:-sga}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    container_name: sga_web
+    command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-true}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django-insecure-local-docker}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0}
+      POSTGRES_DB: ${POSTGRES_DB:-sga}
+      POSTGRES_USER: ${POSTGRES_USER:-sga}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sga}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - staticfiles:/app/staticfiles
+      - media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  staticfiles:
+  media:

@@ -1,5 +1,6 @@
 asgiref==3.11.1
 Django==5.2
 django-wkhtmltopdf==3.4.0
+psycopg[binary]==3.2.9
 six==1.17.0
 sqlparse==0.5.5
