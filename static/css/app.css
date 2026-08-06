@@ -530,6 +530,45 @@ body[data-sidebar-state="collapsed"] .app-shell {
     gap: 18px;
 }
 
+.timeline-list {
+    display: grid;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.timeline-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: center;
+    border-bottom: 1px solid var(--panel-border);
+    padding: 12px 14px;
+}
+
+.timeline-item:last-child {
+    border-bottom: 0;
+}
+
+.timeline-item strong {
+    color: #1f2937;
+    font-size: 13px;
+}
+
+.timeline-item p {
+    margin: 3px 0 0;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.timeline-item small {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
 .chart-line {
     position: relative;
     display: grid;

@@ -11,7 +11,7 @@ from clientes.models import Cliente, EnderecoCliente
 from rastreamento.models import PosicaoRastreamento, Rastreador
 
 from .forms import ItemLocacaoForm, LocacaoForm
-from .models import ItemLocacao, Locacao
+from .models import HistoricoLocacao, ItemLocacao, Locacao
 
 
 class LocacaoOperacaoTests(TestCase):
@@ -137,6 +137,20 @@ class LocacaoOperacaoTests(TestCase):
 
         self.assertContains(response, "Esta locacao nao tem rastreamento ativo")
         self.assertContains(response, "Permite rastreamento")
+
+    def test_detalhe_locacao_exibe_historico_operacional(self):
+        HistoricoLocacao.objects.create(
+            locacao=self.locacao,
+            tipo=HistoricoLocacao.Tipo.EDICAO,
+            descricao="Dados principais da locacao atualizados.",
+            usuario_nome="Suporte",
+        )
+
+        response = self.client.get(reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
+
+        self.assertContains(response, "Historico operacional")
+        self.assertContains(response, "Dados principais da locacao atualizados.")
+        self.assertContains(response, "Suporte")
 
     @patch("wkhtmltopdf.views.render_pdf_from_template", return_value=b"%PDF-1.4")
     def test_gera_pdf_do_termo_de_entrega(self, _render_pdf):
@@ -352,6 +366,12 @@ class LocacaoOperacaoTests(TestCase):
         self.assertEqual(locacao.itens.count(), 3)
         self.assertEqual(locacao.valor_equipamentos, Decimal("675.00"))
         self.assertEqual(locacao.valor_total, Decimal("715.00"))
+        self.assertTrue(
+            locacao.historicos.filter(
+                tipo=HistoricoLocacao.Tipo.CRIACAO,
+                descricao="Locacao criada com 3 item(ns).",
+            ).exists()
+        )
 
     def test_cria_locacao_com_valores_em_formato_brasileiro(self):
         response = self.client.post(
@@ -640,6 +660,12 @@ class LocacaoOperacaoTests(TestCase):
         self.assertFalse(ItemLocacao.objects.filter(pk=item.pk).exists())
         self.assertEqual(self.locacao.valor_equipamentos, Decimal("0.00"))
         self.assertEqual(self.locacao.valor_total, Decimal("40.00"))
+        self.assertTrue(
+            self.locacao.historicos.filter(
+                tipo=HistoricoLocacao.Tipo.ITEM_REMOVIDO,
+                descricao="Ativo BET-001 removido da locacao.",
+            ).exists()
+        )
 
     def test_remove_item_bloqueia_locacao_ativa(self):
         item = ItemLocacao.objects.create(
@@ -752,6 +778,7 @@ class LocacaoOperacaoTests(TestCase):
         self.locacao.refresh_from_db()
         self.assertRedirects(response, reverse("locacao_detail", kwargs={"pk": self.locacao.pk}))
         self.assertEqual(self.locacao.status, Locacao.Status.AGENDADA)
+        self.assertTrue(self.locacao.historicos.filter(tipo=HistoricoLocacao.Tipo.APROVACAO).exists())
 
     def test_aprovar_orcamento_bloqueia_equipamento_reservado_no_periodo(self):
         reserva = Locacao.objects.create(

@@ -149,6 +149,32 @@ class ItemLocacao(models.Model):
         return super().save(*args, **kwargs)
 
 
+class HistoricoLocacao(models.Model):
+    class Tipo(models.TextChoices):
+        CRIACAO = "criacao", "Criacao"
+        EDICAO = "edicao", "Edicao"
+        ITEM_ADICIONADO = "item_adicionado", "Item adicionado"
+        ITEM_REMOVIDO = "item_removido", "Item removido"
+        APROVACAO = "aprovacao", "Aprovacao"
+        ATIVACAO = "ativacao", "Ativacao"
+        CANCELAMENTO = "cancelamento", "Cancelamento"
+        FINALIZACAO = "finalizacao", "Finalizacao"
+
+    locacao = models.ForeignKey(Locacao, on_delete=models.CASCADE, related_name="historicos")
+    tipo = models.CharField(max_length=30, choices=Tipo.choices)
+    descricao = models.CharField(max_length=255)
+    usuario_nome = models.CharField(max_length=150, blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-criado_em", "-id"]
+        verbose_name = "historico de locacao"
+        verbose_name_plural = "historicos de locacao"
+
+    def __str__(self):
+        return f"{self.locacao.codigo} - {self.get_tipo_display()}"
+
+
 def _coordenada_simulada(texto, base):
     deslocamento = Decimal(sum(ord(char) for char in texto) % 90) / Decimal("10000")
     return base + deslocamento

@@ -186,4 +186,34 @@
         </aside>
     {% endif %}
 </section>
+
+<section class="panel">
+    <div class="panel-title">
+        <h2>Historico operacional</h2>
+    </div>
+
+    {% if historicos %}
+        <div class="timeline-list">
+            {% for historico in historicos %}
+                <article class="timeline-item">
+                    <div>
+                        <strong>{{ historico.get_tipo_display }}</strong>
+                        <p>{{ historico.descricao }}</p>
+                    </div>
+                    <small>
+                        {{ historico.criado_em|date:"d/m/Y H:i" }}
+                        {% if historico.usuario_nome %}
+                            | {{ historico.usuario_nome }}
+                        {% endif %}
+                    </small>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state compact">
+            <strong>Nenhum evento registrado</strong>
+            <p>As proximas acoes operacionais desta locacao ficarao registradas aqui para apoio ao suporte.</p>
+        </div>
+    {% endif %}
+</section>
 {% endblock %}

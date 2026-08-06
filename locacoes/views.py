@@ -13,7 +13,7 @@ from configuracoes.services import empresa_atual
 from config.views import money_br, with_layout
 
 from .forms import DevolucaoLocacaoForm, ItemLocacaoForm, ItemLocacaoFormSet, LocacaoForm
-from .models import ItemLocacao, Locacao
+from .models import HistoricoLocacao, ItemLocacao, Locacao
 
 
 PDF_OPTIONS = {
@@ -156,6 +156,12 @@ def locacao_create(request):
                         item.save()
 
                     locacao.recalcular_totais()
+                    _registrar_historico(
+                        locacao,
+                        HistoricoLocacao.Tipo.CRIACAO,
+                        f"Locacao criada com {locacao.itens.count()} item(ns).",
+                        request,
+                    )
 
                 messages.success(request, f"Locacao {locacao.codigo} cadastrada com sucesso.")
                 return redirect("locacao_detail", pk=locacao.pk)
@@ -202,6 +208,12 @@ def locacao_update(request, pk):
                 form.add_error(None, _mensagem_conflitos_reserva(conflitos))
             else:
                 locacao = form.save()
+                _registrar_historico(
+                    locacao,
+                    HistoricoLocacao.Tipo.EDICAO,
+                    "Dados principais da locacao atualizados.",
+                    request,
+                )
                 messages.success(request, f"Locacao {locacao.codigo} atualizada com sucesso.")
                 return redirect("locacao_detail", pk=locacao.pk)
     else:
@@ -229,6 +241,7 @@ def locacao_detail(request, pk):
     locacao = get_object_or_404(Locacao.objects.select_related("cliente"), pk=pk)
     itens = list(locacao.itens.select_related("ativo", "ativo__categoria", "ativo__rastreador").order_by("ativo__codigo"))
     can_edit_itens = locacao.status in [Locacao.Status.ORCAMENTO, Locacao.Status.AGENDADA]
+    historicos = locacao.historicos.order_by("-criado_em", "-id")[:10]
 
     if request.method == "POST":
         if not can_edit_itens:
@@ -262,6 +275,12 @@ def locacao_detail(request, pk):
                     item.save()
                     locacao.recalcular_totais()
                     locacao.sincronizar_status_ativos()
+                    _registrar_historico(
+                        locacao,
+                        HistoricoLocacao.Tipo.ITEM_ADICIONADO,
+                        f"Ativo {item.ativo.codigo} adicionado a locacao.",
+                        request,
+                    )
 
                 messages.success(request, f"Ativo {item.ativo.codigo} adicionado a locacao.")
                 return redirect("locacao_detail", pk=locacao.pk)
@@ -279,6 +298,7 @@ def locacao_detail(request, pk):
                 "form": form,
                 "can_edit_itens": can_edit_itens,
                 "rastreamento_status": _rastreamento_status(itens),
+                "historicos": historicos,
             }
         ),
     )
@@ -298,6 +318,12 @@ def locacao_item_remove(request, pk, item_pk):
     codigo_ativo = item.ativo.codigo
     item.delete()
     locacao.recalcular_totais()
+    _registrar_historico(
+        locacao,
+        HistoricoLocacao.Tipo.ITEM_REMOVIDO,
+        f"Ativo {codigo_ativo} removido da locacao.",
+        request,
+    )
     messages.success(request, f"Ativo {codigo_ativo} removido da locacao.")
     return redirect("locacao_detail", pk=locacao.pk)
 
@@ -323,6 +349,12 @@ def orcamento_aprovar(request, pk):
 
     locacao.status = Locacao.Status.AGENDADA
     locacao.save(update_fields=["status", "atualizado_em"])
+    _registrar_historico(
+        locacao,
+        HistoricoLocacao.Tipo.APROVACAO,
+        "Orcamento aprovado e locacao agendada.",
+        request,
+    )
     messages.success(request, f"Orcamento {locacao.codigo} aprovado com sucesso.")
     return redirect("locacao_detail", pk=locacao.pk)
 
@@ -366,6 +398,12 @@ def locacao_cancelar(request, pk):
     locacao.status = Locacao.Status.CANCELADA
     locacao.save(update_fields=["status", "atualizado_em"])
     locacao.cancelar_pagamento()
+    _registrar_historico(
+        locacao,
+        HistoricoLocacao.Tipo.CANCELAMENTO,
+        "Locacao cancelada.",
+        request,
+    )
     messages.success(request, f"Locacao {locacao.codigo} cancelada com sucesso.")
     return redirect("locacao_detail", pk=locacao.pk)
 
@@ -405,6 +443,12 @@ def locacao_ativar(request, pk):
         locacao.save(update_fields=["status", "atualizado_em"])
         locacao.recalcular_totais()
         locacao.sincronizar_status_ativos()
+        _registrar_historico(
+            locacao,
+            HistoricoLocacao.Tipo.ATIVACAO,
+            "Locacao ativada e equipamentos sincronizados.",
+            request,
+        )
 
     messages.success(request, f"Locacao {locacao.codigo} ativada com sucesso.")
     return redirect("locacao_detail", pk=locacao.pk)
@@ -522,6 +566,20 @@ def _mensagem_conflitos_reserva(conflitos):
     return f"Equipamento indisponivel no periodo: {'; '.join(detalhes)}."
 
 
+def _registrar_historico(locacao, tipo, descricao, request):
+    usuario_nome = ""
+
+    if request.user.is_authenticated:
+        usuario_nome = request.user.get_full_name() or request.user.get_username()
+
+    return HistoricoLocacao.objects.create(
+        locacao=locacao,
+        tipo=tipo,
+        descricao=descricao,
+        usuario_nome=usuario_nome,
+    )
+
+
 def locacao_finalizar(request, pk):
     locacao = get_object_or_404(Locacao.objects.select_related("cliente"), pk=pk)
     itens = list(locacao.itens.select_related("ativo", "ativo__categoria", "ativo__rastreador").order_by("ativo__codigo"))
@@ -546,6 +604,12 @@ def locacao_finalizar(request, pk):
 
                 locacao.save(update_fields=update_fields)
                 locacao.finalizar_operacao()
+                _registrar_historico(
+                    locacao,
+                    HistoricoLocacao.Tipo.FINALIZACAO,
+                    "Locacao finalizada e equipamentos liberados.",
+                    request,
+                )
 
             messages.success(request, f"Locacao {locacao.codigo} finalizada com sucesso.")
             return redirect("locacao_detail", pk=locacao.pk)
